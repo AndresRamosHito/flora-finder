@@ -1,29 +1,32 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Shell } from "@/components/Shell";
+import { Feed } from "@/components/Feed";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Your App" },
-      { name: "description", content: "Replace this with a one-sentence description of your app." },
-      { property: "og:title", content: "Your App" },
-      { property: "og:description", content: "Replace this with a one-sentence description of your app." },
+      { title: "OrquIDea · por OrchidArc — orquídeas de la Sierra de Oaxaca" },
+      {
+        name: "description",
+        content:
+          "App ciudadana para observar y registrar orquídeas silvestres en la Sierra de Oaxaca. Solo observar, nunca recolectar.",
+      },
+      { property: "og:title", content: "OrquIDea · por OrchidArc" },
+      {
+        property: "og:description",
+        content:
+          "Comunidad de aficionados a las orquídeas en la Sierra de Oaxaca. Avistamientos, identificación colectiva y conservación.",
+      },
+      { name: "robots", content: "index,follow" },
     ],
   }),
-  component: Index,
+  component: HomePage,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function HomePage() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <Shell active="feed">
+      <Feed />
+    </Shell>
   );
 }
