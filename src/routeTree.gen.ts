@@ -9,18 +9,54 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RetosRouteImport } from './routes/retos'
+import { Route as ReportarRouteImport } from './routes/reportar'
+import { Route as RankingRouteImport } from './routes/ranking'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as MapaRouteImport } from './routes/mapa'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ListaRouteImport } from './routes/lista'
+import { Route as CaptureRouteImport } from './routes/capture'
 import { Route as IndexRouteImport } from './routes/index'
 
+const RetosRoute = RetosRouteImport.update({
+  id: '/retos',
+  path: '/retos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportarRoute = ReportarRouteImport.update({
+  id: '/reportar',
+  path: '/reportar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RankingRoute = RankingRouteImport.update({
+  id: '/ranking',
+  path: '/ranking',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MapaRoute = MapaRouteImport.update({
+  id: '/mapa',
+  path: '/mapa',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListaRoute = ListaRouteImport.update({
+  id: '/lista',
+  path: '/lista',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CaptureRoute = CaptureRouteImport.update({
+  id: '/capture',
+  path: '/capture',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -31,36 +67,109 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/capture': typeof CaptureRoute
+  '/lista': typeof ListaRoute
   '/login': typeof LoginRoute
+  '/mapa': typeof MapaRoute
   '/onboarding': typeof OnboardingRoute
+  '/ranking': typeof RankingRoute
+  '/reportar': typeof ReportarRoute
+  '/retos': typeof RetosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/capture': typeof CaptureRoute
+  '/lista': typeof ListaRoute
   '/login': typeof LoginRoute
+  '/mapa': typeof MapaRoute
   '/onboarding': typeof OnboardingRoute
+  '/ranking': typeof RankingRoute
+  '/reportar': typeof ReportarRoute
+  '/retos': typeof RetosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/capture': typeof CaptureRoute
+  '/lista': typeof ListaRoute
   '/login': typeof LoginRoute
+  '/mapa': typeof MapaRoute
   '/onboarding': typeof OnboardingRoute
+  '/ranking': typeof RankingRoute
+  '/reportar': typeof ReportarRoute
+  '/retos': typeof RetosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/onboarding'
+  fullPaths:
+    | '/'
+    | '/capture'
+    | '/lista'
+    | '/login'
+    | '/mapa'
+    | '/onboarding'
+    | '/ranking'
+    | '/reportar'
+    | '/retos'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/onboarding'
-  id: '__root__' | '/' | '/login' | '/onboarding'
+  to:
+    | '/'
+    | '/capture'
+    | '/lista'
+    | '/login'
+    | '/mapa'
+    | '/onboarding'
+    | '/ranking'
+    | '/reportar'
+    | '/retos'
+  id:
+    | '__root__'
+    | '/'
+    | '/capture'
+    | '/lista'
+    | '/login'
+    | '/mapa'
+    | '/onboarding'
+    | '/ranking'
+    | '/reportar'
+    | '/retos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CaptureRoute: typeof CaptureRoute
+  ListaRoute: typeof ListaRoute
   LoginRoute: typeof LoginRoute
+  MapaRoute: typeof MapaRoute
   OnboardingRoute: typeof OnboardingRoute
+  RankingRoute: typeof RankingRoute
+  ReportarRoute: typeof ReportarRoute
+  RetosRoute: typeof RetosRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/retos': {
+      id: '/retos'
+      path: '/retos'
+      fullPath: '/retos'
+      preLoaderRoute: typeof RetosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reportar': {
+      id: '/reportar'
+      path: '/reportar'
+      fullPath: '/reportar'
+      preLoaderRoute: typeof ReportarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ranking': {
+      id: '/ranking'
+      path: '/ranking'
+      fullPath: '/ranking'
+      preLoaderRoute: typeof RankingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding': {
       id: '/onboarding'
       path: '/onboarding'
@@ -68,11 +177,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mapa': {
+      id: '/mapa'
+      path: '/mapa'
+      fullPath: '/mapa'
+      preLoaderRoute: typeof MapaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lista': {
+      id: '/lista'
+      path: '/lista'
+      fullPath: '/lista'
+      preLoaderRoute: typeof ListaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/capture': {
+      id: '/capture'
+      path: '/capture'
+      fullPath: '/capture'
+      preLoaderRoute: typeof CaptureRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -87,8 +217,14 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CaptureRoute: CaptureRoute,
+  ListaRoute: ListaRoute,
   LoginRoute: LoginRoute,
+  MapaRoute: MapaRoute,
   OnboardingRoute: OnboardingRoute,
+  RankingRoute: RankingRoute,
+  ReportarRoute: ReportarRoute,
+  RetosRoute: RetosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
