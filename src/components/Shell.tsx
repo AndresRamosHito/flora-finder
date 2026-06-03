@@ -1,17 +1,15 @@
-import { Link } from "@tanstack/react-router";
-import { Flower2, MapPin, ShieldAlert, Leaf, Home, Target, Trophy, Plus, LogIn, UserCircle } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { Flower2, MapPin, ShieldAlert, Leaf, Home, Target, Trophy, Plus, LogIn, UserCircle, Map } from "lucide-react";
 import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
 
 export const REGION = "Sierra de Oaxaca";
 
-/**
- * Mobile-first phone-shaped shell. Header carries brand + the "report illegal
- * trade" entry point (sensitive — never gated by login). Bottom nav is a stub
- * for the foundation slice; only "Comunidad" is wired this turn.
- */
-export function Shell({ children, active = "feed" }: { children: ReactNode; active?: "feed" | "list" | "hunts" | "board" }) {
+export type ShellTab = "feed" | "list" | "hunts" | "board" | "map";
+
+export function Shell({ children, active = "feed" }: { children: ReactNode; active?: ShellTab }) {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen w-full bg-background flex justify-center">
@@ -31,19 +29,19 @@ export function Shell({ children, active = "feed" }: { children: ReactNode; acti
             </div>
           </Link>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
+            <Link
+              to="/reportar"
               aria-label="Reportar comercio ilegal"
               className="grid h-9 w-9 place-items-center rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition"
             >
               <ShieldAlert size={16} />
-            </button>
+            </Link>
             <span className="hidden xs:inline-flex items-center gap-1 rounded-full bg-leaf/10 text-leaf px-2 py-1 text-[10px] font-semibold">
               <Leaf size={10} /> Solo&nbsp;observar
             </span>
             {!loading && (
               user ? (
-                <Link to="/" className="grid h-9 w-9 place-items-center rounded-full bg-accent text-accent-foreground" aria-label="Mi cuenta">
+                <Link to="/lista" className="grid h-9 w-9 place-items-center rounded-full bg-accent text-accent-foreground" aria-label="Mi cuenta">
                   <UserCircle size={18} />
                 </Link>
               ) : (
@@ -61,47 +59,45 @@ export function Shell({ children, active = "feed" }: { children: ReactNode; acti
         <main className="flex-1 pb-24">{children}</main>
 
         <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[460px] bg-background/95 backdrop-blur border-t border-border/60 px-2 py-2 z-20 flex items-center justify-around">
-          <NavBtn icon={<Home size={20} />} label="Comunidad" active={active === "feed"} />
-          <NavBtn icon={<Flower2 size={20} />} label="Mi lista" active={active === "list"} disabled />
+          <NavLink to="/" icon={<Home size={20} />} label="Comunidad" active={active === "feed"} />
+          <NavLink to="/mapa" icon={<Map size={20} />} label="Mapa" active={active === "map"} />
           <button
             type="button"
+            onClick={() => navigate({ to: user ? "/capture" : "/login" })}
             aria-label="Nuevo avistamiento"
-            disabled
-            className="grid h-14 w-14 -mt-6 place-items-center rounded-full bg-orchid text-orchid-foreground shadow-lg shadow-orchid/30 disabled:opacity-60"
+            className="grid h-14 w-14 -mt-6 place-items-center rounded-full bg-orchid text-orchid-foreground shadow-lg shadow-orchid/30 hover:scale-105 transition"
           >
             <Plus size={26} />
           </button>
-          <NavBtn icon={<Target size={20} />} label="Retos" active={active === "hunts"} disabled />
-          <NavBtn icon={<Trophy size={20} />} label="Ranking" active={active === "board"} disabled />
+          <NavLink to="/retos" icon={<Target size={20} />} label="Retos" active={active === "hunts"} />
+          <NavLink to="/ranking" icon={<Trophy size={20} />} label="Ranking" active={active === "board"} />
         </nav>
       </div>
     </div>
   );
 }
 
-function NavBtn({
+function NavLink({
+  to,
   icon,
   label,
   active,
-  disabled,
 }: {
+  to: string;
   icon: ReactNode;
   label: string;
   active?: boolean;
-  disabled?: boolean;
 }) {
   return (
-    <button
-      type="button"
-      disabled={disabled}
+    <Link
+      to={to}
       className={
         "flex flex-col items-center gap-0.5 px-3 py-1 text-[10px] font-medium transition " +
-        (active ? "text-leaf" : "text-muted-foreground") +
-        (disabled ? " opacity-40 cursor-not-allowed" : " hover:text-foreground")
+        (active ? "text-leaf" : "text-muted-foreground hover:text-foreground")
       }
     >
       {icon}
       <span>{label}</span>
-    </button>
+    </Link>
   );
 }
