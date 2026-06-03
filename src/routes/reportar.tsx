@@ -42,7 +42,7 @@ function ReportPage() {
     try {
       const willBeAnonymous = anonymous || !user;
       const { error } = await supabase.from("trade_reports").insert({
-        kind: kind as "market" | "online" | "extraction" | "other",
+        kind: kind as "market_sale" | "online_sale" | "field_extraction" | "other",
         taxon_id: taxonId || null,
         location_text: locationText || null,
         details: details || null,
