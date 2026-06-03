@@ -21,7 +21,7 @@ type Taxon = { id: string; sci_name: string; common_name: string | null };
 function ReportPage() {
   const { user } = useAuth();
   const [taxa, setTaxa] = useState<Taxon[]>([]);
-  const [kind, setKind] = useState<string>("market");
+  const [kind, setKind] = useState<string>("market_sale");
   const [taxonId, setTaxonId] = useState("");
   const [locationText, setLocationText] = useState("");
   const [details, setDetails] = useState("");
