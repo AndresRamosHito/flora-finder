@@ -96,9 +96,9 @@ function ReportPage() {
         <Field label="¿Qué viste?">
           <div className="grid grid-cols-2 gap-2">
             {[
-              { v: "market", l: "Mercado/Feria" },
-              { v: "online", l: "Anuncio online" },
-              { v: "extraction", l: "Extracción en campo" },
+              { v: "market_sale", l: "Mercado/Feria" },
+              { v: "online_sale", l: "Anuncio online" },
+              { v: "field_extraction", l: "Extracción en campo" },
               { v: "other", l: "Otro" },
             ].map((o) => (
               <button
