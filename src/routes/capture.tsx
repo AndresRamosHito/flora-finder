@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import { Camera, Loader2, MapPin, Shield, ArrowLeft, Check, AlertCircle } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Camera, Loader2, MapPin, Shield, ArrowLeft, Check, AlertCircle, LocateFixed, RefreshCw } from "lucide-react";
 import { Shell, REGION } from "@/components/Shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,29 @@ export const Route = createFileRoute("/capture")({
 
 type Taxon = { id: string; sci_name: string; common_name: string | null; is_sensitive: boolean };
 
+type CapturedCoords = {
+  latitude: number;
+  longitude: number;
+  accuracy: number | null;
+};
+
+function formatCoord(value: number) {
+  return value.toFixed(5);
+}
+
+function geoErrorMessage(error: GeolocationPositionError) {
+  if (error.code === error.PERMISSION_DENIED) {
+    return "Permiso de ubicación denegado. Puedes guardar el avistamiento con lugar general, pero no aparecerá como punto preciso en el mapa.";
+  }
+  if (error.code === error.POSITION_UNAVAILABLE) {
+    return "No pudimos obtener tu ubicación. Revisa señal/GPS o escribe un lugar general.";
+  }
+  if (error.code === error.TIMEOUT) {
+    return "El GPS tardó demasiado. Intenta actualizar la ubicación o guarda con lugar general.";
+  }
+  return "No pudimos obtener tu ubicación. Puedes guardar con lugar general.";
+}
+
 function CapturePage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -24,14 +47,51 @@ function CapturePage() {
   const [locationLabel, setLocationLabel] = useState("");
   const [observedAt, setObservedAt] = useState(() => new Date().toISOString().slice(0, 16));
   const [notes, setNotes] = useState("");
+  const [coords, setCoords] = useState<CapturedCoords | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [geoError, setGeoError] = useState<string | null>(null);
   const [taxa, setTaxa] = useState<Taxon[]>([]);
   const [stripping, setStripping] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const requestLocation = useCallback(() => {
+    setGeoError(null);
+
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
+      setGeoError("Este navegador no permite capturar ubicación GPS. Escribe un lugar general.");
+      return;
+    }
+
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setCoords({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: Number.isFinite(position.coords.accuracy) ? position.coords.accuracy : null,
+        });
+        setLocating(false);
+      },
+      (positionError) => {
+        setGeoError(geoErrorMessage(positionError));
+        setLocating(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 30000,
+      },
+    );
+  }, []);
+
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
   }, [loading, user, navigate]);
+
+  useEffect(() => {
+    if (!loading && user && !coords && !geoError) requestLocation();
+  }, [loading, user, coords, geoError, requestLocation]);
 
   useEffect(() => {
     supabase.from("taxa").select("id, sci_name, common_name, is_sensitive").order("sci_name").then(({ data }) => {
@@ -68,14 +128,17 @@ function CapturePage() {
       if (up.error) throw up.error;
       const pub = supabase.storage.from("sightings").getPublicUrl(path);
 
-      const selected = taxa.find((t) => t.id === taxonId);
       const ins = await supabase.from("sightings").insert({
         user_id: user.id,
         taxon_id: taxonId || null,
         photo_url: pub.data.publicUrl,
         observed_at: new Date(observedAt).toISOString(),
+        lat: coords?.latitude ?? null,
+        lng: coords?.longitude ?? null,
         location_label: locationLabel || REGION,
-        location_precision: selected?.is_sensitive ? "fuzzed" : "fuzzed",
+        // Always mark user-submitted locations as fuzzed for the public surface.
+        // The server-side views/RPCs remain responsible for masking sensitive taxa.
+        location_precision: "fuzzed",
         notes: notes || null,
         status: taxonId ? "pending" : "needs_id",
       });
@@ -89,6 +152,8 @@ function CapturePage() {
   }
 
   if (loading || !user) return <Shell><div className="p-6 text-sm text-muted-foreground">Cargando…</div></Shell>;
+
+  const selectedTaxon = taxa.find((t) => t.id === taxonId);
 
   return (
     <Shell>
@@ -136,6 +201,43 @@ function CapturePage() {
           />
         </div>
 
+        <Field label="Coordenadas GPS privadas">
+          <div className="rounded-xl border border-border bg-card px-3 py-3 text-xs">
+            {coords ? (
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5 font-medium text-foreground/85">
+                  <LocateFixed size={14} className="text-leaf" /> GPS capturado
+                </div>
+                <div className="text-muted-foreground">
+                  {formatCoord(coords.latitude)}, {formatCoord(coords.longitude)}
+                  {coords.accuracy != null ? ` · precisión aprox. ${Math.round(coords.accuracy)} m` : ""}
+                </div>
+                <div className="text-muted-foreground leading-snug">
+                  La foto no conserva EXIF. Las coordenadas se guardan por separado y la publicación depende de la política de enmascaramiento del servidor.
+                </div>
+              </div>
+            ) : locating ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 size={14} className="animate-spin" /> Obteniendo ubicación…
+              </div>
+            ) : (
+              <div className="space-y-1 text-muted-foreground">
+                <div>No hay GPS capturado. El avistamiento se guardará con lugar general.</div>
+                {geoError && <div className="text-warn">{geoError}</div>}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={requestLocation}
+              disabled={locating}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-[11px] font-medium text-foreground disabled:opacity-60"
+            >
+              {locating ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+              {coords ? "Actualizar GPS" : "Capturar GPS"}
+            </button>
+          </div>
+        </Field>
+
         <Field label="Especie (puedes dejarlo en blanco si no estás seguro)">
           <select
             value={taxonId}
@@ -151,7 +253,7 @@ function CapturePage() {
           </select>
         </Field>
 
-        <Field label="Lugar (texto general, sin coordenadas)">
+        <Field label="Lugar (texto general, sin coordenadas exactas)">
           <div className="relative">
             <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -181,7 +283,7 @@ function CapturePage() {
           />
         </Field>
 
-        {taxa.find((t) => t.id === taxonId)?.is_sensitive && (
+        {selectedTaxon?.is_sensitive && (
           <div className="mt-4 rounded-xl bg-warn/10 border border-warn/30 px-3 py-2.5 text-xs text-foreground/80 flex gap-2">
             <Shield size={14} className="text-warn shrink-0 mt-0.5" />
             Especie sensible — su ubicación se publicará solo como región amplia, nunca como punto exacto.
