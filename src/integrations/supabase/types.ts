@@ -1021,6 +1021,10 @@ export type Database = {
         }[]
       }
       longtransactionsenabled: { Args: never; Returns: boolean }
+      peer_promote_sighting: {
+        Args: { p_sighting_id: string }
+        Returns: undefined
+      }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
         | { Args: { use_typmod?: boolean }; Returns: string }
@@ -1062,6 +1066,26 @@ export type Database = {
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
       recompute_points: { Args: { uid: string }; Returns: number }
+      sighting_public_one: {
+        Args: { p_id: string }
+        Returns: {
+          common_name: string
+          created_at: string
+          id: string
+          is_masked: boolean
+          is_sensitive: boolean
+          lat: number
+          lng: number
+          location_label: string
+          notes: string
+          observed_at: string
+          photo_url: string
+          sci_name: string
+          status: Database["public"]["Enums"]["sighting_status"]
+          taxon_id: string
+          user_id: string
+        }[]
+      }
       sightings_in_bbox: {
         Args: {
           max_lat: number

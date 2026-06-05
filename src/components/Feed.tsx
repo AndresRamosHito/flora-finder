@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { BadgeCheck, BookOpen, HelpCircle, Lock, MapPin, MessageCircle, Flower2 } from "lucide-react";
 import { Orchid } from "@/components/Orchid";
 import { StatusPill } from "@/components/StatusPill";
@@ -97,10 +98,13 @@ function FeedCard({ s, status, index }: { s: SightingRow; status: string | null;
   const common = s.common_name;
   const masked = !!s.is_masked;
   return (
-    <article
-      className="stagger-in rounded-3xl border border-border/70 bg-card overflow-hidden shadow-sm"
+    <Link
+      to="/s/$id"
+      params={{ id: s.id }}
+      className="stagger-in block rounded-3xl border border-border/70 bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-leaf/30 transition"
       style={{ animationDelay: index * 40 + "ms" }}
     >
+      <article>
       <div className="relative h-44 grid place-items-center bg-gradient-to-br from-accent/40 to-secondary/30">
         <Orchid sciName={sci} size={150} />
         {!sci && (
@@ -171,7 +175,8 @@ function FeedCard({ s, status, index }: { s: SightingRow; status: string | null;
           )}
         </div>
       </div>
-    </article>
+      </article>
+    </Link>
   );
 }
 

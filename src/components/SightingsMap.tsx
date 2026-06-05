@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, CircleMarker, Circle, Popup, useMap } from "react-leaflet";
+import { Link } from "@tanstack/react-router";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -92,6 +93,13 @@ export function SightingsMap({
                     {p.location_label && (
                       <div className="text-[11px] mt-1">{p.location_label}</div>
                     )}
+                    <Link
+                      to="/s/$id"
+                      params={{ id: p.id }}
+                      className="inline-block mt-2 text-[11px] font-semibold text-leaf underline"
+                    >
+                      Ver detalle →
+                    </Link>
                   </div>
                 </Popup>
               </Circle>
@@ -120,6 +128,13 @@ export function SightingsMap({
                   <div className="text-[10px] uppercase tracking-wide mt-1 opacity-70">
                     {verified ? "Verificado" : "Pendiente"}
                   </div>
+                  <Link
+                    to="/s/$id"
+                    params={{ id: p.id }}
+                    className="inline-block mt-2 text-[11px] font-semibold text-leaf underline"
+                  >
+                    Ver detalle →
+                  </Link>
                 </div>
               </Popup>
             </CircleMarker>
