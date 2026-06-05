@@ -128,6 +128,13 @@ export function SightingsMap({
                   <div className="text-[10px] uppercase tracking-wide mt-1 opacity-70">
                     {verified ? "Verificado" : "Pendiente"}
                   </div>
+                  <Link
+                    to="/s/$id"
+                    params={{ id: p.id }}
+                    className="inline-block mt-2 text-[11px] font-semibold text-leaf underline"
+                  >
+                    Ver detalle →
+                  </Link>
                 </div>
               </Popup>
             </CircleMarker>
