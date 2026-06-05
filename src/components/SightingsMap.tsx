@@ -93,6 +93,13 @@ export function SightingsMap({
                     {p.location_label && (
                       <div className="text-[11px] mt-1">{p.location_label}</div>
                     )}
+                    <Link
+                      to="/s/$id"
+                      params={{ id: p.id }}
+                      className="inline-block mt-2 text-[11px] font-semibold text-leaf underline"
+                    >
+                      Ver detalle →
+                    </Link>
                   </div>
                 </Popup>
               </Circle>
