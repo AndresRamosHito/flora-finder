@@ -30,6 +30,13 @@ export function Shell({ children, active = "feed" }: { children: ReactNode; acti
           </Link>
           <div className="flex items-center gap-2">
             <Link
+              to="/sociedades"
+              aria-label="Sociedades"
+              className="grid h-9 w-9 place-items-center rounded-full bg-leaf/10 text-leaf hover:bg-leaf/20 transition"
+            >
+              <Users size={16} />
+            </Link>
+            <Link
               to="/reportar"
               aria-label="Reportar comercio ilegal"
               className="grid h-9 w-9 place-items-center rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition"
