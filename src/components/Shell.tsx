@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Flower2, MapPin, ShieldAlert, Leaf, Home, Target, Trophy, Plus, LogIn, UserCircle, Map } from "lucide-react";
+import { Flower2, MapPin, ShieldAlert, Leaf, Home, Target, Trophy, Plus, LogIn, UserCircle, Map, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
 
