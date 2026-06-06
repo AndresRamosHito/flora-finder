@@ -507,6 +507,9 @@ export type Database = {
           kind: Database["public"]["Enums"]["report_kind"] | null
           location_text: string | null
           reporter_id: string | null
+          resolved_at: string | null
+          reviewer_id: string | null
+          reviewer_notes: string | null
           status: Database["public"]["Enums"]["report_status"]
           taxon_id: string | null
         }
@@ -518,6 +521,9 @@ export type Database = {
           kind?: Database["public"]["Enums"]["report_kind"] | null
           location_text?: string | null
           reporter_id?: string | null
+          resolved_at?: string | null
+          reviewer_id?: string | null
+          reviewer_notes?: string | null
           status?: Database["public"]["Enums"]["report_status"]
           taxon_id?: string | null
         }
@@ -529,6 +535,9 @@ export type Database = {
           kind?: Database["public"]["Enums"]["report_kind"] | null
           location_text?: string | null
           reporter_id?: string | null
+          resolved_at?: string | null
+          reviewer_id?: string | null
+          reviewer_notes?: string | null
           status?: Database["public"]["Enums"]["report_status"]
           taxon_id?: string | null
         }
@@ -536,6 +545,13 @@ export type Database = {
           {
             foreignKeyName: "trade_reports_reporter_id_fkey"
             columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trade_reports_reviewer_id_fkey"
+            columns: ["reviewer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

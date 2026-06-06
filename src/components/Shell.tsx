@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Flower2, MapPin, ShieldAlert, Leaf, Home, Target, Trophy, Plus, LogIn, UserCircle, Map } from "lucide-react";
+import { Flower2, MapPin, ShieldAlert, Leaf, Home, Target, Trophy, Plus, LogIn, UserCircle, Map, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -29,6 +29,13 @@ export function Shell({ children, active = "feed" }: { children: ReactNode; acti
             </div>
           </Link>
           <div className="flex items-center gap-2">
+            <Link
+              to="/sociedades"
+              aria-label="Sociedades"
+              className="grid h-9 w-9 place-items-center rounded-full bg-leaf/10 text-leaf hover:bg-leaf/20 transition"
+            >
+              <Users size={16} />
+            </Link>
             <Link
               to="/reportar"
               aria-label="Reportar comercio ilegal"
