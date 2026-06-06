@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SociedadesRouteImport } from './routes/sociedades'
 import { Route as RetosRouteImport } from './routes/retos'
 import { Route as ReportarRouteImport } from './routes/reportar'
 import { Route as RankingRouteImport } from './routes/ranking'
@@ -20,6 +21,11 @@ import { Route as CaptureRouteImport } from './routes/capture'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SIdRouteImport } from './routes/s.$id'
 
+const SociedadesRoute = SociedadesRouteImport.update({
+  id: '/sociedades',
+  path: '/sociedades',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RetosRoute = RetosRouteImport.update({
   id: '/retos',
   path: '/retos',
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/ranking': typeof RankingRoute
   '/reportar': typeof ReportarRoute
   '/retos': typeof RetosRoute
+  '/sociedades': typeof SociedadesRoute
   '/s/$id': typeof SIdRoute
 }
 export interface FileRoutesByTo {
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/ranking': typeof RankingRoute
   '/reportar': typeof ReportarRoute
   '/retos': typeof RetosRoute
+  '/sociedades': typeof SociedadesRoute
   '/s/$id': typeof SIdRoute
 }
 export interface FileRoutesById {
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/ranking': typeof RankingRoute
   '/reportar': typeof ReportarRoute
   '/retos': typeof RetosRoute
+  '/sociedades': typeof SociedadesRoute
   '/s/$id': typeof SIdRoute
 }
 export interface FileRouteTypes {
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/ranking'
     | '/reportar'
     | '/retos'
+    | '/sociedades'
     | '/s/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -132,6 +142,7 @@ export interface FileRouteTypes {
     | '/ranking'
     | '/reportar'
     | '/retos'
+    | '/sociedades'
     | '/s/$id'
   id:
     | '__root__'
@@ -144,6 +155,7 @@ export interface FileRouteTypes {
     | '/ranking'
     | '/reportar'
     | '/retos'
+    | '/sociedades'
     | '/s/$id'
   fileRoutesById: FileRoutesById
 }
@@ -157,11 +169,19 @@ export interface RootRouteChildren {
   RankingRoute: typeof RankingRoute
   ReportarRoute: typeof ReportarRoute
   RetosRoute: typeof RetosRoute
+  SociedadesRoute: typeof SociedadesRoute
   SIdRoute: typeof SIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sociedades': {
+      id: '/sociedades'
+      path: '/sociedades'
+      fullPath: '/sociedades'
+      preLoaderRoute: typeof SociedadesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/retos': {
       id: '/retos'
       path: '/retos'
@@ -245,8 +265,19 @@ const rootRouteChildren: RootRouteChildren = {
   RankingRoute: RankingRoute,
   ReportarRoute: ReportarRoute,
   RetosRoute: RetosRoute,
+  SociedadesRoute: SociedadesRoute,
   SIdRoute: SIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
