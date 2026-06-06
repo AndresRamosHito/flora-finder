@@ -19,6 +19,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ListaRouteImport } from './routes/lista'
 import { Route as CaptureRouteImport } from './routes/capture'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SociedadesIdRouteImport } from './routes/sociedades.$id'
 import { Route as SIdRouteImport } from './routes/s.$id'
 
 const SociedadesRoute = SociedadesRouteImport.update({
@@ -71,6 +72,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SociedadesIdRoute = SociedadesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => SociedadesRoute,
+} as any)
 const SIdRoute = SIdRouteImport.update({
   id: '/s/$id',
   path: '/s/$id',
@@ -87,8 +93,9 @@ export interface FileRoutesByFullPath {
   '/ranking': typeof RankingRoute
   '/reportar': typeof ReportarRoute
   '/retos': typeof RetosRoute
-  '/sociedades': typeof SociedadesRoute
+  '/sociedades': typeof SociedadesRouteWithChildren
   '/s/$id': typeof SIdRoute
+  '/sociedades/$id': typeof SociedadesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -100,8 +107,9 @@ export interface FileRoutesByTo {
   '/ranking': typeof RankingRoute
   '/reportar': typeof ReportarRoute
   '/retos': typeof RetosRoute
-  '/sociedades': typeof SociedadesRoute
+  '/sociedades': typeof SociedadesRouteWithChildren
   '/s/$id': typeof SIdRoute
+  '/sociedades/$id': typeof SociedadesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -114,8 +122,9 @@ export interface FileRoutesById {
   '/ranking': typeof RankingRoute
   '/reportar': typeof ReportarRoute
   '/retos': typeof RetosRoute
-  '/sociedades': typeof SociedadesRoute
+  '/sociedades': typeof SociedadesRouteWithChildren
   '/s/$id': typeof SIdRoute
+  '/sociedades/$id': typeof SociedadesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
     | '/retos'
     | '/sociedades'
     | '/s/$id'
+    | '/sociedades/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/retos'
     | '/sociedades'
     | '/s/$id'
+    | '/sociedades/$id'
   id:
     | '__root__'
     | '/'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/retos'
     | '/sociedades'
     | '/s/$id'
+    | '/sociedades/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -169,7 +181,7 @@ export interface RootRouteChildren {
   RankingRoute: typeof RankingRoute
   ReportarRoute: typeof ReportarRoute
   RetosRoute: typeof RetosRoute
-  SociedadesRoute: typeof SociedadesRoute
+  SociedadesRoute: typeof SociedadesRouteWithChildren
   SIdRoute: typeof SIdRoute
 }
 
@@ -245,6 +257,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sociedades/$id': {
+      id: '/sociedades/$id'
+      path: '/$id'
+      fullPath: '/sociedades/$id'
+      preLoaderRoute: typeof SociedadesIdRouteImport
+      parentRoute: typeof SociedadesRoute
+    }
     '/s/$id': {
       id: '/s/$id'
       path: '/s/$id'
@@ -254,6 +273,18 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface SociedadesRouteChildren {
+  SociedadesIdRoute: typeof SociedadesIdRoute
+}
+
+const SociedadesRouteChildren: SociedadesRouteChildren = {
+  SociedadesIdRoute: SociedadesIdRoute,
+}
+
+const SociedadesRouteWithChildren = SociedadesRoute._addFileChildren(
+  SociedadesRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -265,7 +296,7 @@ const rootRouteChildren: RootRouteChildren = {
   RankingRoute: RankingRoute,
   ReportarRoute: ReportarRoute,
   RetosRoute: RetosRoute,
-  SociedadesRoute: SociedadesRoute,
+  SociedadesRoute: SociedadesRouteWithChildren,
   SIdRoute: SIdRoute,
 }
 export const routeTree = rootRouteImport
