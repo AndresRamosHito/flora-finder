@@ -21,6 +21,7 @@ import { Route as CaptureRouteImport } from './routes/capture'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SociedadesIdRouteImport } from './routes/sociedades.$id'
 import { Route as SIdRouteImport } from './routes/s.$id'
+import { Route as AdminReportesRouteImport } from './routes/admin.reportes'
 
 const SociedadesRoute = SociedadesRouteImport.update({
   id: '/sociedades',
@@ -82,6 +83,11 @@ const SIdRoute = SIdRouteImport.update({
   path: '/s/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminReportesRoute = AdminReportesRouteImport.update({
+  id: '/admin/reportes',
+  path: '/admin/reportes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/reportar': typeof ReportarRoute
   '/retos': typeof RetosRoute
   '/sociedades': typeof SociedadesRouteWithChildren
+  '/admin/reportes': typeof AdminReportesRoute
   '/s/$id': typeof SIdRoute
   '/sociedades/$id': typeof SociedadesIdRoute
 }
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/reportar': typeof ReportarRoute
   '/retos': typeof RetosRoute
   '/sociedades': typeof SociedadesRouteWithChildren
+  '/admin/reportes': typeof AdminReportesRoute
   '/s/$id': typeof SIdRoute
   '/sociedades/$id': typeof SociedadesIdRoute
 }
@@ -123,6 +131,7 @@ export interface FileRoutesById {
   '/reportar': typeof ReportarRoute
   '/retos': typeof RetosRoute
   '/sociedades': typeof SociedadesRouteWithChildren
+  '/admin/reportes': typeof AdminReportesRoute
   '/s/$id': typeof SIdRoute
   '/sociedades/$id': typeof SociedadesIdRoute
 }
@@ -139,6 +148,7 @@ export interface FileRouteTypes {
     | '/reportar'
     | '/retos'
     | '/sociedades'
+    | '/admin/reportes'
     | '/s/$id'
     | '/sociedades/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/reportar'
     | '/retos'
     | '/sociedades'
+    | '/admin/reportes'
     | '/s/$id'
     | '/sociedades/$id'
   id:
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/reportar'
     | '/retos'
     | '/sociedades'
+    | '/admin/reportes'
     | '/s/$id'
     | '/sociedades/$id'
   fileRoutesById: FileRoutesById
@@ -182,6 +194,7 @@ export interface RootRouteChildren {
   ReportarRoute: typeof ReportarRoute
   RetosRoute: typeof RetosRoute
   SociedadesRoute: typeof SociedadesRouteWithChildren
+  AdminReportesRoute: typeof AdminReportesRoute
   SIdRoute: typeof SIdRoute
 }
 
@@ -271,6 +284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/reportes': {
+      id: '/admin/reportes'
+      path: '/admin/reportes'
+      fullPath: '/admin/reportes'
+      preLoaderRoute: typeof AdminReportesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -297,6 +317,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReportarRoute: ReportarRoute,
   RetosRoute: RetosRoute,
   SociedadesRoute: SociedadesRouteWithChildren,
+  AdminReportesRoute: AdminReportesRoute,
   SIdRoute: SIdRoute,
 }
 export const routeTree = rootRouteImport
