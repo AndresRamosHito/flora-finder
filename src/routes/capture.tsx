@@ -20,7 +20,7 @@ function CapturePage() {
 
   const [file, setFile] = useState<Blob | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [taxonId, setTaxonId] = useState<string>("");
+  // selectedTaxon below holds the chosen species (id + metadata)
   const [locationLabel, setLocationLabel] = useState("");
   const [observedAt, setObservedAt] = useState(() => new Date().toISOString().slice(0, 16));
   const [notes, setNotes] = useState("");
