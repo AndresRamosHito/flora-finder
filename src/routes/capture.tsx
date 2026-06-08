@@ -74,6 +74,8 @@ function CapturePage() {
         location_label: locationLabel || REGION,
         location_precision: selectedTaxon?.is_sensitive ? "fuzzed" : "fuzzed",
         notes: notes || null,
+        variety: variety.trim() || null,
+        origin,
         status: taxonId ? "pending" : "needs_id",
       });
       if (ins.error) throw ins.error;
