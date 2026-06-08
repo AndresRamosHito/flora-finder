@@ -5,13 +5,13 @@ import { Shell, REGION } from "@/components/Shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { stripExifAndDownscale } from "@/lib/exif-strip";
+import { TaxonCombobox, type Taxon } from "@/components/TaxonCombobox";
 
 export const Route = createFileRoute("/capture")({
   head: () => ({ meta: [{ title: "Nuevo avistamiento · OrquIDea" }, { name: "robots", content: "noindex" }] }),
   component: CapturePage,
 });
 
-type Taxon = { id: string; sci_name: string; common_name: string | null; is_sensitive: boolean };
 
 function CapturePage() {
   const { user, loading } = useAuth();
@@ -20,11 +20,11 @@ function CapturePage() {
 
   const [file, setFile] = useState<Blob | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [taxonId, setTaxonId] = useState<string>("");
+  // selectedTaxon below holds the chosen species (id + metadata)
   const [locationLabel, setLocationLabel] = useState("");
   const [observedAt, setObservedAt] = useState(() => new Date().toISOString().slice(0, 16));
   const [notes, setNotes] = useState("");
-  const [taxa, setTaxa] = useState<Taxon[]>([]);
+  const [selectedTaxon, setSelectedTaxon] = useState<Taxon | null>(null);
   const [stripping, setStripping] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,11 +33,6 @@ function CapturePage() {
     if (!loading && !user) navigate({ to: "/login" });
   }, [loading, user, navigate]);
 
-  useEffect(() => {
-    supabase.from("taxa").select("id, sci_name, common_name, is_sensitive").order("sci_name").then(({ data }) => {
-      if (data) setTaxa(data as Taxon[]);
-    });
-  }, []);
 
   async function handleFile(f: File) {
     setError(null);
@@ -68,14 +63,14 @@ function CapturePage() {
       if (up.error) throw up.error;
       const pub = supabase.storage.from("sightings").getPublicUrl(path);
 
-      const selected = taxa.find((t) => t.id === taxonId);
+      const taxonId = selectedTaxon?.id ?? "";
       const ins = await supabase.from("sightings").insert({
         user_id: user.id,
         taxon_id: taxonId || null,
         photo_url: pub.data.publicUrl,
         observed_at: new Date(observedAt).toISOString(),
         location_label: locationLabel || REGION,
-        location_precision: selected?.is_sensitive ? "fuzzed" : "fuzzed",
+        location_precision: selectedTaxon?.is_sensitive ? "fuzzed" : "fuzzed",
         notes: notes || null,
         status: taxonId ? "pending" : "needs_id",
       });
@@ -137,19 +132,13 @@ function CapturePage() {
         </div>
 
         <Field label="Especie (puedes dejarlo en blanco si no estás seguro)">
-          <select
-            value={taxonId}
-            onChange={(e) => setTaxonId(e.target.value)}
-            className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
-          >
-            <option value="">— Sin identificar (pediremos ayuda) —</option>
-            {taxa.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.sci_name}{t.common_name ? ` · ${t.common_name}` : ""}{t.is_sensitive ? " 🛡" : ""}
-              </option>
-            ))}
-          </select>
+          <TaxonCombobox
+            value={selectedTaxon?.id ?? ""}
+            onChange={(_id, t) => setSelectedTaxon(t)}
+            placeholder="— Sin identificar (pediremos ayuda) —"
+          />
         </Field>
+
 
         <Field label="Lugar (texto general, sin coordenadas)">
           <div className="relative">
@@ -181,7 +170,7 @@ function CapturePage() {
           />
         </Field>
 
-        {taxa.find((t) => t.id === taxonId)?.is_sensitive && (
+        {selectedTaxon?.is_sensitive && (
           <div className="mt-4 rounded-xl bg-warn/10 border border-warn/30 px-3 py-2.5 text-xs text-foreground/80 flex gap-2">
             <Shield size={14} className="text-warn shrink-0 mt-0.5" />
             Especie sensible — su ubicación se publicará solo como región amplia, nunca como punto exacto.
