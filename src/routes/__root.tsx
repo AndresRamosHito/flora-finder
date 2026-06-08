@@ -13,6 +13,10 @@ import { supabase } from "../integrations/supabase/client";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
+const ORQUIDEA_BASE_PATH = "/orquidea";
+const ORQUIDEA_CANONICAL_URL = "https://www.orchidarc.org/orquidea/";
+const ORQUIDEA_OG_IMAGE_URL = "https://www.orchidarc.org/orquidea/og-image.jpg";
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -63,7 +67,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             Intentar de nuevo
           </button>
           <a
-            href="/"
+            href={`${ORQUIDEA_BASE_PATH}/`}
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
             Volver al inicio
@@ -108,7 +112,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Documenta y protege las orquídeas silvestres de México mediante ciencia ciudadana y conservación responsable.",
       },
-      { property: "og:image", content: "/og-image.jpg" },
+      { property: "og:url", content: ORQUIDEA_CANONICAL_URL },
+      { property: "og:image", content: ORQUIDEA_OG_IMAGE_URL },
       {
         property: "og:image:alt",
         content: "OrquIDea — ciencia ciudadana para orquídeas de México",
@@ -124,14 +129,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Documenta y protege las orquídeas silvestres de México mediante ciencia ciudadana.",
       },
-      { name: "twitter:image", content: "/og-image.jpg" },
+      { name: "twitter:image", content: ORQUIDEA_OG_IMAGE_URL },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "manifest", href: "/manifest.webmanifest" },
-      { rel: "icon", href: "/favicon.ico" },
-      { rel: "icon", type: "image/png", href: "/favicon.png" },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "canonical", href: ORQUIDEA_CANONICAL_URL },
+      { rel: "manifest", href: `${ORQUIDEA_BASE_PATH}/manifest.webmanifest` },
+      { rel: "icon", href: `${ORQUIDEA_BASE_PATH}/favicon.ico` },
+      { rel: "icon", type: "image/png", href: `${ORQUIDEA_BASE_PATH}/favicon.png` },
+      { rel: "apple-touch-icon", href: `${ORQUIDEA_BASE_PATH}/apple-touch-icon.png` },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       {
         rel: "preconnect",
