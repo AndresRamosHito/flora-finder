@@ -25,6 +25,8 @@ function CapturePage() {
   const [observedAt, setObservedAt] = useState(() => new Date().toISOString().slice(0, 16));
   const [notes, setNotes] = useState("");
   const [selectedTaxon, setSelectedTaxon] = useState<Taxon | null>(null);
+  const [variety, setVariety] = useState("");
+  const [origin, setOrigin] = useState<"wild" | "collection">("wild");
   const [stripping, setStripping] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +74,8 @@ function CapturePage() {
         location_label: locationLabel || REGION,
         location_precision: selectedTaxon?.is_sensitive ? "fuzzed" : "fuzzed",
         notes: notes || null,
+        variety: variety.trim() || null,
+        origin,
         status: taxonId ? "pending" : "needs_id",
       });
       if (ins.error) throw ins.error;
@@ -138,6 +142,44 @@ function CapturePage() {
             placeholder="— Sin identificar (pediremos ayuda) —"
           />
         </Field>
+
+        <Field label="Variedad o subespecie (opcional)">
+          <input
+            value={variety}
+            onChange={(e) => setVariety(e.target.value.slice(0, 120))}
+            placeholder="Ej. var. alba, subsp. majus, forma peloric…"
+            className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm italic"
+          />
+        </Field>
+
+        <Field label="Origen del ejemplar">
+          <div className="grid grid-cols-2 gap-2">
+            {([
+              { v: "wild", label: "En su hábitat", hint: "Observación silvestre" },
+              { v: "collection", label: "En colección", hint: "Cultivo o colección particular" },
+            ] as const).map((opt) => {
+              const active = origin === opt.v;
+              return (
+                <button
+                  key={opt.v}
+                  type="button"
+                  onClick={() => setOrigin(opt.v)}
+                  className={
+                    "rounded-xl border px-3 py-2 text-left text-xs transition " +
+                    (active
+                      ? "border-leaf bg-leaf/10 text-foreground"
+                      : "border-border bg-background text-muted-foreground hover:bg-accent/30")
+                  }
+                >
+                  <div className="text-sm font-medium text-foreground">{opt.label}</div>
+                  <div className="mt-0.5">{opt.hint}</div>
+                </button>
+              );
+            })}
+          </div>
+        </Field>
+
+
 
 
         <Field label="Lugar (texto general, sin coordenadas)">

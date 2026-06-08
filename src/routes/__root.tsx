@@ -81,11 +81,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "theme-color", content: "#f6f1e4" },
       { name: "author", content: "OrchidArc" },
+      { name: "description", content: "OrquIDea es una plataforma de ciencia ciudadana para documentar y proteger las orquídeas silvestres de México sin revelar la ubicación de especies sensibles." },
+      { name: "keywords", content: "orquídeas, México, ciencia ciudadana, conservación, OrchidArc, Laelia, Barkeria, biodiversidad" },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "OrquIDea" },
+      { property: "og:locale", content: "es_MX" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "robots", content: "index,follow" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", href: "/favicon.ico" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {

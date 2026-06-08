@@ -269,10 +269,12 @@ export type Database = {
           location_precision: Database["public"]["Enums"]["location_precision"]
           notes: string | null
           observed_at: string | null
+          origin: Database["public"]["Enums"]["sighting_origin"]
           photo_url: string | null
           status: Database["public"]["Enums"]["sighting_status"]
           taxon_id: string | null
           user_id: string
+          variety: string | null
         }
         Insert: {
           created_at?: string
@@ -284,10 +286,12 @@ export type Database = {
           location_precision?: Database["public"]["Enums"]["location_precision"]
           notes?: string | null
           observed_at?: string | null
+          origin?: Database["public"]["Enums"]["sighting_origin"]
           photo_url?: string | null
           status?: Database["public"]["Enums"]["sighting_status"]
           taxon_id?: string | null
           user_id: string
+          variety?: string | null
         }
         Update: {
           created_at?: string
@@ -299,10 +303,12 @@ export type Database = {
           location_precision?: Database["public"]["Enums"]["location_precision"]
           notes?: string | null
           observed_at?: string | null
+          origin?: Database["public"]["Enums"]["sighting_origin"]
           photo_url?: string | null
           status?: Database["public"]["Enums"]["sighting_status"]
           taxon_id?: string | null
           user_id?: string
+          variety?: string | null
         }
         Relationships: [
           {
@@ -711,11 +717,13 @@ export type Database = {
           location_label: string | null
           notes: string | null
           observed_at: string | null
+          origin: Database["public"]["Enums"]["sighting_origin"] | null
           photo_url: string | null
           sci_name: string | null
           status: Database["public"]["Enums"]["sighting_status"] | null
           taxon_id: string | null
           user_id: string | null
+          variety: string | null
         }
         Relationships: [
           {
@@ -1738,10 +1746,12 @@ export type Database = {
           location_precision: Database["public"]["Enums"]["location_precision"]
           notes: string | null
           observed_at: string | null
+          origin: Database["public"]["Enums"]["sighting_origin"]
           photo_url: string | null
           status: Database["public"]["Enums"]["sighting_status"]
           taxon_id: string | null
           user_id: string
+          variety: string | null
         }
         SetofOptions: {
           from: "*"
@@ -1756,6 +1766,7 @@ export type Database = {
       member_role: "spotter" | "verifier" | "admin"
       report_kind: "online_sale" | "market_sale" | "field_extraction" | "other"
       report_status: "new" | "triaged" | "escalated" | "closed"
+      sighting_origin: "wild" | "collection"
       sighting_status: "needs_id" | "pending" | "verified" | "rejected"
     }
     CompositeTypes: {
@@ -1896,6 +1907,7 @@ export const Constants = {
       member_role: ["spotter", "verifier", "admin"],
       report_kind: ["online_sale", "market_sale", "field_extraction", "other"],
       report_status: ["new", "triaged", "escalated", "closed"],
+      sighting_origin: ["wild", "collection"],
       sighting_status: ["needs_id", "pending", "verified", "rejected"],
     },
   },
