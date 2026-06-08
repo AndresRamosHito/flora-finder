@@ -5,13 +5,13 @@ import { Shell, REGION } from "@/components/Shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { stripExifAndDownscale } from "@/lib/exif-strip";
+import { TaxonCombobox, type Taxon } from "@/components/TaxonCombobox";
 
 export const Route = createFileRoute("/capture")({
   head: () => ({ meta: [{ title: "Nuevo avistamiento · OrquIDea" }, { name: "robots", content: "noindex" }] }),
   component: CapturePage,
 });
 
-type Taxon = { id: string; sci_name: string; common_name: string | null; is_sensitive: boolean };
 
 function CapturePage() {
   const { user, loading } = useAuth();
@@ -24,7 +24,7 @@ function CapturePage() {
   const [locationLabel, setLocationLabel] = useState("");
   const [observedAt, setObservedAt] = useState(() => new Date().toISOString().slice(0, 16));
   const [notes, setNotes] = useState("");
-  const [taxa, setTaxa] = useState<Taxon[]>([]);
+  const [selectedTaxon, setSelectedTaxon] = useState<Taxon | null>(null);
   const [stripping, setStripping] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,11 +33,6 @@ function CapturePage() {
     if (!loading && !user) navigate({ to: "/login" });
   }, [loading, user, navigate]);
 
-  useEffect(() => {
-    supabase.from("taxa").select("id, sci_name, common_name, is_sensitive").order("sci_name").then(({ data }) => {
-      if (data) setTaxa(data as Taxon[]);
-    });
-  }, []);
 
   async function handleFile(f: File) {
     setError(null);
