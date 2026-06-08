@@ -63,14 +63,14 @@ function CapturePage() {
       if (up.error) throw up.error;
       const pub = supabase.storage.from("sightings").getPublicUrl(path);
 
-      const selected = taxa.find((t) => t.id === taxonId);
+      const taxonId = selectedTaxon?.id ?? "";
       const ins = await supabase.from("sightings").insert({
         user_id: user.id,
         taxon_id: taxonId || null,
         photo_url: pub.data.publicUrl,
         observed_at: new Date(observedAt).toISOString(),
         location_label: locationLabel || REGION,
-        location_precision: selected?.is_sensitive ? "fuzzed" : "fuzzed",
+        location_precision: selectedTaxon?.is_sensitive ? "fuzzed" : "fuzzed",
         notes: notes || null,
         status: taxonId ? "pending" : "needs_id",
       });
@@ -132,19 +132,13 @@ function CapturePage() {
         </div>
 
         <Field label="Especie (puedes dejarlo en blanco si no estás seguro)">
-          <select
-            value={taxonId}
-            onChange={(e) => setTaxonId(e.target.value)}
-            className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
-          >
-            <option value="">— Sin identificar (pediremos ayuda) —</option>
-            {taxa.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.sci_name}{t.common_name ? ` · ${t.common_name}` : ""}{t.is_sensitive ? " 🛡" : ""}
-              </option>
-            ))}
-          </select>
+          <TaxonCombobox
+            value={selectedTaxon?.id ?? ""}
+            onChange={(_id, t) => setSelectedTaxon(t)}
+            placeholder="— Sin identificar (pediremos ayuda) —"
+          />
         </Field>
+
 
         <Field label="Lugar (texto general, sin coordenadas)">
           <div className="relative">
@@ -176,7 +170,7 @@ function CapturePage() {
           />
         </Field>
 
-        {taxa.find((t) => t.id === taxonId)?.is_sensitive && (
+        {selectedTaxon?.is_sensitive && (
           <div className="mt-4 rounded-xl bg-warn/10 border border-warn/30 px-3 py-2.5 text-xs text-foreground/80 flex gap-2">
             <Shield size={14} className="text-warn shrink-0 mt-0.5" />
             Especie sensible — su ubicación se publicará solo como región amplia, nunca como punto exacto.
