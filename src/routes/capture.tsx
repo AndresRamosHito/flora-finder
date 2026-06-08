@@ -25,6 +25,8 @@ function CapturePage() {
   const [observedAt, setObservedAt] = useState(() => new Date().toISOString().slice(0, 16));
   const [notes, setNotes] = useState("");
   const [selectedTaxon, setSelectedTaxon] = useState<Taxon | null>(null);
+  const [variety, setVariety] = useState("");
+  const [origin, setOrigin] = useState<"wild" | "collection">("wild");
   const [stripping, setStripping] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
