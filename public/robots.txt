@@ -1,9 +1,10 @@
 User-agent: *
-Allow: /orquidea/
+Allow: /
 
-Disallow: /orquidea/capture
-Disallow: /orquidea/admin/
-Disallow: /orquidea/onboarding
-Disallow: /orquidea/login
+Disallow: /capture
+Disallow: /admin/
+Disallow: /onboarding
+Disallow: /login
+Disallow: /lista
 
-Sitemap: https://www.orchidarc.org/orquidea/sitemap.xml
+Sitemap: https://orchid-map-oaxaca.lovable.app/sitemap.xml
