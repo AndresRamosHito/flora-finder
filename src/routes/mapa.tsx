@@ -8,6 +8,9 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/mapa")({
   ssr: false,
+  validateSearch: (search: Record<string, unknown>): { especie?: string } => ({
+    especie: typeof search.especie === "string" && search.especie ? search.especie : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Mapa · OrquIDea" },
@@ -26,6 +29,7 @@ const BBOX = { min_lat: 16.6, max_lat: 17.9, min_lng: -97.0, max_lng: -95.6 };
 type StatusFilter = "all" | "verified" | "pending";
 
 function MapPage() {
+  const { especie } = Route.useSearch();
   const { data, isLoading } = useQuery({
     queryKey: ["map-bbox", BBOX],
     queryFn: async () => {
@@ -37,7 +41,7 @@ function MapPage() {
 
   const [status, setStatus] = useState<StatusFilter>("all");
   const [showSensitive, setShowSensitive] = useState(true);
-  const [taxon, setTaxon] = useState("");
+  const [taxon, setTaxon] = useState(especie ?? "");
 
   const all = data ?? [];
 
@@ -63,7 +67,8 @@ function MapPage() {
       <div className="px-4 pt-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-display font-semibold">Mapa</h1>
+            <div className="specimen-label">{REGION}</div>
+            <h1 className="mt-0.5 text-2xl font-display font-semibold">Mapa</h1>
             <p className="text-xs text-muted-foreground mt-1 max-w-[28ch]">
               Coordenadas redondeadas a cuadrícula. Especies sensibles solo como área.
             </p>
@@ -75,9 +80,15 @@ function MapPage() {
 
         <div className="mt-4 space-y-2">
           <div className="flex gap-2 flex-wrap">
-            <Chip active={status === "all"} onClick={() => setStatus("all")}>Todos</Chip>
-            <Chip active={status === "verified"} onClick={() => setStatus("verified")}>Verificados</Chip>
-            <Chip active={status === "pending"} onClick={() => setStatus("pending")}>Pendientes</Chip>
+            <Chip active={status === "all"} onClick={() => setStatus("all")}>
+              Todos
+            </Chip>
+            <Chip active={status === "verified"} onClick={() => setStatus("verified")}>
+              Verificados
+            </Chip>
+            <Chip active={status === "pending"} onClick={() => setStatus("pending")}>
+              Pendientes
+            </Chip>
             <Chip active={showSensitive} onClick={() => setShowSensitive((v) => !v)}>
               {showSensitive ? "Sensibles ✓" : "Sensibles"}
             </Chip>
@@ -91,7 +102,7 @@ function MapPage() {
         </div>
 
         <div className="mt-3">
-          <SightingsMap points={filtered} bbox={BBOX} />
+          <SightingsMap points={filtered} bbox={BBOX} heightClass="h-[56vh] min-h-[320px]" />
         </div>
 
         <div className="mt-3 flex items-center gap-4 text-[11px] flex-wrap">

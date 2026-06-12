@@ -24,10 +24,9 @@ type BBox = { min_lat: number; max_lat: number; min_lng: number; max_lng: number
 function FitToBbox({ bbox }: { bbox: BBox }) {
   const map = useMap();
   useEffect(() => {
-    map.fitBounds(
-      L.latLngBounds([bbox.min_lat, bbox.min_lng], [bbox.max_lat, bbox.max_lng]),
-      { padding: [16, 16] },
-    );
+    map.fitBounds(L.latLngBounds([bbox.min_lat, bbox.min_lng], [bbox.max_lat, bbox.max_lng]), {
+      padding: [16, 16],
+    });
   }, [map, bbox]);
   return null;
 }
@@ -41,12 +40,13 @@ function pinIcon(verified: boolean) {
 function ClusteredPins({ points }: { points: SightingPoint[] }) {
   const map = useMap();
   useEffect(() => {
-    const cluster = (L as unknown as { markerClusterGroup: (opts?: object) => L.LayerGroup })
-      .markerClusterGroup({
-        showCoverageOnHover: false,
-        maxClusterRadius: 45,
-        spiderfyOnMaxZoom: true,
-      });
+    const cluster = (
+      L as unknown as { markerClusterGroup: (opts?: object) => L.LayerGroup }
+    ).markerClusterGroup({
+      showCoverageOnHover: false,
+      maxClusterRadius: 45,
+      spiderfyOnMaxZoom: true,
+    });
     points.forEach((p) => {
       if (p.lat == null || p.lng == null || p.is_sensitive || p.is_masked) return;
       const verified = p.status === "verified";
@@ -87,7 +87,19 @@ function LocateButton() {
       className="absolute top-3 right-3 z-[400] rounded-full bg-card border border-border shadow-sm h-9 w-9 grid place-items-center text-foreground"
       aria-label="Ubicarme"
     >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="12" r="3" />
+        <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+      </svg>
     </button>
   );
 }
@@ -95,9 +107,11 @@ function LocateButton() {
 export function SightingsMap({
   points,
   bbox,
+  heightClass = "aspect-[4/5]",
 }: {
   points: SightingPoint[];
   bbox: BBox;
+  heightClass?: string;
 }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -121,13 +135,20 @@ export function SightingsMap({
     return (
       <div
         ref={containerRef}
-        className="w-full aspect-[4/5] rounded-3xl bg-gradient-to-br from-leaf/15 via-accent/30 to-background animate-pulse"
+        className={
+          "w-full rounded-3xl bg-gradient-to-br from-leaf/15 via-accent/30 to-background animate-pulse " +
+          heightClass
+        }
       />
     );
   }
 
   return (
-    <div className="w-full aspect-[4/5] rounded-3xl overflow-hidden border border-border relative z-0">
+    <div
+      className={
+        "w-full rounded-3xl overflow-hidden border border-border relative z-0 " + heightClass
+      }
+    >
       <MapContainer
         center={center}
         zoom={9}
@@ -159,9 +180,7 @@ export function SightingsMap({
                 <div className="text-[11px] opacity-70 mt-0.5">
                   Especie sensible — solo área aproximada
                 </div>
-                {p.location_label && (
-                  <div className="text-[11px] mt-1">{p.location_label}</div>
-                )}
+                {p.location_label && <div className="text-[11px] mt-1">{p.location_label}</div>}
                 <Link
                   to="/s/$id"
                   params={{ id: p.id }}

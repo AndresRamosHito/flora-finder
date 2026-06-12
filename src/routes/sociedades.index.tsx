@@ -6,15 +6,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 
-export const Route = createFileRoute("/sociedades")({
+export const Route = createFileRoute("/sociedades/")({
   ssr: false,
   head: () => ({
     meta: [
       { title: "Sociedades · OrquIDea" },
       {
         name: "description",
-        content:
-          "Sociedades orquideológicas activas en la Sierra de Oaxaca y regiones cercanas.",
+        content: "Sociedades orquideológicas activas en la Sierra de Oaxaca y regiones cercanas.",
       },
     ],
   }),
@@ -35,10 +34,7 @@ function SocietiesPage() {
           .order("is_official", { ascending: false })
           .order("name"),
         user
-          ? supabase
-              .from("society_members")
-              .select("society_id")
-              .eq("user_id", user.id)
+          ? supabase.from("society_members").select("society_id").eq("user_id", user.id)
           : Promise.resolve({ data: [] as { society_id: string }[], error: null }),
       ]);
       if (socs.error) throw socs.error;
@@ -63,7 +59,7 @@ function SocietiesPage() {
   }
 
   return (
-    <Shell>
+    <Shell active="community">
       <div className="px-4 pt-5 pb-10">
         <div className="flex items-center gap-2">
           <div className="grid h-10 w-10 place-items-center rounded-2xl bg-leaf/15 text-leaf">
@@ -72,7 +68,8 @@ function SocietiesPage() {
           <h1 className="text-2xl font-display font-semibold">Sociedades</h1>
         </div>
         <p className="mt-2 text-xs text-muted-foreground max-w-[34ch]">
-          Únete a sociedades orquideológicas de la región para coordinar salidas, IDs y conservación.
+          Únete a sociedades orquideológicas de la región para coordinar salidas, IDs y
+          conservación.
         </p>
 
         {!user && (
@@ -87,10 +84,7 @@ function SocietiesPage() {
         <div className="mt-5 space-y-3">
           {isLoading && <div className="text-xs text-muted-foreground">Cargando…</div>}
           {(data ?? []).map((s) => (
-            <div
-              key={s.id}
-              className="rounded-2xl bg-card border border-border p-4"
-            >
+            <div key={s.id} className="rounded-2xl bg-card border border-border p-4">
               <div className="flex items-start gap-3">
                 <div
                   className="grid h-11 w-11 place-items-center rounded-xl text-white font-bold text-sm uppercase shrink-0"
