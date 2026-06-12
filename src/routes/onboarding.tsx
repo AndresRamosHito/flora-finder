@@ -8,9 +8,11 @@ export const Route = createFileRoute("/onboarding")({
   head: () => ({
     meta: [
       { title: "Elige tu @handle — OrquIDea" },
-      { name: "robots", content: "noindex" },
+      { name: "description", content: "Configura tu handle de OrquIDea para empezar a publicar avistamientos de orquídeas en la comunidad." },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
+
   component: OnboardingPage,
 });
 
