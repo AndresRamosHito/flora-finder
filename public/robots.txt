@@ -7,4 +7,4 @@ Disallow: /onboarding
 Disallow: /login
 Disallow: /lista
 
-Sitemap: https://orchid-map-oaxaca.lovable.app/sitemap.xml
+Sitemap: https://orquidea.orchidarc.org/sitemap.xml
