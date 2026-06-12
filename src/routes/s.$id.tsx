@@ -21,18 +21,64 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/s/$id")({
-  head: () => ({
-    meta: [
-      { title: "Avistamiento · OrquIDea" },
-      {
-        name: "description",
-        content:
-          "Detalle del avistamiento — discusión, sugerencias de ID y verificación comunitaria.",
-      },
-    ],
-  }),
+  loader: async ({ params }) => {
+    const { data } = await supabase.rpc("sighting_public_one", { p_id: params.id });
+    const s = (data?.[0] as { sci_name: string | null; common_name: string | null; location_label: string | null; notes: string | null; photo_url: string | null; observed_at: string | null; created_at: string } | undefined) ?? null;
+    return { sighting: s };
+  },
+  head: ({ params, loaderData }) => {
+    const s = loaderData?.sighting;
+    const url = `https://orchid-map-oaxaca.lovable.app/s/${params.id}`;
+    const name = s?.sci_name ?? "Orquídea sin identificar";
+    const where = s?.location_label ?? "Sierra de Oaxaca";
+    const title = s?.sci_name
+      ? `${s.sci_name}${s.common_name ? ` (${s.common_name})` : ""} · Avistamiento · OrquIDea`
+      : "Avistamiento sin identificar · OrquIDea";
+    const rawDesc =
+      s?.notes?.trim() ||
+      `Avistamiento comunitario de ${name} en ${where}. Discusión, sugerencias de ID y verificación comunitaria.`;
+    const desc = rawDesc.length > 158 ? rawDesc.slice(0, 155) + "…" : rawDesc;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: desc },
+        { property: "og:title", content: title },
+        { property: "og:description", content: desc },
+        { property: "og:type", content: "article" },
+        { property: "og:url", content: url },
+        ...(s?.photo_url
+          ? [
+              { property: "og:image", content: s.photo_url },
+              { name: "twitter:image", content: s.photo_url },
+            ]
+          : []),
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: desc },
+      ],
+      links: [{ rel: "canonical", href: url }],
+      scripts: s
+        ? [
+            {
+              type: "application/ld+json",
+              children: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Article",
+                headline: name,
+                description: desc,
+                datePublished: s.observed_at ?? s.created_at,
+                image: s.photo_url ?? undefined,
+                url,
+                inLanguage: "es-MX",
+                publisher: { "@type": "Organization", name: "OrchidArc" },
+              }),
+            },
+          ]
+        : [],
+    };
+  },
   component: SightingDetail,
 });
+
 
 type SightingOne = {
   id: string;
