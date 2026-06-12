@@ -13,14 +13,19 @@ export const Route = createFileRoute("/mapa")({
   }),
   head: () => ({
     meta: [
-      { title: "Mapa · OrquIDea" },
+      { title: "Mapa de orquídeas · OrquIDea" },
       {
         name: "description",
         content:
-          "Avistamientos georreferenciados en la Sierra de Oaxaca con protección de ubicación para especies sensibles.",
+          "Mapa de avistamientos de orquídeas en la Sierra de Oaxaca con clustering, filtros y protección de ubicación para especies sensibles.",
       },
+      { property: "og:title", content: "Mapa de orquídeas · OrquIDea" },
+      { property: "og:description", content: "Mapa interactivo de avistamientos de orquídeas en la Sierra de Oaxaca." },
+      { property: "og:url", content: "https://orchid-map-oaxaca.lovable.app/mapa" },
     ],
+    links: [{ rel: "canonical", href: "https://orchid-map-oaxaca.lovable.app/mapa" }],
   }),
+
   component: MapPage,
 });
 
