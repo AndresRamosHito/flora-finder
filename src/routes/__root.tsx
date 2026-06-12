@@ -81,24 +81,48 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "theme-color", content: "#f6f1e4" },
       { name: "author", content: "OrchidArc" },
+      { name: "robots", content: "index, follow" },
+      { title: "OrquIDea · por OrchidArc" },
+      { name: "description", content: "Comunidad ciudadana de orquídeas en la Sierra de Oaxaca: avistamientos, identificación colectiva y conservación." },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "OrquIDea" },
+      { property: "og:locale", content: "es_MX" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "OrquIDea" },
-      { property: "og:title", content: "OrquIDea" },
-      { name: "twitter:title", content: "OrquIDea" },
-      { name: "description", content: "OrchidArc's Flora Finder is a citizen-science app for spotting and documenting orchids." },
-      { property: "og:description", content: "OrchidArc's Flora Finder is a citizen-science app for spotting and documenting orchids." },
-      { name: "twitter:description", content: "OrchidArc's Flora Finder is a citizen-science app for spotting and documenting orchids." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/78946d95-ae7e-436e-8b7a-71acc2661f35/id-preview-8ef00188--120eb405-9241-4ab4-9361-97745aa50c4f.lovable.app-1780902483017.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/78946d95-ae7e-436e-8b7a-71acc2661f35/id-preview-8ef00188--120eb405-9241-4ab4-9361-97745aa50c4f.lovable.app-1780902483017.png" },
+
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: "/favicon.ico" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&display=swap",
+      },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              name: "OrchidArc",
+              url: "https://orchid-map-oaxaca.lovable.app",
+              logo: "https://orchid-map-oaxaca.lovable.app/icon-512.png",
+            },
+            {
+              "@type": "WebSite",
+              name: "OrquIDea",
+              url: "https://orchid-map-oaxaca.lovable.app",
+              inLanguage: "es-MX",
+              publisher: { "@type": "Organization", name: "OrchidArc" },
+            },
+          ],
+        }),
       },
     ],
   }),
@@ -107,6 +131,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
+
 
 function RootShell({ children }: { children: ReactNode }) {
   return (

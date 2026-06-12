@@ -8,10 +8,15 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/retos")({
   head: () => ({
     meta: [
-      { title: "Retos · OrquIDea" },
-      { name: "description", content: "Retos de observación de orquídeas en la Sierra de Oaxaca." },
+      { title: "Retos de observación · OrquIDea" },
+      { name: "description", content: "Retos comunitarios de observación de orquídeas en la Sierra de Oaxaca: gana insignias por completar misiones." },
+      { property: "og:title", content: "Retos de observación · OrquIDea" },
+      { property: "og:description", content: "Misiones e insignias para observadores de orquídeas en Oaxaca." },
+      { property: "og:url", content: "https://orchid-map-oaxaca.lovable.app/retos" },
     ],
+    links: [{ rel: "canonical", href: "https://orchid-map-oaxaca.lovable.app/retos" }],
   }),
+
   component: HuntsPage,
 });
 

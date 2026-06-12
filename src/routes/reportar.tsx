@@ -8,11 +8,15 @@ import { useAuth } from "@/hooks/use-auth";
 export const Route = createFileRoute("/reportar")({
   head: () => ({
     meta: [
-      { title: "Reportar comercio ilegal · OrquIDea" },
-      { name: "description", content: "Reporta confidencialmente el saqueo o comercio ilegal de orquídeas en la Sierra de Oaxaca." },
-      { name: "robots", content: "noindex" },
+      { title: "Reportar comercio ilegal de orquídeas · OrquIDea" },
+      { name: "description", content: "Reporta confidencialmente el saqueo o comercio ilegal de orquídeas en la Sierra de Oaxaca. Tu identidad queda protegida." },
+      { property: "og:title", content: "Reportar comercio ilegal · OrquIDea" },
+      { property: "og:description", content: "Canal confidencial para denunciar saqueo y comercio ilegal de orquídeas." },
+      { property: "og:url", content: "https://orchid-map-oaxaca.lovable.app/reportar" },
     ],
+    links: [{ rel: "canonical", href: "https://orchid-map-oaxaca.lovable.app/reportar" }],
   }),
+
   component: ReportPage,
 });
 

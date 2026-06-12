@@ -8,7 +8,12 @@ import { stripExifAndDownscale } from "@/lib/exif-strip";
 import { TaxonCombobox, type Taxon } from "@/components/TaxonCombobox";
 
 export const Route = createFileRoute("/capture")({
-  head: () => ({ meta: [{ title: "Nuevo avistamiento · OrquIDea" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [
+    { title: "Nuevo avistamiento de orquídea · OrquIDea" },
+    { name: "description", content: "Registra un nuevo avistamiento de orquídea con foto, GPS y especie sugerida en la Sierra de Oaxaca." },
+    { name: "robots", content: "noindex, nofollow" },
+  ] }),
+
   component: CapturePage,
 });
 

@@ -7,10 +7,15 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/ranking")({
   head: () => ({
     meta: [
-      { title: "Ranking · OrquIDea" },
-      { name: "description", content: "Tabla de spotters de orquídeas en la Sierra de Oaxaca." },
+      { title: "Ranking de spotters · OrquIDea" },
+      { name: "description", content: "Tabla de posiciones de spotters de orquídeas en la Sierra de Oaxaca: puntos, avistamientos y especies únicas." },
+      { property: "og:title", content: "Ranking de spotters · OrquIDea" },
+      { property: "og:description", content: "Top observadores de orquídeas en la Sierra de Oaxaca." },
+      { property: "og:url", content: "https://orchid-map-oaxaca.lovable.app/ranking" },
     ],
+    links: [{ rel: "canonical", href: "https://orchid-map-oaxaca.lovable.app/ranking" }],
   }),
+
   component: RankingPage,
 });
 

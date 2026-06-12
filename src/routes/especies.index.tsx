@@ -10,14 +10,19 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/especies/")({
   head: () => ({
     meta: [
-      { title: "Especies · OrquIDea" },
+      { title: "Herbario de orquídeas de México · OrquIDea" },
       {
         name: "description",
         content:
-          "Herbario digital: explora las orquídeas de México por género y especie, con fichas, estado de conservación y enlaces a fuentes científicas.",
+          "Herbario digital de orquídeas de México: fichas por género y especie con estado de conservación, sinónimos y enlaces a fuentes científicas.",
       },
+      { property: "og:title", content: "Herbario de orquídeas de México · OrquIDea" },
+      { property: "og:description", content: "Explora las orquídeas mexicanas por género y especie con fichas y conservación." },
+      { property: "og:url", content: "https://orchid-map-oaxaca.lovable.app/especies" },
     ],
+    links: [{ rel: "canonical", href: "https://orchid-map-oaxaca.lovable.app/especies" }],
   }),
+
   component: SpeciesIndexPage,
 });
 

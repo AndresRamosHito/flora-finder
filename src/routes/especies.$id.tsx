@@ -18,18 +18,65 @@ import { StatusPill } from "@/components/StatusPill";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/especies/$id")({
-  head: () => ({
-    meta: [
-      { title: "Ficha de especie · OrquIDea" },
-      {
-        name: "description",
-        content:
-          "Ficha de especie: taxonomía, conservación, avistamientos y enlaces a fuentes científicas.",
-      },
-    ],
-  }),
+  loader: async ({ params }) => {
+    const { data } = await supabase
+      .from("taxa")
+      .select("sci_name, common_name, description, conservation_status")
+      .eq("id", params.id)
+      .maybeSingle();
+    return { taxon: data };
+  },
+  head: ({ params, loaderData }) => {
+    const t = loaderData?.taxon;
+    const url = `https://orchid-map-oaxaca.lovable.app/especies/${params.id}`;
+    const title = t?.sci_name
+      ? `${t.sci_name}${t.common_name ? ` (${t.common_name})` : ""} · Ficha de especie · OrquIDea`
+      : "Ficha de especie · OrquIDea";
+    const rawDesc =
+      t?.description?.trim() ||
+      (t?.sci_name
+        ? `Ficha de ${t.sci_name}${t.common_name ? ` (${t.common_name})` : ""}: taxonomía, conservación y avistamientos comunitarios en México.`
+        : "Ficha de especie de orquídea: taxonomía, conservación, avistamientos y enlaces a fuentes científicas.");
+    const desc = rawDesc.length > 158 ? rawDesc.slice(0, 155) + "…" : rawDesc;
+    const ogTitle = t?.sci_name ? `${t.sci_name} · Species Profile · OrquIDea` : title;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: desc },
+        { property: "og:title", content: ogTitle },
+        { property: "og:description", content: desc },
+        { property: "og:type", content: "article" },
+        { property: "og:url", content: url },
+        { name: "twitter:title", content: ogTitle },
+        { name: "twitter:description", content: desc },
+      ],
+      links: [{ rel: "canonical", href: url }],
+      scripts: t?.sci_name
+        ? [
+            {
+              type: "application/ld+json",
+              children: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Article",
+                headline: t.sci_name,
+                description: desc,
+                about: {
+                  "@type": "Taxon",
+                  name: t.sci_name,
+                  alternateName: t.common_name ?? undefined,
+                },
+                url,
+                inLanguage: "es-MX",
+                publisher: { "@type": "Organization", name: "OrchidArc" },
+              }),
+            },
+          ]
+        : [],
+    };
+  },
   component: SpeciesDetailPage,
 });
+
 
 type WikiSummary = {
   title: string;

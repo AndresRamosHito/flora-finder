@@ -21,18 +21,64 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/s/$id")({
-  head: () => ({
-    meta: [
-      { title: "Avistamiento · OrquIDea" },
-      {
-        name: "description",
-        content:
-          "Detalle del avistamiento — discusión, sugerencias de ID y verificación comunitaria.",
-      },
-    ],
-  }),
+  loader: async ({ params }) => {
+    const { data } = await supabase.rpc("sighting_public_one", { p_id: params.id });
+    const s = (data?.[0] as { sci_name: string | null; common_name: string | null; location_label: string | null; notes: string | null; photo_url: string | null; observed_at: string | null; created_at: string } | undefined) ?? null;
+    return { sighting: s };
+  },
+  head: ({ params, loaderData }) => {
+    const s = loaderData?.sighting;
+    const url = `https://orchid-map-oaxaca.lovable.app/s/${params.id}`;
+    const name = s?.sci_name ?? "Orquídea sin identificar";
+    const where = s?.location_label ?? "Sierra de Oaxaca";
+    const title = s?.sci_name
+      ? `${s.sci_name}${s.common_name ? ` (${s.common_name})` : ""} · Avistamiento · OrquIDea`
+      : "Avistamiento sin identificar · OrquIDea";
+    const rawDesc =
+      s?.notes?.trim() ||
+      `Avistamiento comunitario de ${name} en ${where}. Discusión, sugerencias de ID y verificación comunitaria.`;
+    const desc = rawDesc.length > 158 ? rawDesc.slice(0, 155) + "…" : rawDesc;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: desc },
+        { property: "og:title", content: title },
+        { property: "og:description", content: desc },
+        { property: "og:type", content: "article" },
+        { property: "og:url", content: url },
+        ...(s?.photo_url
+          ? [
+              { property: "og:image", content: s.photo_url },
+              { name: "twitter:image", content: s.photo_url },
+            ]
+          : []),
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: desc },
+      ],
+      links: [{ rel: "canonical", href: url }],
+      scripts: s
+        ? [
+            {
+              type: "application/ld+json",
+              children: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Article",
+                headline: name,
+                description: desc,
+                datePublished: s.observed_at ?? s.created_at,
+                image: s.photo_url ?? undefined,
+                url,
+                inLanguage: "es-MX",
+                publisher: { "@type": "Organization", name: "OrchidArc" },
+              }),
+            },
+          ]
+        : [],
+    };
+  },
   component: SightingDetail,
 });
+
 
 type SightingOne = {
   id: string;
@@ -195,16 +241,26 @@ function SightingDetail() {
         {s && (
           <>
             <article className="mt-4 rounded-3xl border border-border/70 bg-card overflow-hidden shadow-sm">
+              <h1 className="sr-only">
+                {s.sci_name
+                  ? `Avistamiento de ${s.sci_name}${s.common_name ? ` (${s.common_name})` : ""}`
+                  : "Avistamiento de orquídea sin identificar"}
+              </h1>
               <div className="relative h-56 grid place-items-center bg-gradient-to-br from-accent/40 to-secondary/30">
                 {s.photo_url ? (
                   <img
                     src={s.photo_url}
-                    alt={s.sci_name ?? "Avistamiento"}
+                    alt={
+                      s.sci_name
+                        ? `Foto de orquídea ${s.sci_name}${s.common_name ? ` (${s.common_name})` : ""} en ${s.location_label ?? "la Sierra de Oaxaca"}`
+                        : `Foto de orquídea sin identificar en ${s.location_label ?? "la Sierra de Oaxaca"}`
+                    }
                     className="h-full w-full object-cover"
                   />
                 ) : (
                   <Orchid sciName={s.sci_name} size={180} />
                 )}
+
                 {!s.sci_name && !s.photo_url && (
                   <div className="absolute inset-0 grid place-items-center gap-2 text-leaf pointer-events-none">
                     <HelpCircle size={28} />

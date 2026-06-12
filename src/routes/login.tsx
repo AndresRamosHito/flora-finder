@@ -7,10 +7,12 @@ import { useAuth } from "@/hooks/use-auth";
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Entrar — OrquIDea" },
-      { name: "description", content: "Recibe un enlace mágico para entrar a OrquIDea." },
+      { title: "Entrar a OrquIDea — comunidad de orquídeas" },
+      { name: "description", content: "Entra a OrquIDea con un enlace mágico o tu cuenta de Google para registrar avistamientos de orquídeas." },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
+
   component: LoginPage,
 });
 
@@ -65,13 +67,14 @@ function LoginPage() {
           </span>
           <div>
             <h1 className="font-display text-2xl tracking-tight">
-              Orqu<span className="font-bold text-orchid">ID</span>ea
+              Entrar a Orqu<span className="font-bold text-orchid">ID</span>ea
             </h1>
             <p className="text-xs text-muted-foreground">por OrchidArc · Sierra de Oaxaca</p>
           </div>
         </div>
 
         <h2 className="mt-8 font-display text-xl">Entra</h2>
+
         <p className="mt-1 text-sm text-muted-foreground">
           Continúa con Google o recibe un enlace mágico por correo.
         </p>

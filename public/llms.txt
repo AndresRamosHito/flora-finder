@@ -1,0 +1,15 @@
+# OrquIDea
+
+> Citizen-science app by OrchidArc for spotting, identifying and documenting orchids of the Sierra de Oaxaca, Mexico. Community sightings, species catalog, conservation map, and societies.
+
+OrquIDea collects geolocated orchid sightings from volunteers and naturalists, runs community ID verification (3 agreements promotes a sighting to "verified"), and surfaces a herbarium-style catalog of Mexican orchid species with conservation status and links to authoritative sources (EncicloVida, GBIF, Kew POWO, NaturaLista). Sensitive species have their exact coordinates masked to protect them from poaching.
+
+## Pages
+
+- [Inicio](/): Community feed of recent orchid sightings.
+- [Mapa](/mapa): Interactive map of orchid sightings with filters and clustering.
+- [Especies](/especies): Catalog of Mexican orchid species with conservation status.
+- [Ranking](/ranking): Leaderboard of top spotters in the Sierra de Oaxaca.
+- [Retos](/retos): Observation challenges and badges.
+- [Sociedades](/sociedades): Orchid societies and chapters.
+- [Reportar comercio](/reportar): Confidential reporting of illegal orchid trade and poaching.

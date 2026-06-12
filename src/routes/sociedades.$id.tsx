@@ -8,8 +8,16 @@ import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/sociedades/$id")({
   ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Chat de sociedad · OrquIDea" },
+      { name: "description", content: "Chat privado de la sociedad orquideológica: conversa con miembros verificados en tiempo real." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: SocietyDetail,
 });
+
 
 type Msg = {
   id: string;
@@ -117,13 +125,14 @@ function SocietyDetail() {
               {society?.name?.slice(0, 3) || "···"}
             </span>
             <div>
-              <div className="font-semibold text-sm leading-tight">
+              <h1 className="font-semibold text-sm leading-tight">
                 {society?.name ?? "Sociedad"}
-              </div>
+              </h1>
               {society?.full_name && (
                 <div className="text-[10px] text-muted-foreground">{society.full_name}</div>
               )}
             </div>
+
           </div>
         </div>
 
