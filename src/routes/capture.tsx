@@ -8,15 +8,20 @@ import { stripExifAndDownscale } from "@/lib/exif-strip";
 import { TaxonCombobox, type Taxon } from "@/components/TaxonCombobox";
 
 export const Route = createFileRoute("/capture")({
-  head: () => ({ meta: [
-    { title: "Nuevo avistamiento de orquídea · OrquIDea" },
-    { name: "description", content: "Registra un nuevo avistamiento de orquídea con foto, GPS y especie sugerida en la Sierra de Oaxaca." },
-    { name: "robots", content: "noindex, nofollow" },
-  ] }),
+  head: () => ({
+    meta: [
+      { title: "Nuevo avistamiento de orquídea · OrquIDea" },
+      {
+        name: "description",
+        content:
+          "Registra un nuevo avistamiento de orquídea con foto y especie sugerida. Eliminamos los datos de GPS antes de subir la foto.",
+      },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
 
   component: CapturePage,
 });
-
 
 function CapturePage() {
   const { user, loading } = useAuth();
@@ -39,7 +44,6 @@ function CapturePage() {
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
   }, [loading, user, navigate]);
-
 
   async function handleFile(f: File) {
     setError(null);
@@ -92,16 +96,26 @@ function CapturePage() {
     }
   }
 
-  if (loading || !user) return <Shell><div className="p-6 text-sm text-muted-foreground">Cargando…</div></Shell>;
+  if (loading || !user)
+    return (
+      <Shell>
+        <div className="p-6 text-sm text-muted-foreground">Cargando…</div>
+      </Shell>
+    );
 
   return (
     <Shell>
       <div className="px-4 pt-5 pb-10">
-        <Link to="/" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft size={12} /> Volver
         </Link>
         <h1 className="mt-2 text-2xl font-display font-semibold">Nuevo avistamiento</h1>
-        <p className="text-xs text-muted-foreground mt-1">La foto se procesa en tu teléfono — eliminamos los datos de GPS antes de subirla.</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          La foto se procesa en tu teléfono — eliminamos los datos de GPS antes de subirla.
+        </p>
 
         <div className="mt-5">
           {preview ? (
@@ -124,9 +138,13 @@ function CapturePage() {
               className="w-full h-64 rounded-2xl border-2 border-dashed border-border bg-card grid place-items-center text-muted-foreground hover:bg-accent/30 transition"
             >
               {stripping ? (
-                <span className="flex flex-col items-center gap-2 text-xs"><Loader2 size={28} className="animate-spin" /> Procesando…</span>
+                <span className="flex flex-col items-center gap-2 text-xs">
+                  <Loader2 size={28} className="animate-spin" /> Procesando…
+                </span>
               ) : (
-                <span className="flex flex-col items-center gap-2 text-xs"><Camera size={32} /> Toca para tomar o elegir foto</span>
+                <span className="flex flex-col items-center gap-2 text-xs">
+                  <Camera size={32} /> Toca para tomar o elegir foto
+                </span>
               )}
             </button>
           )}
@@ -143,9 +161,21 @@ function CapturePage() {
         <Field label="Especie (puedes dejarlo en blanco si no estás seguro)">
           <TaxonCombobox
             value={selectedTaxon?.id ?? ""}
-            onChange={(_id, t) => setSelectedTaxon(t)}
+            onChange={(_id, t) => {
+              setSelectedTaxon(t);
+              // Exotics can't be wild observations — default them to "en colección".
+              if (t && !t.is_native) setOrigin("collection");
+            }}
             placeholder="— Sin identificar (pediremos ayuda) —"
           />
+          {selectedTaxon && !selectedTaxon.is_native && (
+            <div className="mt-2 rounded-xl bg-warn/10 border border-warn/30 px-3 py-2 text-[11px] text-foreground/80">
+              <span className="font-semibold">No nativa de México.</span> Esta especie no forma
+              parte de la flora silvestre mexicana, así que tu registro se guardará como ejemplar{" "}
+              <span className="font-semibold">en colección</span> y no aparecerá en el mapa de
+              distribución silvestre.
+            </div>
+          )}
         </Field>
 
         <Field label="Variedad o subespecie (opcional)">
@@ -159,24 +189,38 @@ function CapturePage() {
 
         <Field label="Origen del ejemplar">
           <div className="grid grid-cols-2 gap-2">
-            {([
-              { v: "wild", label: "En su hábitat", hint: "Observación silvestre" },
-              { v: "collection", label: "En colección", hint: "Cultivo o colección particular" },
-            ] as const).map((opt) => {
+            {(
+              [
+                { v: "wild", label: "En su hábitat", hint: "Observación silvestre" },
+                { v: "collection", label: "En colección", hint: "Cultivo o colección particular" },
+              ] as const
+            ).map((opt) => {
               const active = origin === opt.v;
+              // A non-native taxon can only be a collection record, never wild.
+              const disabled = opt.v === "wild" && !!selectedTaxon && !selectedTaxon.is_native;
               return (
                 <button
                   key={opt.v}
                   type="button"
+                  disabled={disabled}
                   onClick={() => setOrigin(opt.v)}
                   className={
                     "rounded-xl border px-3 py-2 text-left text-xs transition " +
-                    (active
-                      ? "border-leaf bg-leaf/10 text-foreground"
-                      : "border-border bg-background text-muted-foreground hover:bg-accent/30")
+                    (disabled
+                      ? "border-border bg-muted/40 text-muted-foreground/50 cursor-not-allowed"
+                      : active
+                        ? "border-leaf bg-leaf/10 text-foreground"
+                        : "border-border bg-background text-muted-foreground hover:bg-accent/30")
                   }
                 >
-                  <div className="text-sm font-medium text-foreground">{opt.label}</div>
+                  <div
+                    className={
+                      "text-sm font-medium " +
+                      (disabled ? "text-muted-foreground/60" : "text-foreground")
+                    }
+                  >
+                    {opt.label}
+                  </div>
                   <div className="mt-0.5">{opt.hint}</div>
                 </button>
               );
@@ -184,12 +228,12 @@ function CapturePage() {
           </div>
         </Field>
 
-
-
-
         <Field label="Lugar (texto general, sin coordenadas)">
           <div className="relative">
-            <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <MapPin
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
             <input
               value={locationLabel}
               onChange={(e) => setLocationLabel(e.target.value)}
@@ -220,7 +264,8 @@ function CapturePage() {
         {selectedTaxon?.is_sensitive && (
           <div className="mt-4 rounded-xl bg-warn/10 border border-warn/30 px-3 py-2.5 text-xs text-foreground/80 flex gap-2">
             <Shield size={14} className="text-warn shrink-0 mt-0.5" />
-            Especie sensible — su ubicación se publicará solo como región amplia, nunca como punto exacto.
+            Especie sensible — su ubicación se publicará solo como región amplia, nunca como punto
+            exacto.
           </div>
         )}
 

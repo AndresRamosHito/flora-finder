@@ -33,6 +33,7 @@ type TaxonRow = {
   genus: string | null;
   conservation_status: string | null;
   is_sensitive: boolean;
+  is_native: boolean;
 };
 
 function SpeciesIndexPage() {
@@ -41,7 +42,7 @@ function SpeciesIndexPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("taxa")
-        .select("id, sci_name, common_name, genus, conservation_status, is_sensitive")
+        .select("id, sci_name, common_name, genus, conservation_status, is_sensitive, is_native")
         .order("sci_name")
         .limit(5000);
       if (error) throw error;
@@ -51,8 +52,14 @@ function SpeciesIndexPage() {
 
   const [query, setQuery] = useState("");
   const [genus, setGenus] = useState<string | null>(null);
+  const [showExotic, setShowExotic] = useState(false);
 
-  const taxa = data ?? [];
+  // The herbarium is the wild Mexican flora; exotics are hidden unless asked for.
+  const taxa = useMemo(
+    () => (showExotic ? (data ?? []) : (data ?? []).filter((t) => t.is_native)),
+    [data, showExotic],
+  );
+  const exoticCount = useMemo(() => (data ?? []).filter((t) => !t.is_native).length, [data]);
 
   const genera = useMemo(() => {
     const counts = new Map<string, number>();
@@ -87,7 +94,9 @@ function SpeciesIndexPage() {
             <p className="text-xs text-muted-foreground mt-1 max-w-[32ch]">
               {isLoading
                 ? "Cargando catálogo…"
-                : `${taxa.length} orquídeas mexicanas en ${genera.length} géneros.`}
+                : showExotic
+                  ? `${taxa.length} orquídeas (incluye exóticas) en ${genera.length} géneros.`
+                  : `${taxa.length} orquídeas mexicanas en ${genera.length} géneros.`}
             </p>
           </div>
           <span className="grid h-10 w-10 place-items-center rounded-2xl bg-leaf/10 text-leaf shrink-0">
@@ -117,6 +126,23 @@ function SpeciesIndexPage() {
             </button>
           )}
         </div>
+
+        {!isLoading && exoticCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowExotic((v) => !v)}
+            className={
+              "mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors " +
+              (showExotic
+                ? "bg-warn/15 text-warn border-warn/40"
+                : "bg-card text-foreground/70 border-border hover:bg-accent")
+            }
+          >
+            {showExotic
+              ? `Ocultar exóticas (${exoticCount})`
+              : `Incluir exóticas y cultivadas (${exoticCount})`}
+          </button>
+        )}
 
         {genus && (
           <button
@@ -200,6 +226,11 @@ function SpeciesIndexPage() {
                       </span>
                     </span>
                     <span className="flex items-center gap-1.5 shrink-0">
+                      {!t.is_native && (
+                        <span className="rounded-full bg-warn/15 text-warn px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide">
+                          Exótica
+                        </span>
+                      )}
                       {t.is_sensitive && <Shield size={12} className="text-warn" />}
                       {t.conservation_status && <StatusPill status={t.conservation_status} />}
                     </span>

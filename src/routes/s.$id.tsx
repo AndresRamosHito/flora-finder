@@ -23,14 +23,25 @@ import { useAuth } from "@/hooks/use-auth";
 export const Route = createFileRoute("/s/$id")({
   loader: async ({ params }) => {
     const { data } = await supabase.rpc("sighting_public_one", { p_id: params.id });
-    const s = (data?.[0] as { sci_name: string | null; common_name: string | null; location_label: string | null; notes: string | null; photo_url: string | null; observed_at: string | null; created_at: string } | undefined) ?? null;
+    const s =
+      (data?.[0] as
+        | {
+            sci_name: string | null;
+            common_name: string | null;
+            location_label: string | null;
+            notes: string | null;
+            photo_url: string | null;
+            observed_at: string | null;
+            created_at: string;
+          }
+        | undefined) ?? null;
     return { sighting: s };
   },
   head: ({ params, loaderData }) => {
     const s = loaderData?.sighting;
     const url = `https://orchid-map-oaxaca.lovable.app/s/${params.id}`;
     const name = s?.sci_name ?? "Orquídea sin identificar";
-    const where = s?.location_label ?? "Sierra de Oaxaca";
+    const where = s?.location_label ?? "México";
     const title = s?.sci_name
       ? `${s.sci_name}${s.common_name ? ` (${s.common_name})` : ""} · Avistamiento · OrquIDea`
       : "Avistamiento sin identificar · OrquIDea";
@@ -78,7 +89,6 @@ export const Route = createFileRoute("/s/$id")({
   },
   component: SightingDetail,
 });
-
 
 type SightingOne = {
   id: string;
@@ -252,8 +262,8 @@ function SightingDetail() {
                     src={s.photo_url}
                     alt={
                       s.sci_name
-                        ? `Foto de orquídea ${s.sci_name}${s.common_name ? ` (${s.common_name})` : ""} en ${s.location_label ?? "la Sierra de Oaxaca"}`
-                        : `Foto de orquídea sin identificar en ${s.location_label ?? "la Sierra de Oaxaca"}`
+                        ? `Foto de orquídea ${s.sci_name}${s.common_name ? ` (${s.common_name})` : ""} en ${s.location_label ?? "México"}`
+                        : `Foto de orquídea sin identificar en ${s.location_label ?? "México"}`
                     }
                     className="h-full w-full object-cover"
                   />

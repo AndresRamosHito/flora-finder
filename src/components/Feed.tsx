@@ -86,12 +86,12 @@ export function Feed() {
 
   return (
     <div className="px-4 pt-5">
-      <div className="specimen-label">{REGION}</div>
+      <div className="specimen-label">Orquídeas de {REGION}</div>
       <h1 className="mt-0.5 text-2xl font-display font-semibold tracking-tight">
-        Avistamientos cercanos
+        Avistamientos recientes
       </h1>
       <p className="text-sm text-muted-foreground mt-1">
-        Lo que la comunidad observa en la sierra.
+        Lo que la comunidad observa en todo el país.
       </p>
 
       <div className="mt-4 grid grid-cols-3 gap-2">
@@ -255,7 +255,7 @@ function EmptyFeed() {
         <Flower2 size={22} />
       </div>
       <p className="mt-3 text-sm text-foreground/80 font-medium">
-        Aún no hay avistamientos en la Sierra.
+        Aún no hay avistamientos registrados.
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
         Cuando los primeros spotters registren orquídeas, aparecerán aquí.

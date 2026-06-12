@@ -17,10 +17,13 @@ export const Route = createFileRoute("/mapa")({
       {
         name: "description",
         content:
-          "Mapa de avistamientos de orquídeas en la Sierra de Oaxaca con clustering, filtros y protección de ubicación para especies sensibles.",
+          "Mapa de avistamientos de orquídeas de México con clustering, filtros y protección de ubicación para especies sensibles.",
       },
       { property: "og:title", content: "Mapa de orquídeas · OrquIDea" },
-      { property: "og:description", content: "Mapa interactivo de avistamientos de orquídeas en la Sierra de Oaxaca." },
+      {
+        property: "og:description",
+        content: "Mapa interactivo de avistamientos de orquídeas de México.",
+      },
       { property: "og:url", content: "https://orchid-map-oaxaca.lovable.app/mapa" },
     ],
     links: [{ rel: "canonical", href: "https://orchid-map-oaxaca.lovable.app/mapa" }],
@@ -29,7 +32,8 @@ export const Route = createFileRoute("/mapa")({
   component: MapPage,
 });
 
-const BBOX = { min_lat: 16.6, max_lat: 17.9, min_lng: -97.0, max_lng: -95.6 };
+// National bounding box — covers the Mexican mainland and peninsulas.
+const BBOX = { min_lat: 14.3, max_lat: 32.8, min_lng: -118.5, max_lng: -86.6 };
 
 type StatusFilter = "all" | "verified" | "pending";
 
@@ -72,7 +76,7 @@ function MapPage() {
       <div className="px-4 pt-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="specimen-label">{REGION}</div>
+            <div className="specimen-label">Orquídeas de {REGION}</div>
             <h1 className="mt-0.5 text-2xl font-display font-semibold">Mapa</h1>
             <p className="text-xs text-muted-foreground mt-1 max-w-[28ch]">
               Coordenadas redondeadas a cuadrícula. Especies sensibles solo como área.

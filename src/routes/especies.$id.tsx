@@ -160,7 +160,7 @@ function SpeciesDetailPage() {
       const { data, error } = await supabase
         .from("taxa")
         .select(
-          "id, sci_name, common_name, genus, family, tribe, description, conservation_status, is_sensitive, ref_image_url, synonyms, region",
+          "id, sci_name, common_name, genus, family, tribe, description, conservation_status, is_sensitive, is_native, ref_image_url, synonyms, region",
         )
         .eq("id", id)
         .maybeSingle();
@@ -237,14 +237,32 @@ function SpeciesDetailPage() {
                       {t.common_name ?? "Sin nombre común registrado"}
                     </div>
                   </div>
-                  {t.conservation_status && <StatusPill status={t.conservation_status} />}
+                  <span className="flex flex-col items-end gap-1 shrink-0">
+                    {!t.is_native && (
+                      <span className="rounded-full bg-warn/15 text-warn px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                        Exótica
+                      </span>
+                    )}
+                    {t.conservation_status && <StatusPill status={t.conservation_status} />}
+                  </span>
                 </div>
 
                 <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
                   <TaxRow label="Género" value={t.genus ?? t.sci_name.split(" ")[0]} italic />
                   <TaxRow label="Tribu" value={t.tribe ?? "—"} />
-                  <TaxRow label="Región" value={t.region ?? REGION} />
+                  <TaxRow
+                    label={t.is_native ? "Región" : "Origen"}
+                    value={t.is_native ? (t.region ?? REGION) : "No nativa"}
+                  />
                 </dl>
+
+                {!t.is_native && (
+                  <div className="mt-3 rounded-xl bg-warn/10 border border-warn/30 px-3 py-2.5 text-xs text-foreground/80 flex gap-2">
+                    <Globe size={14} className="text-warn shrink-0 mt-0.5" />
+                    Especie no nativa de México. Se incluye para registrar ejemplares en colección;
+                    no forma parte de la flora silvestre ni aparece en el mapa de distribución.
+                  </div>
+                )}
 
                 {t.synonyms && t.synonyms.length > 0 && (
                   <p className="mt-3 text-[11px] text-muted-foreground">
@@ -270,19 +288,22 @@ function SpeciesDetailPage() {
             </article>
 
             {/* Actions */}
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <Link
-                to="/mapa"
-                search={{ especie: t.sci_name }}
-                className="rounded-2xl bg-leaf text-leaf-foreground py-2.5 text-xs font-semibold inline-flex items-center justify-center gap-1.5"
-              >
-                <Map size={14} /> Ver en el mapa
-              </Link>
+            <div className={"mt-3 grid gap-2 " + (t.is_native ? "grid-cols-2" : "grid-cols-1")}>
+              {t.is_native && (
+                <Link
+                  to="/mapa"
+                  search={{ especie: t.sci_name }}
+                  className="rounded-2xl bg-leaf text-leaf-foreground py-2.5 text-xs font-semibold inline-flex items-center justify-center gap-1.5"
+                >
+                  <Map size={14} /> Ver en el mapa
+                </Link>
+              )}
               <Link
                 to="/capture"
                 className="rounded-2xl bg-orchid text-orchid-foreground py-2.5 text-xs font-semibold inline-flex items-center justify-center gap-1.5"
               >
-                <Plus size={14} /> Registrar avistamiento
+                <Plus size={14} />{" "}
+                {t.is_native ? "Registrar avistamiento" : "Registrar en colección"}
               </Link>
             </div>
 

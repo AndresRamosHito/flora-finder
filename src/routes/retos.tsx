@@ -9,9 +9,9 @@ export const Route = createFileRoute("/retos")({
   head: () => ({
     meta: [
       { title: "Retos de observación · OrquIDea" },
-      { name: "description", content: "Retos comunitarios de observación de orquídeas en la Sierra de Oaxaca: gana insignias por completar misiones." },
+      { name: "description", content: "Retos comunitarios de observación de orquídeas de México: gana insignias por completar misiones." },
       { property: "og:title", content: "Retos de observación · OrquIDea" },
-      { property: "og:description", content: "Misiones e insignias para observadores de orquídeas en Oaxaca." },
+      { property: "og:description", content: "Misiones e insignias para observadores de orquídeas de México." },
       { property: "og:url", content: "https://orchid-map-oaxaca.lovable.app/retos" },
     ],
     links: [{ rel: "canonical", href: "https://orchid-map-oaxaca.lovable.app/retos" }],

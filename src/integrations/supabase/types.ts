@@ -461,6 +461,7 @@ export type Database = {
           genus: string | null
           herbarium_ref: string | null
           id: string
+          is_native: boolean
           is_sensitive: boolean
           ref_image_url: string | null
           region: string | null
@@ -478,6 +479,7 @@ export type Database = {
           genus?: string | null
           herbarium_ref?: string | null
           id?: string
+          is_native?: boolean
           is_sensitive?: boolean
           ref_image_url?: string | null
           region?: string | null
@@ -495,6 +497,7 @@ export type Database = {
           genus?: string | null
           herbarium_ref?: string | null
           id?: string
+          is_native?: boolean
           is_sensitive?: boolean
           ref_image_url?: string | null
           region?: string | null

@@ -15,7 +15,7 @@ import {
 import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
 
-export const REGION = "Sierra de Oaxaca";
+export const REGION = "México";
 
 export type ShellTab = "feed" | "map" | "species" | "community" | "list" | "hunts" | "board";
 
@@ -36,7 +36,7 @@ export function Shell({ children, active = "feed" }: { children: ReactNode; acti
                 Orqu<span className="font-bold text-orchid">ID</span>ea
               </div>
               <div className="text-[10px] text-muted-foreground flex items-center gap-1">
-                por OrchidArc · <MapPin size={9} /> {REGION}
+                por OrchidArc · <MapPin size={9} /> Orquídeas de {REGION}
               </div>
             </div>
           </Link>

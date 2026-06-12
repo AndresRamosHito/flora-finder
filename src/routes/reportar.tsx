@@ -9,7 +9,7 @@ export const Route = createFileRoute("/reportar")({
   head: () => ({
     meta: [
       { title: "Reportar comercio ilegal de orquídeas · OrquIDea" },
-      { name: "description", content: "Reporta confidencialmente el saqueo o comercio ilegal de orquídeas en la Sierra de Oaxaca. Tu identidad queda protegida." },
+      { name: "description", content: "Reporta confidencialmente el saqueo o comercio ilegal de orquídeas de México. Tu identidad queda protegida." },
       { property: "og:title", content: "Reportar comercio ilegal · OrquIDea" },
       { property: "og:description", content: "Canal confidencial para denunciar saqueo y comercio ilegal de orquídeas." },
       { property: "og:url", content: "https://orchid-map-oaxaca.lovable.app/reportar" },

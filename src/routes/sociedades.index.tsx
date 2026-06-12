@@ -13,10 +13,10 @@ export const Route = createFileRoute("/sociedades/")({
       { title: "Sociedades orquideológicas · OrquIDea" },
       {
         name: "description",
-        content: "Directorio de sociedades orquideológicas activas en la Sierra de Oaxaca y regiones cercanas. Únete a chapters locales.",
+        content: "Directorio de sociedades orquideológicas activas en México. Únete a chapters locales.",
       },
       { property: "og:title", content: "Sociedades orquideológicas · OrquIDea" },
-      { property: "og:description", content: "Sociedades de orquideólogos en la Sierra de Oaxaca y México." },
+      { property: "og:description", content: "Sociedades de orquideólogos de México." },
       { property: "og:url", content: "https://orchid-map-oaxaca.lovable.app/sociedades" },
     ],
     links: [{ rel: "canonical", href: "https://orchid-map-oaxaca.lovable.app/sociedades" }],

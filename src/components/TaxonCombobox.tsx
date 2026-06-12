@@ -7,6 +7,7 @@ export type Taxon = {
   sci_name: string;
   common_name: string | null;
   is_sensitive: boolean;
+  is_native: boolean;
 };
 
 type Props = {
@@ -14,6 +15,14 @@ type Props = {
   onChange: (taxonId: string, taxon: Taxon | null) => void;
   placeholder?: string;
 };
+
+function NonNativeTag() {
+  return (
+    <span className="inline-flex items-center align-middle ml-1.5 rounded-full bg-warn/15 text-warn px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide not-italic">
+      No nativa
+    </span>
+  );
+}
 
 /** Autocomplete combobox over the full taxa catalog (~1300 Mexican orchid species). */
 export function TaxonCombobox({ value, onChange, placeholder }: Props) {
@@ -26,7 +35,7 @@ export function TaxonCombobox({ value, onChange, placeholder }: Props) {
   useEffect(() => {
     supabase
       .from("taxa")
-      .select("id, sci_name, common_name, is_sensitive")
+      .select("id, sci_name, common_name, is_sensitive, is_native")
       .order("sci_name")
       .limit(5000)
       .then(({ data }) => {
@@ -80,8 +89,13 @@ export function TaxonCombobox({ value, onChange, placeholder }: Props) {
           {selected ? (
             <>
               <span className="italic">{selected.sci_name}</span>
-              {selected.common_name ? <span className="text-muted-foreground"> · {selected.common_name}</span> : null}
-              {selected.is_sensitive ? <Shield size={12} className="inline ml-1 text-warn" /> : null}
+              {selected.common_name ? (
+                <span className="text-muted-foreground"> · {selected.common_name}</span>
+              ) : null}
+              {selected.is_sensitive ? (
+                <Shield size={12} className="inline ml-1 text-warn" />
+              ) : null}
+              {!selected.is_native ? <NonNativeTag /> : null}
             </>
           ) : (
             placeholder || "Buscar especie…"
@@ -130,15 +144,17 @@ export function TaxonCombobox({ value, onChange, placeholder }: Props) {
                     onClick={() => pick(t)}
                     className="w-full flex items-start gap-2 px-3 py-2 text-left text-sm hover:bg-accent/50"
                   >
-                    <Check size={14} className={isSel ? "mt-0.5 opacity-100" : "mt-0.5 opacity-0"} />
+                    <Check
+                      size={14}
+                      className={isSel ? "mt-0.5 opacity-100" : "mt-0.5 opacity-0"}
+                    />
                     <span className="flex-1 min-w-0">
                       <span className="italic">{t.sci_name}</span>
                       {t.common_name && (
                         <span className="text-muted-foreground"> · {t.common_name}</span>
                       )}
-                      {t.is_sensitive && (
-                        <Shield size={11} className="inline ml-1 text-warn" />
-                      )}
+                      {t.is_sensitive && <Shield size={11} className="inline ml-1 text-warn" />}
+                      {!t.is_native && <NonNativeTag />}
                     </span>
                   </button>
                 </li>

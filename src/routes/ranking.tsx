@@ -8,9 +8,9 @@ export const Route = createFileRoute("/ranking")({
   head: () => ({
     meta: [
       { title: "Ranking de spotters · OrquIDea" },
-      { name: "description", content: "Tabla de posiciones de spotters de orquídeas en la Sierra de Oaxaca: puntos, avistamientos y especies únicas." },
+      { name: "description", content: "Tabla de posiciones de spotters de orquídeas de México: puntos, avistamientos y especies únicas." },
       { property: "og:title", content: "Ranking de spotters · OrquIDea" },
-      { property: "og:description", content: "Top observadores de orquídeas en la Sierra de Oaxaca." },
+      { property: "og:description", content: "Top observadores de orquídeas de México." },
       { property: "og:url", content: "https://orchid-map-oaxaca.lovable.app/ranking" },
     ],
     links: [{ rel: "canonical", href: "https://orchid-map-oaxaca.lovable.app/ranking" }],
