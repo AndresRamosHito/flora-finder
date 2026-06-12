@@ -241,16 +241,26 @@ function SightingDetail() {
         {s && (
           <>
             <article className="mt-4 rounded-3xl border border-border/70 bg-card overflow-hidden shadow-sm">
+              <h1 className="sr-only">
+                {s.sci_name
+                  ? `Avistamiento de ${s.sci_name}${s.common_name ? ` (${s.common_name})` : ""}`
+                  : "Avistamiento de orquídea sin identificar"}
+              </h1>
               <div className="relative h-56 grid place-items-center bg-gradient-to-br from-accent/40 to-secondary/30">
                 {s.photo_url ? (
                   <img
                     src={s.photo_url}
-                    alt={s.sci_name ?? "Avistamiento"}
+                    alt={
+                      s.sci_name
+                        ? `Foto de orquídea ${s.sci_name}${s.common_name ? ` (${s.common_name})` : ""} en ${s.location_label ?? "la Sierra de Oaxaca"}`
+                        : `Foto de orquídea sin identificar en ${s.location_label ?? "la Sierra de Oaxaca"}`
+                    }
                     className="h-full w-full object-cover"
                   />
                 ) : (
                   <Orchid sciName={s.sci_name} size={180} />
                 )}
+
                 {!s.sci_name && !s.photo_url && (
                   <div className="absolute inset-0 grid place-items-center gap-2 text-leaf pointer-events-none">
                     <HelpCircle size={28} />
