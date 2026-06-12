@@ -85,6 +85,8 @@ function ListPage() {
   return (
     <Shell active="list">
       <div className="px-4 pt-5 pb-10">
+        <h1 className="sr-only">Mi life list de orquídeas</h1>
+
         <div className="rounded-3xl bg-gradient-to-br from-leaf to-leaf/70 text-leaf-foreground p-5">
           <div className="flex items-center justify-between">
             <div>
