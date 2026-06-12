@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SociedadesRouteImport } from './routes/sociedades'
 import { Route as RetosRouteImport } from './routes/retos'
 import { Route as ReportarRouteImport } from './routes/reportar'
 import { Route as RankingRouteImport } from './routes/ranking'
@@ -19,15 +18,13 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ListaRouteImport } from './routes/lista'
 import { Route as CaptureRouteImport } from './routes/capture'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SociedadesIndexRouteImport } from './routes/sociedades.index'
+import { Route as EspeciesIndexRouteImport } from './routes/especies.index'
 import { Route as SociedadesIdRouteImport } from './routes/sociedades.$id'
 import { Route as SIdRouteImport } from './routes/s.$id'
+import { Route as EspeciesIdRouteImport } from './routes/especies.$id'
 import { Route as AdminReportesRouteImport } from './routes/admin.reportes'
 
-const SociedadesRoute = SociedadesRouteImport.update({
-  id: '/sociedades',
-  path: '/sociedades',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const RetosRoute = RetosRouteImport.update({
   id: '/retos',
   path: '/retos',
@@ -73,14 +70,29 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SociedadesIndexRoute = SociedadesIndexRouteImport.update({
+  id: '/sociedades/',
+  path: '/sociedades/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EspeciesIndexRoute = EspeciesIndexRouteImport.update({
+  id: '/especies/',
+  path: '/especies/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SociedadesIdRoute = SociedadesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => SociedadesRoute,
+  id: '/sociedades/$id',
+  path: '/sociedades/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const SIdRoute = SIdRouteImport.update({
   id: '/s/$id',
   path: '/s/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EspeciesIdRoute = EspeciesIdRouteImport.update({
+  id: '/especies/$id',
+  path: '/especies/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminReportesRoute = AdminReportesRouteImport.update({
@@ -99,10 +111,12 @@ export interface FileRoutesByFullPath {
   '/ranking': typeof RankingRoute
   '/reportar': typeof ReportarRoute
   '/retos': typeof RetosRoute
-  '/sociedades': typeof SociedadesRouteWithChildren
   '/admin/reportes': typeof AdminReportesRoute
+  '/especies/$id': typeof EspeciesIdRoute
   '/s/$id': typeof SIdRoute
   '/sociedades/$id': typeof SociedadesIdRoute
+  '/especies/': typeof EspeciesIndexRoute
+  '/sociedades/': typeof SociedadesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -114,10 +128,12 @@ export interface FileRoutesByTo {
   '/ranking': typeof RankingRoute
   '/reportar': typeof ReportarRoute
   '/retos': typeof RetosRoute
-  '/sociedades': typeof SociedadesRouteWithChildren
   '/admin/reportes': typeof AdminReportesRoute
+  '/especies/$id': typeof EspeciesIdRoute
   '/s/$id': typeof SIdRoute
   '/sociedades/$id': typeof SociedadesIdRoute
+  '/especies': typeof EspeciesIndexRoute
+  '/sociedades': typeof SociedadesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -130,10 +146,12 @@ export interface FileRoutesById {
   '/ranking': typeof RankingRoute
   '/reportar': typeof ReportarRoute
   '/retos': typeof RetosRoute
-  '/sociedades': typeof SociedadesRouteWithChildren
   '/admin/reportes': typeof AdminReportesRoute
+  '/especies/$id': typeof EspeciesIdRoute
   '/s/$id': typeof SIdRoute
   '/sociedades/$id': typeof SociedadesIdRoute
+  '/especies/': typeof EspeciesIndexRoute
+  '/sociedades/': typeof SociedadesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -147,10 +165,12 @@ export interface FileRouteTypes {
     | '/ranking'
     | '/reportar'
     | '/retos'
-    | '/sociedades'
     | '/admin/reportes'
+    | '/especies/$id'
     | '/s/$id'
     | '/sociedades/$id'
+    | '/especies/'
+    | '/sociedades/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -162,10 +182,12 @@ export interface FileRouteTypes {
     | '/ranking'
     | '/reportar'
     | '/retos'
-    | '/sociedades'
     | '/admin/reportes'
+    | '/especies/$id'
     | '/s/$id'
     | '/sociedades/$id'
+    | '/especies'
+    | '/sociedades'
   id:
     | '__root__'
     | '/'
@@ -177,10 +199,12 @@ export interface FileRouteTypes {
     | '/ranking'
     | '/reportar'
     | '/retos'
-    | '/sociedades'
     | '/admin/reportes'
+    | '/especies/$id'
     | '/s/$id'
     | '/sociedades/$id'
+    | '/especies/'
+    | '/sociedades/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -193,20 +217,16 @@ export interface RootRouteChildren {
   RankingRoute: typeof RankingRoute
   ReportarRoute: typeof ReportarRoute
   RetosRoute: typeof RetosRoute
-  SociedadesRoute: typeof SociedadesRouteWithChildren
   AdminReportesRoute: typeof AdminReportesRoute
+  EspeciesIdRoute: typeof EspeciesIdRoute
   SIdRoute: typeof SIdRoute
+  SociedadesIdRoute: typeof SociedadesIdRoute
+  EspeciesIndexRoute: typeof EspeciesIndexRoute
+  SociedadesIndexRoute: typeof SociedadesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sociedades': {
-      id: '/sociedades'
-      path: '/sociedades'
-      fullPath: '/sociedades'
-      preLoaderRoute: typeof SociedadesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/retos': {
       id: '/retos'
       path: '/retos'
@@ -270,18 +290,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sociedades/': {
+      id: '/sociedades/'
+      path: '/sociedades'
+      fullPath: '/sociedades/'
+      preLoaderRoute: typeof SociedadesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/especies/': {
+      id: '/especies/'
+      path: '/especies'
+      fullPath: '/especies/'
+      preLoaderRoute: typeof EspeciesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sociedades/$id': {
       id: '/sociedades/$id'
-      path: '/$id'
+      path: '/sociedades/$id'
       fullPath: '/sociedades/$id'
       preLoaderRoute: typeof SociedadesIdRouteImport
-      parentRoute: typeof SociedadesRoute
+      parentRoute: typeof rootRouteImport
     }
     '/s/$id': {
       id: '/s/$id'
       path: '/s/$id'
       fullPath: '/s/$id'
       preLoaderRoute: typeof SIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/especies/$id': {
+      id: '/especies/$id'
+      path: '/especies/$id'
+      fullPath: '/especies/$id'
+      preLoaderRoute: typeof EspeciesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/reportes': {
@@ -294,18 +335,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface SociedadesRouteChildren {
-  SociedadesIdRoute: typeof SociedadesIdRoute
-}
-
-const SociedadesRouteChildren: SociedadesRouteChildren = {
-  SociedadesIdRoute: SociedadesIdRoute,
-}
-
-const SociedadesRouteWithChildren = SociedadesRoute._addFileChildren(
-  SociedadesRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CaptureRoute: CaptureRoute,
@@ -316,10 +345,23 @@ const rootRouteChildren: RootRouteChildren = {
   RankingRoute: RankingRoute,
   ReportarRoute: ReportarRoute,
   RetosRoute: RetosRoute,
-  SociedadesRoute: SociedadesRouteWithChildren,
   AdminReportesRoute: AdminReportesRoute,
+  EspeciesIdRoute: EspeciesIdRoute,
   SIdRoute: SIdRoute,
+  SociedadesIdRoute: SociedadesIdRoute,
+  EspeciesIndexRoute: EspeciesIndexRoute,
+  SociedadesIndexRoute: SociedadesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

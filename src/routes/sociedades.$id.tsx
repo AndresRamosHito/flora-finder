@@ -48,7 +48,9 @@ function SocietyDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("society_messages")
-        .select("id, body, created_at, user_id, author:profiles!society_messages_user_id_fkey(handle, avatar_url)")
+        .select(
+          "id, body, created_at, user_id, author:profiles!society_messages_user_id_fkey(handle, avatar_url)",
+        )
         .eq("society_id", id)
         .order("created_at", { ascending: true })
         .limit(200);
@@ -64,7 +66,12 @@ function SocietyDetail() {
       .channel(`soc:${id}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "society_messages", filter: `society_id=eq.${id}` },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "society_messages",
+          filter: `society_id=eq.${id}`,
+        },
         () => qc.invalidateQueries({ queryKey: ["society-messages", id] }),
       )
       .subscribe();
@@ -93,10 +100,13 @@ function SocietyDetail() {
   if (!user) return null;
 
   return (
-    <Shell>
+    <Shell active="community">
       <div className="flex flex-col h-[calc(100vh-60px-96px)]">
         <div className="px-4 pt-4 pb-3 border-b border-border/60 sticky top-[60px] bg-background/95 backdrop-blur z-10">
-          <Link to="/sociedades" className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+          <Link
+            to="/sociedades"
+            className="inline-flex items-center gap-1 text-[11px] text-muted-foreground"
+          >
             <ArrowLeft size={11} /> Sociedades
           </Link>
           <div className="mt-1 flex items-center gap-2">
@@ -107,7 +117,9 @@ function SocietyDetail() {
               {society?.name?.slice(0, 3) || "···"}
             </span>
             <div>
-              <div className="font-semibold text-sm leading-tight">{society?.name ?? "Sociedad"}</div>
+              <div className="font-semibold text-sm leading-tight">
+                {society?.name ?? "Sociedad"}
+              </div>
               {society?.full_name && (
                 <div className="text-[10px] text-muted-foreground">{society.full_name}</div>
               )}
@@ -129,7 +141,9 @@ function SocietyDetail() {
                 <div
                   className={
                     "max-w-[80%] rounded-2xl px-3 py-2 text-sm " +
-                    (mine ? "bg-leaf text-leaf-foreground rounded-br-sm" : "bg-card border border-border rounded-bl-sm")
+                    (mine
+                      ? "bg-leaf text-leaf-foreground rounded-br-sm"
+                      : "bg-card border border-border rounded-bl-sm")
                   }
                 >
                   {!mine && (

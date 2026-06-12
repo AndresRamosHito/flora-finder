@@ -1,11 +1,23 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Flower2, MapPin, ShieldAlert, Leaf, Home, Target, Trophy, Plus, LogIn, UserCircle, Map, Users } from "lucide-react";
+import {
+  Flower2,
+  MapPin,
+  ShieldAlert,
+  Leaf,
+  Home,
+  Plus,
+  LogIn,
+  UserCircle,
+  Map,
+  Users,
+  BookOpen,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
 
 export const REGION = "Sierra de Oaxaca";
 
-export type ShellTab = "feed" | "list" | "hunts" | "board" | "map";
+export type ShellTab = "feed" | "map" | "species" | "community" | "list" | "hunts" | "board";
 
 export function Shell({ children, active = "feed" }: { children: ReactNode; active?: ShellTab }) {
   const { user, loading } = useAuth();
@@ -30,13 +42,6 @@ export function Shell({ children, active = "feed" }: { children: ReactNode; acti
           </Link>
           <div className="flex items-center gap-2">
             <Link
-              to="/sociedades"
-              aria-label="Sociedades"
-              className="grid h-9 w-9 place-items-center rounded-full bg-leaf/10 text-leaf hover:bg-leaf/20 transition"
-            >
-              <Users size={16} />
-            </Link>
-            <Link
               to="/reportar"
               aria-label="Reportar comercio ilegal"
               className="grid h-9 w-9 place-items-center rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition"
@@ -46,9 +51,13 @@ export function Shell({ children, active = "feed" }: { children: ReactNode; acti
             <span className="hidden xs:inline-flex items-center gap-1 rounded-full bg-leaf/10 text-leaf px-2 py-1 text-[10px] font-semibold">
               <Leaf size={10} /> Solo&nbsp;observar
             </span>
-            {!loading && (
-              user ? (
-                <Link to="/lista" className="grid h-9 w-9 place-items-center rounded-full bg-accent text-accent-foreground" aria-label="Mi cuenta">
+            {!loading &&
+              (user ? (
+                <Link
+                  to="/lista"
+                  className="grid h-9 w-9 place-items-center rounded-full bg-accent text-accent-foreground"
+                  aria-label="Mi cuenta"
+                >
                   <UserCircle size={18} />
                 </Link>
               ) : (
@@ -58,15 +67,14 @@ export function Shell({ children, active = "feed" }: { children: ReactNode; acti
                 >
                   <LogIn size={12} /> Entrar
                 </Link>
-              )
-            )}
+              ))}
           </div>
         </header>
 
         <main className="flex-1 pb-24">{children}</main>
 
         <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[460px] bg-background/95 backdrop-blur border-t border-border/60 px-2 py-2 z-20 flex items-center justify-around">
-          <NavLink to="/" icon={<Home size={20} />} label="Comunidad" active={active === "feed"} />
+          <NavLink to="/" icon={<Home size={20} />} label="Inicio" active={active === "feed"} />
           <NavLink to="/mapa" icon={<Map size={20} />} label="Mapa" active={active === "map"} />
           <button
             type="button"
@@ -76,8 +84,18 @@ export function Shell({ children, active = "feed" }: { children: ReactNode; acti
           >
             <Plus size={26} />
           </button>
-          <NavLink to="/retos" icon={<Target size={20} />} label="Retos" active={active === "hunts"} />
-          <NavLink to="/ranking" icon={<Trophy size={20} />} label="Ranking" active={active === "board"} />
+          <NavLink
+            to="/especies"
+            icon={<BookOpen size={20} />}
+            label="Especies"
+            active={active === "species"}
+          />
+          <NavLink
+            to="/sociedades"
+            icon={<Users size={20} />}
+            label="Comunidad"
+            active={active === "community"}
+          />
         </nav>
       </div>
     </div>
@@ -99,12 +117,19 @@ function NavLink({
     <Link
       to={to}
       className={
-        "flex flex-col items-center gap-0.5 px-3 py-1 text-[10px] font-medium transition " +
-        (active ? "text-leaf" : "text-muted-foreground hover:text-foreground")
+        "relative flex flex-col items-center gap-0.5 px-3 py-1 text-[10px] font-medium transition " +
+        (active ? "text-leaf font-semibold" : "text-muted-foreground hover:text-foreground")
       }
     >
       {icon}
       <span>{label}</span>
+      <span
+        aria-hidden
+        className={
+          "absolute -bottom-1 h-1 w-1 rounded-full bg-orchid transition-opacity " +
+          (active ? "opacity-100" : "opacity-0")
+        }
+      />
     </Link>
   );
 }

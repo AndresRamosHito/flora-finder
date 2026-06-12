@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Shell, REGION } from "@/components/Shell";
 import { Orchid } from "@/components/Orchid";
-import { StatusPill } from "@/components/StatusPill";
+import { TaxonCombobox } from "@/components/TaxonCombobox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -24,7 +24,11 @@ export const Route = createFileRoute("/s/$id")({
   head: () => ({
     meta: [
       { title: "Avistamiento · OrquIDea" },
-      { name: "description", content: "Detalle del avistamiento — discusión, sugerencias de ID y verificación comunitaria." },
+      {
+        name: "description",
+        content:
+          "Detalle del avistamiento — discusión, sugerencias de ID y verificación comunitaria.",
+      },
     ],
   }),
   component: SightingDetail,
@@ -116,18 +120,6 @@ function SightingDetail() {
     },
   });
 
-  const taxaListQ = useQuery({
-    queryKey: ["taxa-list"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("taxa")
-        .select("id, sci_name, common_name")
-        .order("sci_name");
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-
   const [body, setBody] = useState("");
   const [suggested, setSuggested] = useState<string>("");
 
@@ -192,9 +184,7 @@ function SightingDetail() {
           <ArrowLeft size={14} /> Volver
         </button>
 
-        {sightingQ.isLoading && (
-          <div className="mt-6 h-44 rounded-3xl bg-muted animate-pulse" />
-        )}
+        {sightingQ.isLoading && <div className="mt-6 h-44 rounded-3xl bg-muted animate-pulse" />}
 
         {sightingQ.isSuccess && !s && (
           <div className="mt-8 rounded-2xl border border-border p-6 text-center text-sm text-muted-foreground">
@@ -207,8 +197,11 @@ function SightingDetail() {
             <article className="mt-4 rounded-3xl border border-border/70 bg-card overflow-hidden shadow-sm">
               <div className="relative h-56 grid place-items-center bg-gradient-to-br from-accent/40 to-secondary/30">
                 {s.photo_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={s.photo_url} alt={s.sci_name ?? "Avistamiento"} className="h-full w-full object-cover" />
+                  <img
+                    src={s.photo_url}
+                    alt={s.sci_name ?? "Avistamiento"}
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   <Orchid sciName={s.sci_name} size={180} />
                 )}
@@ -228,6 +221,15 @@ function SightingDetail() {
                     </div>
                     {s.common_name && (
                       <div className="text-xs text-muted-foreground">{s.common_name}</div>
+                    )}
+                    {s.taxon_id && (
+                      <Link
+                        to="/especies/$id"
+                        params={{ id: s.taxon_id }}
+                        className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-leaf"
+                      >
+                        Ver ficha de la especie →
+                      </Link>
                     )}
                   </div>
                   <StatusBadge status={s.status} />
@@ -250,13 +252,16 @@ function SightingDetail() {
                   <div className="mt-3 rounded-xl bg-warn/10 border border-warn/30 px-3 py-2 text-[12px] text-foreground/80 flex gap-2">
                     <ShieldCheck size={14} className="text-warn shrink-0 mt-0.5" />
                     <div>
-                      Especie sensible. Las coordenadas exactas no se muestran a nadie excepto al observador y los verificadores.
+                      Especie sensible. Las coordenadas exactas no se muestran a nadie excepto al
+                      observador y los verificadores.
                     </div>
                   </div>
                 )}
 
                 {s.notes && (
-                  <p className="mt-3 text-sm text-foreground/85 whitespace-pre-wrap leading-snug">{s.notes}</p>
+                  <p className="mt-3 text-sm text-foreground/85 whitespace-pre-wrap leading-snug">
+                    {s.notes}
+                  </p>
                 )}
               </div>
             </article>
@@ -269,20 +274,21 @@ function SightingDetail() {
                 </span>
               </div>
               <p className="text-[11px] text-muted-foreground mt-0.5">
-                Las sugerencias de ID son comunitarias. Cuando una especie sugerida acumula 3 personas de acuerdo, el avistamiento se marca como verificado.
+                Las sugerencias de ID son comunitarias. Cuando una especie sugerida acumula 3
+                personas de acuerdo, el avistamiento se marca como verificado.
               </p>
 
               <div className="mt-3 space-y-3">
-                {commentsQ.isLoading && (
-                  <div className="h-16 rounded-xl bg-muted animate-pulse" />
-                )}
+                {commentsQ.isLoading && <div className="h-16 rounded-xl bg-muted animate-pulse" />}
                 {commentsQ.data && commentsQ.data.rows.length === 0 && (
                   <div className="rounded-xl border border-dashed border-border p-4 text-xs text-muted-foreground text-center">
                     Nadie ha comentado todavía. Sé el primero en proponer una ID.
                   </div>
                 )}
                 {commentsQ.data?.rows.map((c) => {
-                  const taxon = c.suggested_taxon_id ? commentsQ.data!.taxaById.get(c.suggested_taxon_id) : null;
+                  const taxon = c.suggested_taxon_id
+                    ? commentsQ.data!.taxaById.get(c.suggested_taxon_id)
+                    : null;
                   const prof = commentsQ.data!.profById.get(c.user_id);
                   const agrees = commentsQ.data!.agreeBy.get(c.id) ?? [];
                   const support = 1 + agrees.length; // suggester + agreers
@@ -299,11 +305,15 @@ function SightingDetail() {
                       {taxon && (
                         <div className="mt-2 rounded-lg bg-leaf/10 text-leaf px-2.5 py-1.5 text-xs">
                           Sugiere: <span className="italic font-semibold">{taxon.sci_name}</span>
-                          {taxon.common_name && <span className="opacity-70"> · {taxon.common_name}</span>}
+                          {taxon.common_name && (
+                            <span className="opacity-70"> · {taxon.common_name}</span>
+                          )}
                         </div>
                       )}
                       {c.body && (
-                        <p className="mt-2 text-sm text-foreground/85 whitespace-pre-wrap leading-snug">{c.body}</p>
+                        <p className="mt-2 text-sm text-foreground/85 whitespace-pre-wrap leading-snug">
+                          {c.body}
+                        </p>
                       )}
                       {c.suggested_taxon_id && (
                         <div className="mt-2 flex items-center justify-between">
@@ -314,7 +324,9 @@ function SightingDetail() {
                             <button
                               type="button"
                               disabled={isMine || toggleAgree.isPending}
-                              onClick={() => toggleAgree.mutate({ commentId: c.id, agreed: iAgree })}
+                              onClick={() =>
+                                toggleAgree.mutate({ commentId: c.id, agreed: iAgree })
+                              }
                               className={
                                 "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition " +
                                 (isMine
@@ -324,7 +336,12 @@ function SightingDetail() {
                                     : "bg-leaf/10 text-leaf hover:bg-leaf/20")
                               }
                             >
-                              <ThumbsUp size={11} /> {isMine ? "Tu sugerencia" : iAgree ? "De acuerdo" : "Estoy de acuerdo"}
+                              <ThumbsUp size={11} />{" "}
+                              {isMine
+                                ? "Tu sugerencia"
+                                : iAgree
+                                  ? "De acuerdo"
+                                  : "Estoy de acuerdo"}
                             </button>
                           ) : (
                             <Link to="/login" className="text-[11px] text-leaf font-semibold">
@@ -349,19 +366,11 @@ function SightingDetail() {
                   <label className="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Sugerir especie (opcional)
                   </label>
-                  <select
+                  <TaxonCombobox
                     value={suggested}
-                    onChange={(e) => setSuggested(e.target.value)}
-                    className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm"
-                  >
-                    <option value="">— Sin sugerencia —</option>
-                    {(taxaListQ.data ?? []).map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.sci_name}
-                        {t.common_name ? ` · ${t.common_name}` : ""}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(id) => setSuggested(id)}
+                    placeholder="— Sin sugerencia —"
+                  />
                   <textarea
                     value={body}
                     onChange={(e) => setBody(e.target.value)}
@@ -379,13 +388,20 @@ function SightingDetail() {
                     disabled={addComment.isPending}
                     className="inline-flex items-center gap-1.5 rounded-full bg-leaf text-leaf-foreground px-3 py-1.5 text-xs font-semibold disabled:opacity-50"
                   >
-                    {addComment.isPending ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+                    {addComment.isPending ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Send size={12} />
+                    )}
                     Publicar
                   </button>
                 </form>
               ) : (
                 <div className="mt-4 rounded-2xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-                  <Link to="/login" className="text-leaf font-semibold">Entra</Link> para comentar o sugerir una ID.
+                  <Link to="/login" className="text-leaf font-semibold">
+                    Entra
+                  </Link>{" "}
+                  para comentar o sugerir una ID.
                 </div>
               )}
             </section>
