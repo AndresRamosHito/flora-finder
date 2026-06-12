@@ -67,13 +67,14 @@ function LoginPage() {
           </span>
           <div>
             <h1 className="font-display text-2xl tracking-tight">
-              Orqu<span className="font-bold text-orchid">ID</span>ea
+              Entrar a Orqu<span className="font-bold text-orchid">ID</span>ea
             </h1>
             <p className="text-xs text-muted-foreground">por OrchidArc · Sierra de Oaxaca</p>
           </div>
         </div>
 
         <h2 className="mt-8 font-display text-xl">Entra</h2>
+
         <p className="mt-1 text-sm text-muted-foreground">
           Continúa con Google o recibe un enlace mágico por correo.
         </p>
