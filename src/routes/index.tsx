@@ -5,23 +5,29 @@ import { Feed } from "@/components/Feed";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "OrquIDea · por OrchidArc — orquídeas de la Sierra de Oaxaca" },
+      { title: "OrquIDea · Orquídeas silvestres de la Sierra de Oaxaca" },
       {
         name: "description",
         content:
-          "App ciudadana para observar y registrar orquídeas silvestres en la Sierra de Oaxaca. Solo observar, nunca recolectar.",
+          "App ciudadana para observar y registrar orquídeas silvestres de la Sierra de Oaxaca. Avistamientos comunitarios, ID colectiva y conservación.",
       },
       { property: "og:title", content: "OrquIDea · por OrchidArc" },
       {
         property: "og:description",
         content:
-          "Comunidad de aficionados a las orquídeas en la Sierra de Oaxaca. Avistamientos, identificación colectiva y conservación.",
+          "Comunidad de orquídeas en la Sierra de Oaxaca: avistamientos, identificación colectiva y conservación. Solo observar, nunca recolectar.",
       },
-      { name: "robots", content: "index,follow" },
+      { property: "og:url", content: "https://orchid-map-oaxaca.lovable.app/" },
+      { property: "og:image", content: "https://orchid-map-oaxaca.lovable.app/og-image.jpg" },
+      { name: "twitter:title", content: "OrquIDea · por OrchidArc" },
+      { name: "twitter:description", content: "Orquídeas silvestres de la Sierra de Oaxaca: avistamientos, ID colectiva y conservación." },
+      { name: "twitter:image", content: "https://orchid-map-oaxaca.lovable.app/og-image.jpg" },
     ],
+    links: [{ rel: "canonical", href: "https://orchid-map-oaxaca.lovable.app/" }],
   }),
   component: HomePage,
 });
+
 
 function HomePage() {
   return (
