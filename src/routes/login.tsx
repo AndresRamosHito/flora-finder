@@ -7,10 +7,12 @@ import { useAuth } from "@/hooks/use-auth";
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Entrar — OrquIDea" },
-      { name: "description", content: "Recibe un enlace mágico para entrar a OrquIDea." },
+      { title: "Entrar a OrquIDea — comunidad de orquídeas" },
+      { name: "description", content: "Entra a OrquIDea con un enlace mágico o tu cuenta de Google para registrar avistamientos de orquídeas." },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
+
   component: LoginPage,
 });
 
