@@ -82,10 +82,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "theme-color", content: "#f6f1e4" },
       { name: "author", content: "OrchidArc" },
       { name: "robots", content: "index, follow" },
+      { title: "OrquIDea · por OrchidArc" },
+      { name: "description", content: "Comunidad ciudadana de orquídeas en la Sierra de Oaxaca: avistamientos, identificación colectiva y conservación." },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "OrquIDea" },
       { property: "og:locale", content: "es_MX" },
       { name: "twitter:card", content: "summary_large_image" },
+
     ],
     links: [
       { rel: "stylesheet", href: appCss },
