@@ -1031,8 +1031,8 @@ export type Database = {
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
       gettransactionid: { Args: never; Returns: unknown }
-      is_admin: { Args: { uid?: string }; Returns: boolean }
-      is_verifier_or_admin: { Args: { uid?: string }; Returns: boolean }
+      is_admin: { Args: never; Returns: boolean }
+      is_verifier_or_admin: { Args: never; Returns: boolean }
       leaderboard: {
         Args: { p_limit?: number; p_region?: string; p_since?: string }
         Returns: {
