@@ -125,13 +125,14 @@ function SocietyDetail() {
               {society?.name?.slice(0, 3) || "···"}
             </span>
             <div>
-              <div className="font-semibold text-sm leading-tight">
+              <h1 className="font-semibold text-sm leading-tight">
                 {society?.name ?? "Sociedad"}
-              </div>
+              </h1>
               {society?.full_name && (
                 <div className="text-[10px] text-muted-foreground">{society.full_name}</div>
               )}
             </div>
+
           </div>
         </div>
 
