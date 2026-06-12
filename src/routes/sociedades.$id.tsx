@@ -8,8 +8,16 @@ import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/sociedades/$id")({
   ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Chat de sociedad · OrquIDea" },
+      { name: "description", content: "Chat privado de la sociedad orquideológica: conversa con miembros verificados en tiempo real." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: SocietyDetail,
 });
+
 
 type Msg = {
   id: string;
