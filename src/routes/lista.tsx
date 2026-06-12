@@ -10,8 +10,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/lista")({
   head: () => ({
-    meta: [{ title: "Mi lista · OrquIDea" }, { name: "robots", content: "noindex" }],
+    meta: [
+      { title: "Mi life list de orquídeas · OrquIDea" },
+      { name: "description", content: "Tu life list personal de orquídeas observadas: avistamientos, especies únicas y verificados por la comunidad." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
   }),
+
   component: ListPage,
 });
 
