@@ -6,6 +6,7 @@ import { Shell } from "@/components/Shell";
 import { Orchid } from "@/components/Orchid";
 import { StatusPill } from "@/components/StatusPill";
 import { supabase } from "@/integrations/supabase/client";
+import { useLang } from "@/lib/i18n";
 
 export const Route = createFileRoute("/especies/")({
   head: () => ({
@@ -17,7 +18,10 @@ export const Route = createFileRoute("/especies/")({
           "Herbario digital de orquídeas de México: fichas por género y especie con estado de conservación, sinónimos y enlaces a fuentes científicas.",
       },
       { property: "og:title", content: "Herbario de orquídeas de México · OrquIDea" },
-      { property: "og:description", content: "Explora las orquídeas mexicanas por género y especie con fichas y conservación." },
+      {
+        property: "og:description",
+        content: "Explora las orquídeas mexicanas por género y especie con fichas y conservación.",
+      },
       { property: "og:url", content: "https://orchid-map-oaxaca.lovable.app/especies" },
     ],
     links: [{ rel: "canonical", href: "https://orchid-map-oaxaca.lovable.app/especies" }],
@@ -37,6 +41,7 @@ type TaxonRow = {
 };
 
 function SpeciesIndexPage() {
+  const { t } = useLang();
   const { data, isLoading } = useQuery({
     queryKey: ["taxa-catalog"],
     queryFn: async () => {
@@ -89,14 +94,22 @@ function SpeciesIndexPage() {
       <div className="px-4 pt-5 pb-10">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="specimen-label">Herbario digital</div>
-            <h1 className="mt-0.5 text-2xl font-display font-semibold">Especies</h1>
+            <div className="specimen-label">{t("Herbario digital", "Digital herbarium")}</div>
+            <h1 className="mt-0.5 text-2xl font-display font-semibold">
+              {t("Especies", "Species")}
+            </h1>
             <p className="text-xs text-muted-foreground mt-1 max-w-[32ch]">
               {isLoading
-                ? "Cargando catálogo…"
+                ? t("Cargando catálogo…", "Loading catalog…")
                 : showExotic
-                  ? `${taxa.length} orquídeas (incluye exóticas) en ${genera.length} géneros.`
-                  : `${taxa.length} orquídeas mexicanas en ${genera.length} géneros.`}
+                  ? t(
+                      `${taxa.length} orquídeas (incluye exóticas) en ${genera.length} géneros.`,
+                      `${taxa.length} orchids (incl. exotics) across ${genera.length} genera.`,
+                    )
+                  : t(
+                      `${taxa.length} orquídeas mexicanas en ${genera.length} géneros.`,
+                      `${taxa.length} Mexican orchids across ${genera.length} genera.`,
+                    )}
             </p>
           </div>
           <span className="grid h-10 w-10 place-items-center rounded-2xl bg-leaf/10 text-leaf shrink-0">
@@ -112,13 +125,16 @@ function SpeciesIndexPage() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Busca por nombre científico o común…"
+            placeholder={t(
+              "Busca por nombre científico o común…",
+              "Search by scientific or common name…",
+            )}
             className="w-full rounded-xl border border-input bg-card pl-9 pr-9 py-2.5 text-sm outline-none focus:border-leaf focus:ring-2 focus:ring-leaf/20"
           />
           {query && (
             <button
               type="button"
-              aria-label="Limpiar búsqueda"
+              aria-label={t("Limpiar búsqueda", "Clear search")}
               onClick={() => setQuery("")}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
@@ -139,8 +155,11 @@ function SpeciesIndexPage() {
             }
           >
             {showExotic
-              ? `Ocultar exóticas (${exoticCount})`
-              : `Incluir exóticas y cultivadas (${exoticCount})`}
+              ? t(`Ocultar exóticas (${exoticCount})`, `Hide exotics (${exoticCount})`)
+              : t(
+                  `Incluir exóticas y cultivadas (${exoticCount})`,
+                  `Include exotics & cultivated (${exoticCount})`,
+                )}
           </button>
         )}
 
@@ -150,14 +169,14 @@ function SpeciesIndexPage() {
             onClick={() => setGenus(null)}
             className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-leaf"
           >
-            <ArrowLeft size={13} /> Todos los géneros
+            <ArrowLeft size={13} /> {t("Todos los géneros", "All genera")}
           </button>
         )}
 
         {/* Genus directory — the explore entry point */}
         {!q && !genus && (
           <>
-            <div className="specimen-label mt-6">Explora por género</div>
+            <div className="specimen-label mt-6">{t("Explora por género", "Explore by genus")}</div>
             {isLoading && (
               <div className="mt-3 grid grid-cols-2 gap-2">
                 {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -176,7 +195,7 @@ function SpeciesIndexPage() {
                 >
                   <div className="font-display italic text-sm leading-tight truncate">{g}</div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">
-                    {n} {n === 1 ? "especie" : "especies"}
+                    {n} {n === 1 ? t("especie", "species") : t("especies", "species")}
                   </div>
                 </button>
               ))}
@@ -190,49 +209,53 @@ function SpeciesIndexPage() {
             <div className="specimen-label mt-6">
               {genus ? (
                 <>
-                  Género <span className="italic normal-case text-foreground">{genus}</span> ·{" "}
+                  {t("Género", "Genus")}{" "}
+                  <span className="italic normal-case text-foreground">{genus}</span> ·{" "}
                   {results.length}
                 </>
               ) : (
-                <>{results.length} resultados</>
+                <>
+                  {results.length} {t("resultados", "results")}
+                </>
               )}
             </div>
             {results.length === 0 && !isLoading && (
               <div className="mt-3 rounded-2xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-                Sin resultados para tu búsqueda.
+                {t("Sin resultados para tu búsqueda.", "No results for your search.")}
               </div>
             )}
             <ul className="mt-3 space-y-2">
-              {results.slice(0, 200).map((t, i) => (
+              {results.slice(0, 200).map((tx, i) => (
                 <li
-                  key={t.id}
+                  key={tx.id}
                   className="stagger-in"
                   style={{ animationDelay: Math.min(i, 15) * 25 + "ms" }}
                 >
                   <Link
                     to="/especies/$id"
-                    params={{ id: t.id }}
+                    params={{ id: tx.id }}
                     className="sheet-card flex items-center gap-3 rounded-2xl p-3 hover:border-leaf/40 transition"
                   >
                     <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-accent/40 overflow-hidden">
-                      <Orchid sciName={t.sci_name} size={44} />
+                      <Orchid sciName={tx.sci_name} size={44} />
                     </span>
                     <span className="flex-1 min-w-0">
                       <span className="block font-display italic text-sm leading-tight truncate">
-                        {t.sci_name}
+                        {tx.sci_name}
                       </span>
                       <span className="block text-[11px] text-muted-foreground truncate">
-                        {t.common_name ?? "Sin nombre común registrado"}
+                        {tx.common_name ??
+                          t("Sin nombre común registrado", "No common name recorded")}
                       </span>
                     </span>
                     <span className="flex items-center gap-1.5 shrink-0">
-                      {!t.is_native && (
+                      {!tx.is_native && (
                         <span className="rounded-full bg-warn/15 text-warn px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide">
-                          Exótica
+                          {t("Exótica", "Exotic")}
                         </span>
                       )}
-                      {t.is_sensitive && <Shield size={12} className="text-warn" />}
-                      {t.conservation_status && <StatusPill status={t.conservation_status} />}
+                      {tx.is_sensitive && <Shield size={12} className="text-warn" />}
+                      {tx.conservation_status && <StatusPill status={tx.conservation_status} />}
                     </span>
                   </Link>
                 </li>
@@ -240,7 +263,10 @@ function SpeciesIndexPage() {
             </ul>
             {results.length > 200 && (
               <p className="mt-3 text-center text-[11px] text-muted-foreground">
-                Mostrando 200 de {results.length} — afina tu búsqueda para ver más.
+                {t(
+                  `Mostrando 200 de ${results.length} — afina tu búsqueda para ver más.`,
+                  `Showing 200 of ${results.length} — refine your search to see more.`,
+                )}
               </p>
             )}
           </>

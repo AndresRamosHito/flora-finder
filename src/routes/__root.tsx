@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import { supabase } from "../integrations/supabase/client";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { LanguageProvider } from "../lib/i18n";
 
 const ORQUIDEA_URL = "https://orquidea.orchidarc.org/";
 const ORQUIDEA_OG_IMAGE_URL = "https://orquidea.orchidarc.org/og-image.jpg";
@@ -198,9 +199,11 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthSync />
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <LanguageProvider>
+        <AuthSync />
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }

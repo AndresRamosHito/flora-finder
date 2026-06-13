@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useLang, LanguageToggle } from "@/lib/i18n";
 
 export const REGION = "México";
 
@@ -21,6 +22,7 @@ export type ShellTab = "feed" | "map" | "species" | "community" | "list" | "hunt
 
 export function Shell({ children, active = "feed" }: { children: ReactNode; active?: ShellTab }) {
   const { user, loading } = useAuth();
+  const { t } = useLang();
   const navigate = useNavigate();
 
   return (
@@ -36,27 +38,29 @@ export function Shell({ children, active = "feed" }: { children: ReactNode; acti
                 Orqu<span className="font-bold text-orchid">ID</span>ea
               </div>
               <div className="text-[10px] text-muted-foreground flex items-center gap-1">
-                por OrchidArc · <MapPin size={9} /> Orquídeas de {REGION}
+                {t("por OrchidArc · Orquídeas de", "by OrchidArc · Orchids of")} <MapPin size={9} />{" "}
+                {REGION}
               </div>
             </div>
           </Link>
           <div className="flex items-center gap-2">
+            <LanguageToggle />
             <Link
               to="/reportar"
-              aria-label="Reportar comercio ilegal"
+              aria-label={t("Reportar comercio ilegal", "Report illegal trade")}
               className="grid h-9 w-9 place-items-center rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition"
             >
               <ShieldAlert size={16} />
             </Link>
             <span className="hidden xs:inline-flex items-center gap-1 rounded-full bg-leaf/10 text-leaf px-2 py-1 text-[10px] font-semibold">
-              <Leaf size={10} /> Solo&nbsp;observar
+              <Leaf size={10} /> {t("Solo observar", "Observe only")}
             </span>
             {!loading &&
               (user ? (
                 <Link
                   to="/lista"
                   className="grid h-9 w-9 place-items-center rounded-full bg-accent text-accent-foreground"
-                  aria-label="Mi cuenta"
+                  aria-label={t("Mi cuenta", "My account")}
                 >
                   <UserCircle size={18} />
                 </Link>
@@ -65,7 +69,7 @@ export function Shell({ children, active = "feed" }: { children: ReactNode; acti
                   to="/login"
                   className="flex items-center gap-1 rounded-full bg-leaf text-leaf-foreground px-3 py-1.5 text-xs font-semibold"
                 >
-                  <LogIn size={12} /> Entrar
+                  <LogIn size={12} /> {t("Entrar", "Sign in")}
                 </Link>
               ))}
           </div>
@@ -74,12 +78,22 @@ export function Shell({ children, active = "feed" }: { children: ReactNode; acti
         <main className="flex-1 pb-24">{children}</main>
 
         <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[460px] bg-background/95 backdrop-blur border-t border-border/60 px-2 py-2 z-20 flex items-center justify-around">
-          <NavLink to="/" icon={<Home size={20} />} label="Inicio" active={active === "feed"} />
-          <NavLink to="/mapa" icon={<Map size={20} />} label="Mapa" active={active === "map"} />
+          <NavLink
+            to="/"
+            icon={<Home size={20} />}
+            label={t("Inicio", "Home")}
+            active={active === "feed"}
+          />
+          <NavLink
+            to="/mapa"
+            icon={<Map size={20} />}
+            label={t("Mapa", "Map")}
+            active={active === "map"}
+          />
           <button
             type="button"
             onClick={() => navigate({ to: user ? "/capture" : "/login" })}
-            aria-label="Nuevo avistamiento"
+            aria-label={t("Nuevo avistamiento", "New sighting")}
             className="grid h-14 w-14 -mt-6 place-items-center rounded-full bg-orchid text-orchid-foreground shadow-lg shadow-orchid/30 hover:scale-105 transition"
           >
             <Plus size={26} />
@@ -87,13 +101,13 @@ export function Shell({ children, active = "feed" }: { children: ReactNode; acti
           <NavLink
             to="/especies"
             icon={<BookOpen size={20} />}
-            label="Especies"
+            label={t("Especies", "Species")}
             active={active === "species"}
           />
           <NavLink
             to="/sociedades"
             icon={<Users size={20} />}
-            label="Comunidad"
+            label={t("Comunidad", "Community")}
             active={active === "community"}
           />
         </nav>

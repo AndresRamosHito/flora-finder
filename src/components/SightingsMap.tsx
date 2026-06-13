@@ -6,6 +6,14 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import "leaflet.markercluster";
+import { useLang } from "@/lib/i18n";
+
+type PopupLabels = {
+  unidentified: string;
+  verified: string;
+  pending: string;
+  viewDetail: string;
+};
 
 export type SightingPoint = {
   id: string;
@@ -37,7 +45,7 @@ function pinIcon(verified: boolean) {
   return L.divIcon({ html, className: "", iconSize: [14, 14], iconAnchor: [7, 7] });
 }
 
-function ClusteredPins({ points }: { points: SightingPoint[] }) {
+function ClusteredPins({ points, labels }: { points: SightingPoint[]; labels: PopupLabels }) {
   const map = useMap();
   useEffect(() => {
     const cluster = (
@@ -54,12 +62,12 @@ function ClusteredPins({ points }: { points: SightingPoint[] }) {
       const linkHref = `/s/${p.id}`;
       marker.bindPopup(
         `<div style="font-size:12px"><div style="font-weight:600;font-style:italic">${
-          p.sci_name ?? "Sin identificar"
+          p.sci_name ?? labels.unidentified
         }</div>${
           p.common_name ? `<div style="font-size:11px">${p.common_name}</div>` : ""
         }<div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;opacity:.7;margin-top:4px">${
-          verified ? "Verificado" : "Pendiente"
-        }</div><a href="${linkHref}" style="display:inline-block;margin-top:6px;font-size:11px;font-weight:600;color:#2d6a4f;text-decoration:underline">Ver detalle →</a></div>`,
+          verified ? labels.verified : labels.pending
+        }</div><a href="${linkHref}" style="display:inline-block;margin-top:6px;font-size:11px;font-weight:600;color:#2d6a4f;text-decoration:underline">${labels.viewDetail}</a></div>`,
       );
       cluster.addLayer(marker);
     });
@@ -67,11 +75,11 @@ function ClusteredPins({ points }: { points: SightingPoint[] }) {
     return () => {
       map.removeLayer(cluster);
     };
-  }, [map, points]);
+  }, [map, points, labels]);
   return null;
 }
 
-function LocateButton() {
+function LocateButton({ label }: { label: string }) {
   const map = useMap();
   return (
     <button
@@ -85,7 +93,7 @@ function LocateButton() {
         );
       }}
       className="absolute top-3 right-3 z-[400] rounded-full bg-card border border-border shadow-sm h-9 w-9 grid place-items-center text-foreground"
-      aria-label="Ubicarme"
+      aria-label={label}
     >
       <svg
         width="16"
@@ -113,9 +121,20 @@ export function SightingsMap({
   bbox: BBox;
   heightClass?: string;
 }) {
+  const { t } = useLang();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const popupLabels = useMemo<PopupLabels>(
+    () => ({
+      unidentified: t("Sin identificar", "Unidentified"),
+      verified: t("Verificado", "Verified"),
+      pending: t("Pendiente", "Pending"),
+      viewDetail: t("Ver detalle →", "View details →"),
+    }),
+    [t],
+  );
 
   const center: [number, number] = useMemo(
     () => [(bbox.min_lat + bbox.max_lat) / 2, (bbox.min_lng + bbox.max_lng) / 2],
@@ -160,8 +179,8 @@ export function SightingsMap({
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
         <FitToBbox bbox={bbox} />
-        <LocateButton />
-        <ClusteredPins points={normalPts} />
+        <LocateButton label={t("Ubicarme", "Locate me")} />
+        <ClusteredPins points={normalPts} labels={popupLabels} />
         {sensitivePts.map((p) => (
           <Circle
             key={p.id}
@@ -176,9 +195,14 @@ export function SightingsMap({
           >
             <Popup>
               <div className="text-xs">
-                <div className="font-semibold italic">{p.sci_name ?? "Sin identificar"}</div>
+                <div className="font-semibold italic">
+                  {p.sci_name ?? t("Sin identificar", "Unidentified")}
+                </div>
                 <div className="text-[11px] opacity-70 mt-0.5">
-                  Especie sensible — solo área aproximada
+                  {t(
+                    "Especie sensible — solo área aproximada",
+                    "Sensitive species — approximate area only",
+                  )}
                 </div>
                 {p.location_label && <div className="text-[11px] mt-1">{p.location_label}</div>}
                 <Link
@@ -186,7 +210,7 @@ export function SightingsMap({
                   params={{ id: p.id }}
                   className="inline-block mt-2 text-[11px] font-semibold text-leaf underline"
                 >
-                  Ver detalle →
+                  {t("Ver detalle →", "View details →")}
                 </Link>
               </div>
             </Popup>

@@ -5,6 +5,9 @@ import { ShieldAlert, ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
 import { Shell } from "@/components/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useLang } from "@/lib/i18n";
+
+type Tr = (es: string, en: string) => string;
 
 export const Route = createFileRoute("/admin/reportes")({
   ssr: false,
@@ -28,6 +31,7 @@ type Report = {
 const STATUSES: Report["status"][] = ["new", "triaged", "escalated", "closed"];
 
 function AdminReportsPage() {
+  const { t, lang } = useLang();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -53,7 +57,9 @@ function AdminReportsPage() {
     queryFn: async () => {
       let q = supabase
         .from("trade_reports")
-        .select("id, kind, taxon_id, location_text, details, anonymous, status, created_at, reporter_id, reviewer_notes, taxon:taxa(sci_name)")
+        .select(
+          "id, kind, taxon_id, location_text, details, anonymous, status, created_at, reporter_id, reviewer_notes, taxon:taxa(sci_name)",
+        )
         .order("created_at", { ascending: false })
         .limit(100);
       if (filter !== "all") q = q.eq("status", filter);
@@ -92,12 +98,15 @@ function AdminReportsPage() {
       <Shell>
         <div className="px-4 pt-10 text-center">
           <ShieldAlert size={36} className="mx-auto text-destructive" />
-          <h1 className="mt-3 font-display text-xl">Solo administradores</h1>
+          <h1 className="mt-3 font-display text-xl">{t("Solo administradores", "Admins only")}</h1>
           <p className="mt-2 text-xs text-muted-foreground">
-            Esta cola está reservada al equipo de OrchidArc.
+            {t(
+              "Esta cola está reservada al equipo de OrchidArc.",
+              "This queue is reserved for the OrchidArc team.",
+            )}
           </p>
           <Link to="/" className="mt-5 inline-flex items-center gap-1 text-xs underline">
-            Volver
+            {t("Volver", "Back")}
           </Link>
         </div>
       </Shell>
@@ -108,15 +117,17 @@ function AdminReportsPage() {
     <Shell>
       <div className="px-4 pt-5 pb-10">
         <Link to="/" className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-          <ArrowLeft size={12} /> Volver
+          <ArrowLeft size={12} /> {t("Volver", "Back")}
         </Link>
         <div className="mt-2 flex items-center gap-2">
           <div className="grid h-10 w-10 place-items-center rounded-2xl bg-destructive/10 text-destructive">
             <ShieldCheck size={18} />
           </div>
-          <h1 className="text-2xl font-display font-semibold">Reportes</h1>
+          <h1 className="text-2xl font-display font-semibold">{t("Reportes", "Reports")}</h1>
         </div>
-        <p className="text-xs text-muted-foreground mt-1">Cola de comercio ilegal — solo admins.</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          {t("Cola de comercio ilegal — solo admins.", "Illegal-trade queue — admins only.")}
+        </p>
 
         <div className="mt-4 flex gap-1.5 flex-wrap">
           {(["all", ...STATUSES] as const).map((s) => (
@@ -130,20 +141,22 @@ function AdminReportsPage() {
                   : "bg-card text-foreground/70 border-border")
               }
             >
-              {s === "all" ? "Todos" : statusLabel(s)}
+              {s === "all" ? t("Todos", "All") : statusLabel(s, t)}
             </button>
           ))}
         </div>
 
         <div className="mt-4 space-y-3">
-          {isLoading && <div className="text-xs text-muted-foreground">Cargando…</div>}
+          {isLoading && (
+            <div className="text-xs text-muted-foreground">{t("Cargando…", "Loading…")}</div>
+          )}
           {(data ?? []).length === 0 && !isLoading && (
             <div className="text-xs text-muted-foreground text-center py-10">
-              Sin reportes en esta cola.
+              {t("Sin reportes en esta cola.", "No reports in this queue.")}
             </div>
           )}
           {(data ?? []).map((r) => (
-            <ReportCard key={r.id} report={r} onUpdate={updateStatus} />
+            <ReportCard key={r.id} report={r} onUpdate={updateStatus} t={t} lang={lang} />
           ))}
         </div>
       </div>
@@ -151,21 +164,25 @@ function AdminReportsPage() {
   );
 }
 
-function statusLabel(s: Report["status"]) {
+function statusLabel(s: Report["status"], t: Tr) {
   return {
-    new: "Nuevos",
-    triaged: "Triaje",
-    escalated: "Escalados",
-    closed: "Cerrados",
+    new: t("Nuevos", "New"),
+    triaged: t("Triaje", "Triaged"),
+    escalated: t("Escalados", "Escalated"),
+    closed: t("Cerrados", "Closed"),
   }[s];
 }
 
 function ReportCard({
   report,
   onUpdate,
+  t,
+  lang,
 }: {
   report: Report;
   onUpdate: (id: string, status: Report["status"], notes?: string) => Promise<void>;
+  t: Tr;
+  lang: "es" | "en";
 }) {
   const [notes, setNotes] = useState(report.reviewer_notes ?? "");
   const [busy, setBusy] = useState<string | null>(null);
@@ -185,10 +202,10 @@ function ReportCard({
             statusColor(report.status)
           }
         >
-          {statusLabel(report.status)}
+          {statusLabel(report.status, t)}
         </span>
         <span className="text-[10px] text-muted-foreground">
-          {new Date(report.created_at).toLocaleString("es-MX", {
+          {new Date(report.created_at).toLocaleString(lang === "en" ? "en-US" : "es-MX", {
             dateStyle: "short",
             timeStyle: "short",
           })}
@@ -196,7 +213,7 @@ function ReportCard({
       </div>
       <div className="mt-2 text-xs">
         <div className="font-semibold">
-          {kindLabel(report.kind)}
+          {kindLabel(report.kind, t)}
           {report.taxon?.sci_name && (
             <span className="font-normal italic"> · {report.taxon.sci_name}</span>
           )}
@@ -208,14 +225,14 @@ function ReportCard({
           <div className="mt-1 text-foreground/80 whitespace-pre-wrap">{report.details}</div>
         )}
         <div className="mt-1.5 text-[10px] text-muted-foreground">
-          {report.anonymous ? "Anónimo" : "Identificado"}
+          {report.anonymous ? t("Anónimo", "Anonymous") : t("Identificado", "Identified")}
         </div>
       </div>
       <textarea
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
         rows={2}
-        placeholder="Notas internas…"
+        placeholder={t("Notas internas…", "Internal notes…")}
         className="mt-2 w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs"
       />
       <div className="mt-2 flex gap-1.5 flex-wrap">
@@ -226,7 +243,7 @@ function ReportCard({
             disabled={busy === s}
             className="rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-medium disabled:opacity-50"
           >
-            {busy === s ? "…" : "→ " + statusLabel(s)}
+            {busy === s ? "…" : "→ " + statusLabel(s, t)}
           </button>
         ))}
       </div>
@@ -243,13 +260,13 @@ function statusColor(s: Report["status"]) {
   }[s];
 }
 
-function kindLabel(k: string | null) {
+function kindLabel(k: string | null, t: Tr) {
   return (
     {
-      market_sale: "Mercado/Feria",
-      online_sale: "Anuncio online",
-      field_extraction: "Extracción en campo",
-      other: "Otro",
+      market_sale: t("Mercado/Feria", "Market/Fair"),
+      online_sale: t("Anuncio online", "Online listing"),
+      field_extraction: t("Extracción en campo", "Field extraction"),
+      other: t("Otro", "Other"),
     }[k ?? ""] ?? "—"
   );
 }

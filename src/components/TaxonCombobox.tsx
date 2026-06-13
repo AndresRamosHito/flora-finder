@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronsUpDown, Search, Shield, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useLang } from "@/lib/i18n";
 
 export type Taxon = {
   id: string;
@@ -17,15 +18,17 @@ type Props = {
 };
 
 function NonNativeTag() {
+  const { t } = useLang();
   return (
     <span className="inline-flex items-center align-middle ml-1.5 rounded-full bg-warn/15 text-warn px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide not-italic">
-      No nativa
+      {t("No nativa", "Non-native")}
     </span>
   );
 }
 
 /** Autocomplete combobox over the full taxa catalog (~1300 Mexican orchid species). */
 export function TaxonCombobox({ value, onChange, placeholder }: Props) {
+  const { t } = useLang();
   const [taxa, setTaxa] = useState<Taxon[]>([]);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -98,7 +101,7 @@ export function TaxonCombobox({ value, onChange, placeholder }: Props) {
               {!selected.is_native ? <NonNativeTag /> : null}
             </>
           ) : (
-            placeholder || "Buscar especie…"
+            placeholder || t("Buscar especie…", "Search species…")
           )}
         </span>
         <span className="flex items-center gap-1">
@@ -124,16 +127,23 @@ export function TaxonCombobox({ value, onChange, placeholder }: Props) {
               ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Escribe nombre científico o común…"
+              placeholder={t(
+                "Escribe nombre científico o común…",
+                "Type a scientific or common name…",
+              )}
               className="w-full bg-transparent text-sm outline-none"
             />
           </div>
           <ul className="max-h-72 overflow-y-auto py-1">
             {!taxa.length && (
-              <li className="px-3 py-2 text-xs text-muted-foreground">Cargando catálogo…</li>
+              <li className="px-3 py-2 text-xs text-muted-foreground">
+                {t("Cargando catálogo…", "Loading catalog…")}
+              </li>
             )}
             {taxa.length > 0 && results.length === 0 && (
-              <li className="px-3 py-2 text-xs text-muted-foreground">Sin resultados.</li>
+              <li className="px-3 py-2 text-xs text-muted-foreground">
+                {t("Sin resultados.", "No results.")}
+              </li>
             )}
             {results.map((t) => {
               const isSel = t.id === value;
@@ -162,7 +172,10 @@ export function TaxonCombobox({ value, onChange, placeholder }: Props) {
             })}
             {taxa.length > 0 && !query && taxa.length > results.length && (
               <li className="px-3 py-1.5 text-[10px] text-muted-foreground text-center">
-                Mostrando {results.length} de {taxa.length} — escribe para filtrar
+                {t(
+                  `Mostrando ${results.length} de ${taxa.length} — escribe para filtrar`,
+                  `Showing ${results.length} of ${taxa.length} — type to filter`,
+                )}
               </li>
             )}
           </ul>

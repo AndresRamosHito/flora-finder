@@ -5,19 +5,23 @@ import { ArrowLeft, Send, Loader2 } from "lucide-react";
 import { Shell } from "@/components/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useLang } from "@/lib/i18n";
 
 export const Route = createFileRoute("/sociedades/$id")({
   ssr: false,
   head: () => ({
     meta: [
       { title: "Chat de sociedad · OrquIDea" },
-      { name: "description", content: "Chat privado de la sociedad orquideológica: conversa con miembros verificados en tiempo real." },
+      {
+        name: "description",
+        content:
+          "Chat privado de la sociedad orquideológica: conversa con miembros verificados en tiempo real.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: SocietyDetail,
 });
-
 
 type Msg = {
   id: string;
@@ -28,6 +32,7 @@ type Msg = {
 };
 
 function SocietyDetail() {
+  const { t } = useLang();
   const { id } = Route.useParams();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -115,7 +120,7 @@ function SocietyDetail() {
             to="/sociedades"
             className="inline-flex items-center gap-1 text-[11px] text-muted-foreground"
           >
-            <ArrowLeft size={11} /> Sociedades
+            <ArrowLeft size={11} /> {t("Sociedades", "Societies")}
           </Link>
           <div className="mt-1 flex items-center gap-2">
             <span
@@ -126,21 +131,25 @@ function SocietyDetail() {
             </span>
             <div>
               <h1 className="font-semibold text-sm leading-tight">
-                {society?.name ?? "Sociedad"}
+                {society?.name ?? t("Sociedad", "Society")}
               </h1>
               {society?.full_name && (
                 <div className="text-[10px] text-muted-foreground">{society.full_name}</div>
               )}
             </div>
-
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-          {isLoading && <div className="text-xs text-muted-foreground">Cargando…</div>}
+          {isLoading && (
+            <div className="text-xs text-muted-foreground">{t("Cargando…", "Loading…")}</div>
+          )}
           {(messages ?? []).length === 0 && !isLoading && (
             <div className="text-xs text-muted-foreground text-center py-8">
-              Sin mensajes todavía. Sé el primero en saludar.
+              {t(
+                "Sin mensajes todavía. Sé el primero en saludar.",
+                "No messages yet. Be the first to say hello.",
+              )}
             </div>
           )}
           {(messages ?? []).map((m) => {
@@ -178,7 +187,7 @@ function SocietyDetail() {
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder="Escribe un mensaje…"
+            placeholder={t("Escribe un mensaje…", "Write a message…")}
             rows={1}
             maxLength={1000}
             className="flex-1 rounded-2xl border border-input bg-card px-3 py-2 text-sm outline-none focus:border-leaf focus:ring-2 focus:ring-leaf/20 resize-none"
@@ -187,7 +196,7 @@ function SocietyDetail() {
             type="submit"
             disabled={sending || !body.trim()}
             className="grid h-10 w-10 place-items-center rounded-full bg-leaf text-leaf-foreground disabled:opacity-50 shrink-0"
-            aria-label="Enviar"
+            aria-label={t("Enviar", "Send")}
           >
             {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
           </button>
