@@ -2,9 +2,10 @@
 --
 -- Approach (chosen with the user): rather than read the live catalog, we flag
 -- nativeness by genus against an allowlist of orchid genera native to Mexico,
--- compiled from the published Mexican checklist literature (~170 genera /
--- ~1,260 species: Soto Arenas / Hágsater — Herbario AMO; Espejo-Serna &
--- López-Ferrari; CONABIO). Anything whose genus is NOT on the allowlist is
+-- compiled from the authoritative Mexican checklist — Soto Arenas, Hágsater,
+-- Jiménez Machorro & Solano Gómez, "Orquídeas de México" (CONABIO Project
+-- P107, Herbario AMO), including the narrow segregate genera that work uses.
+-- Anything whose genus is NOT on the allowlist is
 -- marked is_native = false (exotic / cultivated-only).
 --
 -- IMPORTANT REVIEW NOTES:
@@ -21,76 +22,49 @@
 CREATE TEMPORARY TABLE _native_genera (genus text PRIMARY KEY) ON COMMIT DROP;
 
 INSERT INTO _native_genera (genus) VALUES
-  -- Cypripedioideae (slipper orchids native to Mexico)
-  ('Cypripedium'), ('Mexipedium'), ('Phragmipedium'),
-  -- Vanilloideae
-  ('Vanilla'),
-  -- Orchidoideae · Cranichideae (Spiranthinae + Goodyerinae + Cranichidinae)
-  ('Aulosepalum'), ('Beloglottis'), ('Brachystele'), ('Coccineorchis'), ('Cranichis'),
-  ('Cyclopogon'), ('Deiregyne'), ('Dichromanthus'), ('Eltroplectris'), ('Eurystyles'),
-  ('Funkiella'), ('Galeottiella'), ('Hapalorchis'), ('Kionophyton'), ('Lankesterella'),
-  ('Mesadenus'), ('Microthelys'), ('Pelexia'), ('Physogyne'), ('Ponthieva'),
-  ('Prescottia'), ('Pseudogoodyera'), ('Pteroglossa'), ('Sacoila'), ('Sarcoglottis'),
-  ('Schiedeella'), ('Spiranthes'), ('Stenorrhynchos'), ('Svenkoeltzia'),
-  ('Goodyera'), ('Aspidogyne'), ('Microchilus'), ('Erythrodes'), ('Platythelys'),
-  ('Kreodanthus'), ('Ligeophila'),
-  -- Orchidoideae · Tropidieae
-  ('Corymborkis'), ('Tropidia'),
-  -- Orchidoideae · Orchideae
-  ('Habenaria'), ('Platanthera'), ('Galeoglossum'), ('Bertauxia'), ('Coeloglossum'), ('Piperia'),
-  -- Epidendroideae · Triphoreae
-  ('Triphora'), ('Psilochilus'), ('Monophyllorchis'),
-  -- Epidendroideae · Sobralieae
-  ('Sobralia'), ('Elleanthus'),
-  -- Epidendroideae · Wullschlaegelieae
-  ('Wullschlaegelia'),
-  -- Epidendroideae · Malaxideae
-  ('Malaxis'), ('Liparis'), ('Crossoglossa'), ('Crossoliparis'),
-  -- Epidendroideae · Calypsoeae
-  ('Calypso'), ('Corallorhiza'), ('Govenia'), ('Hexalectris'), ('Aplectrum'),
-  -- Epidendroideae · Arethuseae (Arpophyllinae / Coeliinae)
-  ('Arpophyllum'), ('Coelia'),
-  -- Epidendroideae · Epidendreae · Chysinae / Bletiinae / Ponerinae
-  ('Chysis'), ('Bletia'), ('Basiphyllaea'), ('Ponera'), ('Nemaconia'), ('Helleriella'), ('Isochilus'),
-  -- Epidendroideae · Epidendreae · Laeliinae
-  ('Encyclia'), ('Prosthechea'), ('Epidendrum'), ('Laelia'), ('Barkeria'), ('Brassavola'),
-  ('Caularthron'), ('Euchile'), ('Guarianthe'), ('Jacquiniella'), ('Nidema'), ('Oestlundia'),
-  ('Homalopetalum'), ('Scaphyglottis'), ('Hagsatera'), ('Artorima'), ('Myrmecophila'),
-  ('Rhyncholaelia'), ('Dinema'), ('Microepidendrum'), ('Alamania'), ('Domingoa'), ('Lanium'),
-  -- Epidendroideae · Epidendreae · Pleurothallidinae
-  ('Pleurothallis'), ('Stelis'), ('Acianthera'), ('Specklinia'), ('Trichosalpinx'),
-  ('Platystele'), ('Anathallis'), ('Lepanthes'), ('Lepanthopsis'), ('Echinosepala'),
-  ('Masdevallia'), ('Dryadella'), ('Restrepia'), ('Myoxanthus'), ('Zootrophion'),
-  ('Scaphosepalum'), ('Dresslerella'), ('Barbosella'), ('Pabstiella'),
-  -- Epidendroideae · Cymbidieae · Eulophiinae / Cyrtopodiinae
-  ('Eulophia'), ('Oeceoclades'), ('Cyrtopodium'),
-  -- Epidendroideae · Cymbidieae · Catasetinae
-  ('Catasetum'), ('Clowesia'), ('Cycnoches'), ('Mormodes'), ('Dressleria'), ('Galeandra'),
-  -- Epidendroideae · Cymbidieae · Maxillariinae
-  ('Maxillaria'), ('Mormolyca'), ('Trigonidium'), ('Xylobium'), ('Camaridium'),
-  ('Heterotaxis'), ('Ornithidium'), ('Christensonella'), ('Brasiliorchis'),
-  -- Epidendroideae · Cymbidieae · Stanhopeinae
-  ('Stanhopea'), ('Coryanthes'), ('Gongora'), ('Acineta'), ('Houlletia'), ('Polycycnis'),
-  ('Sievekingia'), ('Embreea'),
-  -- Epidendroideae · Cymbidieae · Zygopetalinae
-  ('Dichaea'), ('Cryptarrhena'), ('Cochleanthes'), ('Chondroscaphe'), ('Kefersteinia'),
-  ('Warczewiczella'), ('Huntleya'), ('Chaubardia'),
-  -- Epidendroideae · Cymbidieae · Lycastinae
-  ('Lycaste'),
-  -- Epidendroideae · Cymbidieae · Oncidiinae (incl. synonym genera)
-  ('Oncidium'), ('Trichocentrum'), ('Rhynchostele'), ('Cuitlauzina'), ('Cohniella'),
-  ('Trichopilia'), ('Notylia'), ('Macroclinium'), ('Leochilus'), ('Papperitzia'),
-  ('Ionopsis'), ('Lockhartia'), ('Aspasia'), ('Brassia'), ('Ada'), ('Rossioglossum'),
-  ('Comparettia'), ('Erycina'), ('Psygmorchis'), ('Palumbina'), ('Osmoglossum'),
-  ('Otoglossum'), ('Gomesa'), ('Mesospinidium'), ('Solenidium'), ('Ornithocephalus'),
-  ('Zygostates'), ('Telipogon'), ('Stellilabium'), ('Hintonella'), ('Phymatidium'),
-  ('Centroglossa'), ('Hofmeisterella'), ('Sigmatostalix'), ('Mexicoa'),
-  ('Lemboglossum'), ('Odontoglossum'), ('Mesoglossum'), ('Ticoglossum'), ('Amparoa'),
-  ('Symphyglossum'),
-  -- Epidendroideae · Vandeae (New-World leafless + Polystachya; Old-World vandoids excluded)
-  ('Polystachya'), ('Campylocentrum'), ('Dendrophylax'), ('Harrisella'),
-  -- Epidendroideae · Malaxideae/Podochileae · Bulbophyllinae (B. pachyrachis is native)
-  ('Bulbophyllum')
+  ('Acianthera'), ('Acineta'), ('Acinopetala'), ('Acronia'), ('Ada'), ('Alamania'),
+  ('Amparoa'), ('Anacheilium'), ('Anathallis'), ('Apatostelis'), ('Aplectrum'), ('Arpophyllum'),
+  ('Artorima'), ('Aspasia'), ('Aspidogyne'), ('Auliza'), ('Aulosepalum'), ('Barbosella'),
+  ('Barkeria'), ('Basiphyllaea'), ('Beadlea'), ('Beloglottis'), ('Bertauxia'), ('Bletia'),
+  ('Botriochilus'), ('Brachystele'), ('Brasiliorchis'), ('Brassavola'), ('Brassia'), ('Brenesia'),
+  ('Bulbophyllum'), ('Calanthe'), ('Calypso'), ('Camaridium'), ('Campylocentrum'), ('Catasetum'),
+  ('Caularthron'), ('Centroglossa'), ('Chaubardia'), ('Chondrorrhyncha'), ('Chondroscaphe'), ('Christensonella'),
+  ('Chysis'), ('Clowesia'), ('Coccineorchis'), ('Cochleanthes'), ('Coelia'), ('Coeloglossum'),
+  ('Cohniella'), ('Coilostylis'), ('Comparettia'), ('Corallorhiza'), ('Coryanthes'), ('Corymborkis'),
+  ('Cranichis'), ('Crossoglossa'), ('Crossoliparis'), ('Cryptarrhena'), ('Cuitlauzina'), ('Cyclopogon'),
+  ('Cycnoches'), ('Cymbiglossum'), ('Cypripedium'), ('Cyrtochiloides'), ('Cyrtopodium'), ('Deiregyne'),
+  ('Dendrophylax'), ('Dichaea'), ('Dichromanthus'), ('Dignathe'), ('Dimerandra'), ('Dinema'),
+  ('Domingoa'), ('Dracontia'), ('Dracula'), ('Dresslerella'), ('Dressleria'), ('Dressleriella'),
+  ('Dryadella'), ('Echinosepala'), ('Elleanthus'), ('Eltroplectris'), ('Embreea'), ('Encyclia'),
+  ('Epidendrum'), ('Erycina'), ('Erythrodes'), ('Erytrodes'), ('Euchile'), ('Eulophia'),
+  ('Eurystyles'), ('Funkiella'), ('Galeandra'), ('Galeoglossum'), ('Galeottia'), ('Galeottiella'),
+  ('Gomesa'), ('Gongora'), ('Goodyera'), ('Govenia'), ('Gracielanthus'), ('Guarianthe'),
+  ('Gularia'), ('Habenaria'), ('Habenella'), ('Hagsatera'), ('Hapalorchis'), ('Harrisella'),
+  ('Hartwegia'), ('Helleriella'), ('Heterotaxis'), ('Hexadesmia'), ('Hexalectris'), ('Hexisea'),
+  ('Hintonella'), ('Hofmeisterella'), ('Homalopetalum'), ('Hormidium'), ('Houlletia'), ('Huntleya'),
+  ('Ionopsis'), ('Isochilus'), ('Jacquiniella'), ('Kefersteinia'), ('Kionophyton'), ('Kraenzlinella'),
+  ('Kreodanthus'), ('Lacaena'), ('Laelia'), ('Lanium'), ('Lankesterella'), ('Lemboglossum'),
+  ('Leochilus'), ('Lepanthes'), ('Lepanthopsis'), ('Ligeophila'), ('Liparis'), ('Lockhartia'),
+  ('Lophiaris'), ('Lycaste'), ('Lyroglossa'), ('Macroclinium'), ('Malaxis'), ('Masdevallia'),
+  ('Maxillaria'), ('Meiracyllium'), ('Mesadenella'), ('Mesadenus'), ('Mesoglossum'), ('Mesospinidium'),
+  ('Mexicoa'), ('Mexipedium'), ('Microchilus'), ('Microepidendrum'), ('Microthelys'), ('Miltonioides'),
+  ('Monophyllorchis'), ('Mormodes'), ('Mormolyca'), ('Muscarella'), ('Myoxanthus'), ('Myrmecophila'),
+  ('Nageliella'), ('Nanodes'), ('Nemaconia'), ('Neolehmannia'), ('Nidema'), ('Notylia'),
+  ('Ocampoa'), ('Odontoglossum'), ('Oeceoclades'), ('Oerstedella'), ('Oestlundia'), ('Oestlundorchis'),
+  ('Oncidium'), ('Ornithidium'), ('Ornithocephalus'), ('Osmoglossum'), ('Otoglossum'), ('Pabstiella'),
+  ('Palumbina'), ('Panarica'), ('Panmorphia'), ('Papperitzia'), ('Pelexia'), ('Phloeophila'),
+  ('Phragmipedium'), ('Phymatidium'), ('Physogyne'), ('Physosiphon'), ('Piperia'), ('Platanthera'),
+  ('Platantheroides'), ('Platystele'), ('Platythelys'), ('Pleurothallis'), ('Pleurothallopsis'), ('Pogonia'),
+  ('Pollardia'), ('Polycycnis'), ('Polystachya'), ('Ponera'), ('Ponthieva'), ('Potosia'),
+  ('Prescottia'), ('Prosthechea'), ('Pseudocranichis'), ('Pseudogoodyera'), ('Pseudostelis'), ('Psilochilus'),
+  ('Psygmorchis'), ('Pteroglossa'), ('Restrepia'), ('Restrepiella'), ('Rhyncholaelia'), ('Rhynchostele'),
+  ('Rossioglossum'), ('Sacoila'), ('Sarcinula'), ('Sarcoglottis'), ('Scaphosepalum'), ('Scaphyglottis'),
+  ('Schiedeella'), ('Schomburgkia'), ('Sessilibulbum'), ('Sievekingia'), ('Sigmatostalix'), ('Sobralia'),
+  ('Solenidium'), ('Specklinia'), ('Spiranthes'), ('Stanhopea'), ('Stelis'), ('Stellilabium'),
+  ('Stenorrhynchos'), ('Stenotyla'), ('Stilifolium'), ('Svenkoeltzia'), ('Symphyglossum'), ('Tamayorkis'),
+  ('Telipogon'), ('Ticoglossum'), ('Tribulago'), ('Triceratostris'), ('Trichocentrum'), ('Trichopilia'),
+  ('Trichosalpinx'), ('Trigonidium'), ('Triphora'), ('Tropidia'), ('Vanilla'), ('Warczewiczella'),
+  ('Wullschlaegelia'), ('Xylobium'), ('Zhukowskia'), ('Zootrophion'), ('Zosterophyllanthos'), ('Zygostates')
 ON CONFLICT (genus) DO NOTHING;
 
 -- Flag everything whose genus is not on the allowlist as exotic.
