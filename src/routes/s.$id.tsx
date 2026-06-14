@@ -19,18 +19,30 @@ import { Orchid } from "@/components/Orchid";
 import { TaxonCombobox } from "@/components/TaxonCombobox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useLang, formatRelativeTime } from "@/lib/i18n";
 
 export const Route = createFileRoute("/s/$id")({
   loader: async ({ params }) => {
     const { data } = await supabase.rpc("sighting_public_one", { p_id: params.id });
-    const s = (data?.[0] as { sci_name: string | null; common_name: string | null; location_label: string | null; notes: string | null; photo_url: string | null; observed_at: string | null; created_at: string } | undefined) ?? null;
+    const s =
+      (data?.[0] as
+        | {
+            sci_name: string | null;
+            common_name: string | null;
+            location_label: string | null;
+            notes: string | null;
+            photo_url: string | null;
+            observed_at: string | null;
+            created_at: string;
+          }
+        | undefined) ?? null;
     return { sighting: s };
   },
   head: ({ params, loaderData }) => {
     const s = loaderData?.sighting;
     const url = `https://orchid-map-oaxaca.lovable.app/s/${params.id}`;
     const name = s?.sci_name ?? "Orquídea sin identificar";
-    const where = s?.location_label ?? "Sierra de Oaxaca";
+    const where = s?.location_label ?? "México";
     const title = s?.sci_name
       ? `${s.sci_name}${s.common_name ? ` (${s.common_name})` : ""} · Avistamiento · OrquIDea`
       : "Avistamiento sin identificar · OrquIDea";
@@ -79,7 +91,6 @@ export const Route = createFileRoute("/s/$id")({
   component: SightingDetail,
 });
 
-
 type SightingOne = {
   id: string;
   user_id: string;
@@ -106,21 +117,8 @@ type CommentRow = {
   created_at: string;
 };
 
-function relativeTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return "ahora";
-  if (m < 60) return `hace ${m} min`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `hace ${h} h`;
-  const d = Math.floor(h / 24);
-  if (d === 1) return "ayer";
-  if (d < 7) return `hace ${d} d`;
-  const w = Math.floor(d / 7);
-  return `hace ${w} sem`;
-}
-
 function SightingDetail() {
+  const { t, lang } = useLang();
   const { id } = Route.useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -173,7 +171,10 @@ function SightingDetail() {
     mutationFn: async () => {
       if (!user) throw new Error("auth required");
       const trimmed = body.trim();
-      if (!trimmed && !suggested) throw new Error("Escribe algo o sugiere una especie.");
+      if (!trimmed && !suggested)
+        throw new Error(
+          t("Escribe algo o sugiere una especie.", "Write something or suggest a species."),
+        );
       const { error } = await supabase.from("sighting_comments").insert({
         sighting_id: id,
         user_id: user.id,
@@ -227,14 +228,17 @@ function SightingDetail() {
           onClick={() => navigate({ to: "/" })}
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft size={14} /> Volver
+          <ArrowLeft size={14} /> {t("Volver", "Back")}
         </button>
 
         {sightingQ.isLoading && <div className="mt-6 h-44 rounded-3xl bg-muted animate-pulse" />}
 
         {sightingQ.isSuccess && !s && (
           <div className="mt-8 rounded-2xl border border-border p-6 text-center text-sm text-muted-foreground">
-            Este avistamiento no existe o fue eliminado.
+            {t(
+              "Este avistamiento no existe o fue eliminado.",
+              "This sighting doesn't exist or was deleted.",
+            )}
           </div>
         )}
 
@@ -243,8 +247,14 @@ function SightingDetail() {
             <article className="mt-4 rounded-3xl border border-border/70 bg-card overflow-hidden shadow-sm">
               <h1 className="sr-only">
                 {s.sci_name
-                  ? `Avistamiento de ${s.sci_name}${s.common_name ? ` (${s.common_name})` : ""}`
-                  : "Avistamiento de orquídea sin identificar"}
+                  ? t(
+                      `Avistamiento de ${s.sci_name}${s.common_name ? ` (${s.common_name})` : ""}`,
+                      `Sighting of ${s.sci_name}${s.common_name ? ` (${s.common_name})` : ""}`,
+                    )
+                  : t(
+                      "Avistamiento de orquídea sin identificar",
+                      "Sighting of an unidentified orchid",
+                    )}
               </h1>
               <div className="relative h-56 grid place-items-center bg-gradient-to-br from-accent/40 to-secondary/30">
                 {s.photo_url ? (
@@ -252,8 +262,14 @@ function SightingDetail() {
                     src={s.photo_url}
                     alt={
                       s.sci_name
-                        ? `Foto de orquídea ${s.sci_name}${s.common_name ? ` (${s.common_name})` : ""} en ${s.location_label ?? "la Sierra de Oaxaca"}`
-                        : `Foto de orquídea sin identificar en ${s.location_label ?? "la Sierra de Oaxaca"}`
+                        ? t(
+                            `Foto de orquídea ${s.sci_name}${s.common_name ? ` (${s.common_name})` : ""} en ${s.location_label ?? "México"}`,
+                            `Photo of orchid ${s.sci_name}${s.common_name ? ` (${s.common_name})` : ""} in ${s.location_label ?? "Mexico"}`,
+                          )
+                        : t(
+                            `Foto de orquídea sin identificar en ${s.location_label ?? "México"}`,
+                            `Photo of an unidentified orchid in ${s.location_label ?? "Mexico"}`,
+                          )
                     }
                     className="h-full w-full object-cover"
                   />
@@ -264,7 +280,9 @@ function SightingDetail() {
                 {!s.sci_name && !s.photo_url && (
                   <div className="absolute inset-0 grid place-items-center gap-2 text-leaf pointer-events-none">
                     <HelpCircle size={28} />
-                    <span className="text-xs font-semibold">Sin identificar</span>
+                    <span className="text-xs font-semibold">
+                      {t("Sin identificar", "Unidentified")}
+                    </span>
                   </div>
                 )}
               </div>
@@ -273,7 +291,7 @@ function SightingDetail() {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="font-display italic text-[18px] leading-tight">
-                      {s.sci_name ?? "Orquídea sin identificar"}
+                      {s.sci_name ?? t("Orquídea sin identificar", "Unidentified orchid")}
                     </div>
                     {s.common_name && (
                       <div className="text-xs text-muted-foreground">{s.common_name}</div>
@@ -284,7 +302,7 @@ function SightingDetail() {
                         params={{ id: s.taxon_id }}
                         className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-leaf"
                       >
-                        Ver ficha de la especie →
+                        {t("Ver ficha de la especie →", "View species profile →")}
                       </Link>
                     )}
                   </div>
@@ -292,10 +310,11 @@ function SightingDetail() {
                 </div>
 
                 <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
-                  <span>{relativeTime(s.observed_at ?? s.created_at)}</span>
+                  <span>{formatRelativeTime(s.observed_at ?? s.created_at, lang)}</span>
                   {s.is_masked ? (
                     <span className="inline-flex items-center gap-1">
-                      <Lock size={12} /> Ubicación protegida · {REGION}
+                      <Lock size={12} /> {t("Ubicación protegida · ", "Protected location · ")}
+                      {REGION}
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1">
@@ -308,8 +327,10 @@ function SightingDetail() {
                   <div className="mt-3 rounded-xl bg-warn/10 border border-warn/30 px-3 py-2 text-[12px] text-foreground/80 flex gap-2">
                     <ShieldCheck size={14} className="text-warn shrink-0 mt-0.5" />
                     <div>
-                      Especie sensible. Las coordenadas exactas no se muestran a nadie excepto al
-                      observador y los verificadores.
+                      {t(
+                        "Especie sensible. Las coordenadas exactas no se muestran a nadie excepto al observador y los verificadores.",
+                        "Sensitive species. Exact coordinates are shown to no one except the observer and the verifiers.",
+                      )}
                     </div>
                   </div>
                 )}
@@ -324,21 +345,29 @@ function SightingDetail() {
 
             <section className="mt-6">
               <div className="flex items-center justify-between">
-                <h2 className="font-display text-lg font-semibold">Discusión</h2>
+                <h2 className="font-display text-lg font-semibold">
+                  {t("Discusión", "Discussion")}
+                </h2>
                 <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
-                  <CheckCircle2 size={12} /> 3 acuerdos → verificado
+                  <CheckCircle2 size={12} />{" "}
+                  {t("3 acuerdos → verificado", "3 agreements → verified")}
                 </span>
               </div>
               <p className="text-[11px] text-muted-foreground mt-0.5">
-                Las sugerencias de ID son comunitarias. Cuando una especie sugerida acumula 3
-                personas de acuerdo, el avistamiento se marca como verificado.
+                {t(
+                  "Las sugerencias de ID son comunitarias. Cuando una especie sugerida acumula 3 personas de acuerdo, el avistamiento se marca como verificado.",
+                  "ID suggestions are community-driven. When a suggested species reaches 3 people in agreement, the sighting is marked as verified.",
+                )}
               </p>
 
               <div className="mt-3 space-y-3">
                 {commentsQ.isLoading && <div className="h-16 rounded-xl bg-muted animate-pulse" />}
                 {commentsQ.data && commentsQ.data.rows.length === 0 && (
                   <div className="rounded-xl border border-dashed border-border p-4 text-xs text-muted-foreground text-center">
-                    Nadie ha comentado todavía. Sé el primero en proponer una ID.
+                    {t(
+                      "Nadie ha comentado todavía. Sé el primero en proponer una ID.",
+                      "No one has commented yet. Be the first to propose an ID.",
+                    )}
                   </div>
                 )}
                 {commentsQ.data?.rows.map((c) => {
@@ -356,11 +385,12 @@ function SightingDetail() {
                         <span className="font-medium text-foreground/80">
                           @{prof?.handle ?? "spotter"}
                         </span>
-                        <span>{relativeTime(c.created_at)}</span>
+                        <span>{formatRelativeTime(c.created_at, lang)}</span>
                       </div>
                       {taxon && (
                         <div className="mt-2 rounded-lg bg-leaf/10 text-leaf px-2.5 py-1.5 text-xs">
-                          Sugiere: <span className="italic font-semibold">{taxon.sci_name}</span>
+                          {t("Sugiere:", "Suggests:")}{" "}
+                          <span className="italic font-semibold">{taxon.sci_name}</span>
                           {taxon.common_name && (
                             <span className="opacity-70"> · {taxon.common_name}</span>
                           )}
@@ -374,7 +404,7 @@ function SightingDetail() {
                       {c.suggested_taxon_id && (
                         <div className="mt-2 flex items-center justify-between">
                           <div className="text-[11px] text-muted-foreground">
-                            {support} de 3 apoyos
+                            {t(`${support} de 3 apoyos`, `${support} of 3 supports`)}
                           </div>
                           {user ? (
                             <button
@@ -394,14 +424,14 @@ function SightingDetail() {
                             >
                               <ThumbsUp size={11} />{" "}
                               {isMine
-                                ? "Tu sugerencia"
+                                ? t("Tu sugerencia", "Your suggestion")
                                 : iAgree
-                                  ? "De acuerdo"
-                                  : "Estoy de acuerdo"}
+                                  ? t("De acuerdo", "Agreed")
+                                  : t("Estoy de acuerdo", "I agree")}
                             </button>
                           ) : (
                             <Link to="/login" className="text-[11px] text-leaf font-semibold">
-                              Entra para apoyar
+                              {t("Entra para apoyar", "Sign in to support")}
                             </Link>
                           )}
                         </div>
@@ -420,17 +450,20 @@ function SightingDetail() {
                   }}
                 >
                   <label className="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Sugerir especie (opcional)
+                    {t("Sugerir especie (opcional)", "Suggest a species (optional)")}
                   </label>
                   <TaxonCombobox
                     value={suggested}
                     onChange={(id) => setSuggested(id)}
-                    placeholder="— Sin sugerencia —"
+                    placeholder={t("— Sin sugerencia —", "— No suggestion —")}
                   />
                   <textarea
                     value={body}
                     onChange={(e) => setBody(e.target.value)}
-                    placeholder="Comentario, observación de campo, ¿por qué piensas que es esta especie?"
+                    placeholder={t(
+                      "Comentario, observación de campo, ¿por qué piensas que es esta especie?",
+                      "Comment, field observation, why do you think it's this species?",
+                    )}
                     rows={3}
                     className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm resize-none"
                   />
@@ -449,15 +482,15 @@ function SightingDetail() {
                     ) : (
                       <Send size={12} />
                     )}
-                    Publicar
+                    {t("Publicar", "Post")}
                   </button>
                 </form>
               ) : (
                 <div className="mt-4 rounded-2xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
                   <Link to="/login" className="text-leaf font-semibold">
-                    Entra
+                    {t("Entra", "Sign in")}
                   </Link>{" "}
-                  para comentar o sugerir una ID.
+                  {t("para comentar o sugerir una ID.", "to comment or suggest an ID.")}
                 </div>
               )}
             </section>
@@ -469,30 +502,31 @@ function SightingDetail() {
 }
 
 function StatusBadge({ status }: { status: string | null | undefined }) {
+  const { t } = useLang();
   if (status === "verified") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-leaf/10 text-leaf px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
-        <BadgeCheck size={11} /> Verificado
+        <BadgeCheck size={11} /> {t("Verificado", "Verified")}
       </span>
     );
   }
   if (status === "needs_id") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-orchid/10 text-orchid px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
-        <HelpCircle size={11} /> Necesita ID
+        <HelpCircle size={11} /> {t("Necesita ID", "Needs ID")}
       </span>
     );
   }
   if (status === "rejected") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 text-destructive px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
-        Rechazado
+        {t("Rechazado", "Rejected")}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-muted text-muted-foreground px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
-      <MessageCircle size={11} /> En revisión
+      <MessageCircle size={11} /> {t("En revisión", "Under review")}
     </span>
   );
 }

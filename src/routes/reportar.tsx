@@ -4,14 +4,22 @@ import { ShieldAlert, ArrowLeft, Check, Loader2, AlertCircle, Lock } from "lucid
 import { Shell } from "@/components/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useLang } from "@/lib/i18n";
 
 export const Route = createFileRoute("/reportar")({
   head: () => ({
     meta: [
       { title: "Reportar comercio ilegal de orquídeas · OrquIDea" },
-      { name: "description", content: "Reporta confidencialmente el saqueo o comercio ilegal de orquídeas en la Sierra de Oaxaca. Tu identidad queda protegida." },
+      {
+        name: "description",
+        content:
+          "Reporta confidencialmente el saqueo o comercio ilegal de orquídeas de México. Tu identidad queda protegida.",
+      },
       { property: "og:title", content: "Reportar comercio ilegal · OrquIDea" },
-      { property: "og:description", content: "Canal confidencial para denunciar saqueo y comercio ilegal de orquídeas." },
+      {
+        property: "og:description",
+        content: "Canal confidencial para denunciar saqueo y comercio ilegal de orquídeas.",
+      },
       { property: "og:url", content: "https://orchid-map-oaxaca.lovable.app/reportar" },
     ],
     links: [{ rel: "canonical", href: "https://orchid-map-oaxaca.lovable.app/reportar" }],
@@ -23,6 +31,7 @@ export const Route = createFileRoute("/reportar")({
 type Taxon = { id: string; sci_name: string; common_name: string | null };
 
 function ReportPage() {
+  const { t } = useLang();
   const { user } = useAuth();
   const [taxa, setTaxa] = useState<Taxon[]>([]);
   const [kind, setKind] = useState<string>("market_sale");
@@ -35,9 +44,13 @@ function ReportPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.from("taxa").select("id, sci_name, common_name").order("sci_name").then(({ data }) => {
-      if (data) setTaxa(data as Taxon[]);
-    });
+    supabase
+      .from("taxa")
+      .select("id, sci_name, common_name")
+      .order("sci_name")
+      .then(({ data }) => {
+        if (data) setTaxa(data as Taxon[]);
+      });
   }, []);
 
   async function submit() {
@@ -56,7 +69,9 @@ function ReportPage() {
       if (error) throw error;
       setDone(true);
     } catch (e) {
-      setError((e as Error).message || "No pudimos enviar el reporte.");
+      setError(
+        (e as Error).message || t("No pudimos enviar el reporte.", "We couldn't send the report."),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -69,12 +84,20 @@ function ReportPage() {
           <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-leaf/15 text-leaf">
             <Check size={28} />
           </div>
-          <h1 className="mt-4 font-display text-2xl font-semibold">Reporte enviado</h1>
+          <h1 className="mt-4 font-display text-2xl font-semibold">
+            {t("Reporte enviado", "Report sent")}
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground max-w-xs mx-auto">
-            Gracias por ayudar a proteger las orquídeas de la Sierra. El equipo de OrchidArc revisará tu reporte.
+            {t(
+              "Gracias por ayudar a proteger las orquídeas de México. El equipo de OrchidArc revisará tu reporte.",
+              "Thanks for helping protect Mexico's orchids. The OrchidArc team will review your report.",
+            )}
           </p>
-          <Link to="/" className="mt-6 inline-flex items-center gap-1 rounded-full bg-leaf text-leaf-foreground px-4 py-2 text-xs font-semibold">
-            Volver al inicio
+          <Link
+            to="/"
+            className="mt-6 inline-flex items-center gap-1 rounded-full bg-leaf text-leaf-foreground px-4 py-2 text-xs font-semibold"
+          >
+            {t("Volver al inicio", "Back to home")}
           </Link>
         </div>
       </Shell>
@@ -84,26 +107,36 @@ function ReportPage() {
   return (
     <Shell>
       <div className="px-4 pt-5 pb-10">
-        <Link to="/" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-          <ArrowLeft size={12} /> Volver
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft size={12} /> {t("Volver", "Back")}
         </Link>
         <div className="mt-2 flex items-center gap-2">
           <div className="grid h-10 w-10 place-items-center rounded-2xl bg-destructive/10 text-destructive">
             <ShieldAlert size={20} />
           </div>
-          <h1 className="text-2xl font-display font-semibold">Reportar comercio</h1>
+          <h1 className="text-2xl font-display font-semibold">
+            {t("Reportar comercio", "Report trade")}
+          </h1>
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          Reporta saqueo, ventas en mercados, anuncios online o extracción en campo. <Lock size={10} className="inline" /> Puedes hacerlo de forma anónima.
+          {t(
+            "Reporta saqueo, ventas en mercados, anuncios online o extracción en campo.",
+            "Report poaching, market sales, online listings or field extraction.",
+          )}{" "}
+          <Lock size={10} className="inline" />{" "}
+          {t("Puedes hacerlo de forma anónima.", "You can do it anonymously.")}
         </p>
 
-        <Field label="¿Qué viste?">
+        <Field label={t("¿Qué viste?", "What did you see?")}>
           <div className="grid grid-cols-2 gap-2">
             {[
-              { v: "market_sale", l: "Mercado/Feria" },
-              { v: "online_sale", l: "Anuncio online" },
-              { v: "field_extraction", l: "Extracción en campo" },
-              { v: "other", l: "Otro" },
+              { v: "market_sale", l: t("Mercado/Feria", "Market/Fair") },
+              { v: "online_sale", l: t("Anuncio online", "Online listing") },
+              { v: "field_extraction", l: t("Extracción en campo", "Field extraction") },
+              { v: "other", l: t("Otro", "Other") },
             ].map((o) => (
               <button
                 key={o.v}
@@ -111,7 +144,9 @@ function ReportPage() {
                 onClick={() => setKind(o.v)}
                 className={
                   "rounded-xl border px-3 py-2 text-xs font-medium " +
-                  (kind === o.v ? "bg-destructive/10 border-destructive text-destructive" : "bg-card border-border text-foreground/80")
+                  (kind === o.v
+                    ? "bg-destructive/10 border-destructive text-destructive"
+                    : "bg-card border-border text-foreground/80")
                 }
               >
                 {o.l}
@@ -120,44 +155,55 @@ function ReportPage() {
           </div>
         </Field>
 
-        <Field label="Especie (si la reconoces)">
+        <Field label={t("Especie (si la reconoces)", "Species (if you recognize it)")}>
           <select
             value={taxonId}
             onChange={(e) => setTaxonId(e.target.value)}
             className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
           >
-            <option value="">— No estoy seguro —</option>
-            {taxa.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.sci_name}{t.common_name ? ` · ${t.common_name}` : ""}
+            <option value="">{t("— No estoy seguro —", "— Not sure —")}</option>
+            {taxa.map((tx) => (
+              <option key={tx.id} value={tx.id}>
+                {tx.sci_name}
+                {tx.common_name ? ` · ${tx.common_name}` : ""}
               </option>
             ))}
           </select>
         </Field>
 
-        <Field label="Lugar (mercado, sitio web, paraje)">
+        <Field label={t("Lugar (mercado, sitio web, paraje)", "Place (market, website, locality)")}>
           <input
             value={locationText}
             onChange={(e) => setLocationText(e.target.value)}
-            placeholder="Ej. tianguis de Tlacolula, dom."
+            placeholder={t("Ej. tianguis de Tlacolula, dom.", "e.g. Tlacolula Sunday market")}
             className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
           />
         </Field>
 
-        <Field label="Detalles">
+        <Field label={t("Detalles", "Details")}>
           <textarea
             value={details}
             onChange={(e) => setDetails(e.target.value)}
             rows={4}
-            placeholder="Cantidades, precios, fotos publicadas, vendedor… cualquier detalle ayuda."
+            placeholder={t(
+              "Cantidades, precios, fotos publicadas, vendedor… cualquier detalle ayuda.",
+              "Quantities, prices, posted photos, seller… any detail helps.",
+            )}
             className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
           />
         </Field>
 
         {user && (
           <label className="mt-4 flex items-center gap-2 text-xs text-foreground/80">
-            <input type="checkbox" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} />
-            Enviar de forma anónima (no asociar a mi cuenta @{user.email})
+            <input
+              type="checkbox"
+              checked={anonymous}
+              onChange={(e) => setAnonymous(e.target.checked)}
+            />
+            {t(
+              `Enviar de forma anónima (no asociar a mi cuenta @${user.email})`,
+              `Send anonymously (don't link to my account @${user.email})`,
+            )}
           </label>
         )}
 
@@ -173,11 +219,14 @@ function ReportPage() {
           className="mt-6 w-full rounded-2xl bg-destructive text-destructive-foreground py-3 text-sm font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {submitting ? <Loader2 size={16} className="animate-spin" /> : <ShieldAlert size={16} />}
-          Enviar reporte
+          {t("Enviar reporte", "Send report")}
         </button>
 
         <p className="mt-3 text-[10px] text-muted-foreground text-center">
-          Tu reporte llega solo al equipo de OrchidArc. No se publica en el muro.
+          {t(
+            "Tu reporte llega solo al equipo de OrchidArc. No se publica en el muro.",
+            "Your report goes only to the OrchidArc team. It isn't posted to the feed.",
+          )}
         </p>
       </div>
     </Shell>

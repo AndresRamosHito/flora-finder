@@ -5,6 +5,7 @@ import { Shell } from "@/components/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
+import { useLang } from "@/lib/i18n";
 
 export const Route = createFileRoute("/sociedades/")({
   ssr: false,
@@ -13,10 +14,11 @@ export const Route = createFileRoute("/sociedades/")({
       { title: "Sociedades orquideológicas · OrquIDea" },
       {
         name: "description",
-        content: "Directorio de sociedades orquideológicas activas en la Sierra de Oaxaca y regiones cercanas. Únete a chapters locales.",
+        content:
+          "Directorio de sociedades orquideológicas activas en México. Únete a chapters locales.",
       },
       { property: "og:title", content: "Sociedades orquideológicas · OrquIDea" },
-      { property: "og:description", content: "Sociedades de orquideólogos en la Sierra de Oaxaca y México." },
+      { property: "og:description", content: "Sociedades de orquideólogos de México." },
       { property: "og:url", content: "https://orchid-map-oaxaca.lovable.app/sociedades" },
     ],
     links: [{ rel: "canonical", href: "https://orchid-map-oaxaca.lovable.app/sociedades" }],
@@ -26,6 +28,7 @@ export const Route = createFileRoute("/sociedades/")({
 });
 
 function SocietiesPage() {
+  const { t } = useLang();
   const { user } = useAuth();
   const qc = useQueryClient();
 
@@ -70,24 +73,28 @@ function SocietiesPage() {
           <div className="grid h-10 w-10 place-items-center rounded-2xl bg-leaf/15 text-leaf">
             <Users size={18} />
           </div>
-          <h1 className="text-2xl font-display font-semibold">Sociedades</h1>
+          <h1 className="text-2xl font-display font-semibold">{t("Sociedades", "Societies")}</h1>
         </div>
         <p className="mt-2 text-xs text-muted-foreground max-w-[34ch]">
-          Únete a sociedades orquideológicas de la región para coordinar salidas, IDs y
-          conservación.
+          {t(
+            "Únete a sociedades orquideológicas de la región para coordinar salidas, IDs y conservación.",
+            "Join regional orchid societies to coordinate outings, IDs and conservation.",
+          )}
         </p>
 
         {!user && (
           <div className="mt-4 rounded-2xl bg-accent/40 border border-border p-3 text-xs">
             <Link to="/login" className="font-semibold text-leaf underline">
-              Entra
+              {t("Entra", "Sign in")}
             </Link>{" "}
-            para unirte y participar en los grupos.
+            {t("para unirte y participar en los grupos.", "to join and take part in the groups.")}
           </div>
         )}
 
         <div className="mt-5 space-y-3">
-          {isLoading && <div className="text-xs text-muted-foreground">Cargando…</div>}
+          {isLoading && (
+            <div className="text-xs text-muted-foreground">{t("Cargando…", "Loading…")}</div>
+          )}
           {(data ?? []).map((s) => (
             <div key={s.id} className="rounded-2xl bg-card border border-border p-4">
               <div className="flex items-start gap-3">
@@ -102,7 +109,7 @@ function SocietiesPage() {
                     <span className="font-semibold text-sm">{s.name}</span>
                     {s.is_official && (
                       <span className="rounded-full bg-leaf/10 text-leaf px-1.5 py-0.5 text-[9px] font-semibold uppercase">
-                        Oficial
+                        {t("Oficial", "Official")}
                       </span>
                     )}
                   </div>
@@ -127,10 +134,10 @@ function SocietiesPage() {
                     <Loader2 size={13} className="animate-spin" />
                   ) : s.joined ? (
                     <>
-                      <Check size={13} /> Miembro
+                      <Check size={13} /> {t("Miembro", "Member")}
                     </>
                   ) : (
-                    "Unirme"
+                    t("Unirme", "Join")
                   )}
                 </button>
                 {s.joined && (
@@ -139,7 +146,7 @@ function SocietiesPage() {
                     params={{ id: s.id }}
                     className="rounded-xl bg-card border border-border px-3 py-2 text-xs font-semibold inline-flex items-center gap-1"
                   >
-                    Entrar <ArrowRight size={12} />
+                    {t("Entrar", "Enter")} <ArrowRight size={12} />
                   </Link>
                 )}
               </div>
