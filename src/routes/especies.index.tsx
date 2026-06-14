@@ -5,7 +5,7 @@ import { ArrowLeft, BookOpen, Search, Shield, X } from "lucide-react";
 import { Shell } from "@/components/Shell";
 import { Orchid } from "@/components/Orchid";
 import { StatusPill } from "@/components/StatusPill";
-import { supabase } from "@/integrations/supabase/client";
+import { selectTaxaCatalog } from "@/lib/taxa";
 import { useLang } from "@/lib/i18n";
 
 export const Route = createFileRoute("/especies/")({
@@ -44,15 +44,10 @@ function SpeciesIndexPage() {
   const { t } = useLang();
   const { data, isLoading } = useQuery({
     queryKey: ["taxa-catalog"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("taxa")
-        .select("id, sci_name, common_name, genus, conservation_status, is_sensitive, is_native")
-        .order("sci_name")
-        .limit(5000);
-      if (error) throw error;
-      return (data ?? []) as TaxonRow[];
-    },
+    queryFn: () =>
+      selectTaxaCatalog<Omit<TaxonRow, "is_native">>(
+        "id, sci_name, common_name, genus, conservation_status, is_sensitive",
+      ),
   });
 
   const [query, setQuery] = useState("");

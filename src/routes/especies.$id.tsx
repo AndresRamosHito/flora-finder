@@ -16,6 +16,7 @@ import { Shell, REGION } from "@/components/Shell";
 import { Orchid } from "@/components/Orchid";
 import { StatusPill } from "@/components/StatusPill";
 import { supabase } from "@/integrations/supabase/client";
+import { selectTaxonById } from "@/lib/taxa";
 import { useLang } from "@/lib/i18n";
 
 export const Route = createFileRoute("/especies/$id")({
@@ -152,23 +153,33 @@ function externalSources(sciName: string, tr: (es: string, en: string) => string
   ];
 }
 
+type TaxonDetail = {
+  id: string;
+  sci_name: string;
+  common_name: string | null;
+  genus: string | null;
+  family: string | null;
+  tribe: string | null;
+  description: string | null;
+  conservation_status: string | null;
+  is_sensitive: boolean;
+  is_native: boolean;
+  ref_image_url: string | null;
+  synonyms: string[] | null;
+  region: string | null;
+};
+
 function SpeciesDetailPage() {
   const { t: tr, lang } = useLang();
   const { id } = Route.useParams();
 
   const taxonQ = useQuery({
     queryKey: ["taxon", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("taxa")
-        .select(
-          "id, sci_name, common_name, genus, family, tribe, description, conservation_status, is_sensitive, is_native, ref_image_url, synonyms, region",
-        )
-        .eq("id", id)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () =>
+      selectTaxonById<Omit<TaxonDetail, "is_native">>(
+        id,
+        "id, sci_name, common_name, genus, family, tribe, description, conservation_status, is_sensitive, ref_image_url, synonyms, region",
+      ),
   });
 
   const t = taxonQ.data;

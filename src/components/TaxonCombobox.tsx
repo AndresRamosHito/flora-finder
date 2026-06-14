@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronsUpDown, Search, Shield, X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { selectTaxaCatalog } from "@/lib/taxa";
 import { useLang } from "@/lib/i18n";
 
 export type Taxon = {
@@ -36,14 +36,17 @@ export function TaxonCombobox({ value, onChange, placeholder }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    supabase
-      .from("taxa")
-      .select("id, sci_name, common_name, is_sensitive, is_native")
-      .order("sci_name")
-      .limit(5000)
-      .then(({ data }) => {
-        if (data) setTaxa(data as Taxon[]);
+    let active = true;
+    selectTaxaCatalog<Omit<Taxon, "is_native">>("id, sci_name, common_name, is_sensitive")
+      .then((rows) => {
+        if (active) setTaxa(rows as Taxon[]);
+      })
+      .catch(() => {
+        /* leave the catalog empty on hard failure */
       });
+    return () => {
+      active = false;
+    };
   }, []);
 
   // Close on outside click
