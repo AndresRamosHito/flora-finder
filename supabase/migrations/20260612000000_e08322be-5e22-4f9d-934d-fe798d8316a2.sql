@@ -34,12 +34,17 @@ WHERE genus IN ('Cattleya', 'Phalaenopsis')
 
 -- 3. Add Dinema × mariae to the Mexican flora. Metadata is intentionally
 --    minimal pending confirmation against the Herbario AMO references.
+--    Insert-if-absent (no ON CONFLICT) so this works even where taxa.sci_name
+--    has no unique constraint (the bulk-imported catalog doesn't have one).
 INSERT INTO public.taxa (sci_name, genus, family, tribe, is_native, is_sensitive, region)
-VALUES ('Dinema × mariae', 'Dinema', 'Orchidaceae', 'Epidendreae / Laeliinae', true, false, 'México')
-ON CONFLICT (sci_name) DO UPDATE
-  SET is_native = excluded.is_native,
-      genus     = excluded.genus,
-      tribe     = excluded.tribe;
+SELECT 'Dinema × mariae', 'Dinema', 'Orchidaceae', 'Epidendreae / Laeliinae', true, false, 'México'
+WHERE NOT EXISTS (SELECT 1 FROM public.taxa WHERE sci_name = 'Dinema × mariae');
+
+UPDATE public.taxa
+SET is_native = true,
+    genus     = 'Dinema',
+    tribe     = 'Epidendreae / Laeliinae'
+WHERE sci_name = 'Dinema × mariae';
 
 -- 4. Correct the blanket "Sierra de Oaxaca" region stamped on the seed taxa,
 --    which mislabelled species that occur elsewhere in Mexico.
