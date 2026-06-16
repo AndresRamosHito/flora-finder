@@ -78,17 +78,21 @@ The app reads `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`
 ## 6. Auto-apply migrations going forward (the durable fix)
 
 A GitHub Action (`.github/workflows/db-migrate.yml`) runs `supabase db push`
-against the new project whenever `supabase/migrations/**` changes on `main`. This
+against the new project whenever `supabase/migrations/**` changes on `main`, and
+can be run manually (Actions → "Apply Supabase migrations" → Run workflow). This
 is what was missing before — Vercel only deploys the frontend, so the DB silently
-drifted. Add one repository secret:
+drifted. Add two repository secrets:
 
-- **Settings → Secrets and variables → Actions → New secret**
-  - `SUPABASE_DB_URL` = the project's connection string
-    (Supabase → Settings → Database → Connection string → URI, with your DB
-    password). Use the **Session/Direct** connection (port 5432) or the pooler URI.
+- **Settings → Secrets and variables → Actions → New repository secret**
+  - `SUPABASE_ACCESS_TOKEN` = a personal access token from
+    https://supabase.com/dashboard/account/tokens
+  - `SUPABASE_DB_PASSWORD` = your database password, **raw** (no URL-encoding)
 
-After that, every merged migration applies automatically — no more "frontend
-shipped but the column doesn't exist."
+The CLI resolves the connection from the project ref (`rbjjogsafaplaqfqhohe`, set
+in the workflow), so there's no connection string to hand-build. After the
+secrets exist, run the workflow once to apply everything; from then on every
+merged migration applies automatically — no more "frontend shipped but the
+column doesn't exist."
 
 ## 7. Retire the old project
 
