@@ -1,0 +1,35 @@
+name: Apply Supabase migrations
+
+# Keeps the database in lockstep with the repo. Vercel only deploys the
+# frontend, so without this the DB silently drifts behind merged migrations.
+# Requires repo secret SUPABASE_DB_URL (Supabase → Settings → Database →
+# Connection string → URI, with the DB password).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+  workflow_dispatch: {}
+
+concurrency:
+  group: db-migrate
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Push pending migrations
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::notice::SUPABASE_DB_URL not set yet — skipping. Add it once the owned project exists (see supabase/SETUP.md step 6)."
+            exit 0
+          fi
+          supabase db push --db-url "$SUPABASE_DB_URL"
