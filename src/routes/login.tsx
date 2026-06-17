@@ -256,7 +256,7 @@ function LoginPage() {
               {t("Entrar a", "Sign in to")} Orqu<span className="font-bold text-orchid">ID</span>ea
             </h1>
             <p className="text-xs text-muted-foreground">
-              {t("por OrchidArc · Orquídeas de México", "by OrchidArc · Orchids of Mexico")}
+              {t("por Orchidarc · Orquídeas de México", "by Orchidarc · Orchids of Mexico")}
             </p>
           </div>
         </div>
