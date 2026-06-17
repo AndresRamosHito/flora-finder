@@ -147,8 +147,27 @@ function FeedCard({ s, status, index }: { s: SightingRow; status: string | null;
     >
       <article>
         <div className="relative h-44 grid place-items-center bg-gradient-to-br from-accent/40 to-secondary/30">
-          <Orchid sciName={sci} size={150} />
-          {!sci && (
+          {s.photo_url ? (
+            <img
+              src={s.photo_url}
+              alt={
+                sci
+                  ? t(
+                      `Foto de orquídea ${sci}${common ? ` (${common})` : ""} en ${s.location_label ?? "México"}`,
+                      `Photo of orchid ${sci}${common ? ` (${common})` : ""} in ${s.location_label ?? "Mexico"}`,
+                    )
+                  : t(
+                      `Foto de orquídea sin identificar en ${s.location_label ?? "México"}`,
+                      `Photo of an unidentified orchid in ${s.location_label ?? "Mexico"}`,
+                    )
+              }
+              loading="lazy"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <Orchid sciName={sci} size={150} />
+          )}
+          {!sci && !s.photo_url && (
             <div className="absolute inset-0 grid place-items-center gap-2 text-leaf">
               <HelpCircle size={28} />
               <span className="text-xs font-semibold">{t("Sin identificar", "Unidentified")}</span>
