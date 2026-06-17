@@ -87,6 +87,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "width=device-width, initial-scale=1, viewport-fit=cover",
       },
       { name: "theme-color", content: "#f6f1e4" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: "OrquIDea" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "application-name", content: "OrquIDea" },
       { name: "author", content: "OrchidArc" },
       { name: "robots", content: "index,follow" },
       { title: "OrquIDea — Ciencia ciudadana de orquídeas" },
@@ -201,6 +205,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <AuthSync />
+        <ServiceWorkerRegistration />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
       </LanguageProvider>
@@ -223,6 +228,32 @@ function AuthSync() {
 
     return () => subscription.unsubscribe();
   }, [router, queryClient]);
+
+  return null;
+}
+
+/** Root-level singleton: register the PWA service worker on the client only. */
+function ServiceWorkerRegistration() {
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) {
+      return;
+    }
+
+    const registerServiceWorker = () => {
+      navigator.serviceWorker.register("/sw.js").catch(error => {
+        console.error("Service worker registration failed", error);
+      });
+    };
+
+    if (document.readyState === "complete") {
+      registerServiceWorker();
+      return;
+    }
+
+    window.addEventListener("load", registerServiceWorker, { once: true });
+
+    return () => window.removeEventListener("load", registerServiceWorker);
+  }, []);
 
   return null;
 }
