@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Mail, ShieldAlert, Bug, HelpCircle } from "lucide-react";
 import { Shell } from "@/components/Shell";
 
-const SUPPORT_EMAIL = "contact@orchidarc.org";
+const SUPPORT_EMAIL = "andresr@orchidarc.org";
 
 export const Route = createFileRoute("/support")({
   head: () => ({
