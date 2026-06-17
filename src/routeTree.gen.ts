@@ -23,6 +23,7 @@ import { Route as EspeciesIndexRouteImport } from './routes/especies.index'
 import { Route as SociedadesIdRouteImport } from './routes/sociedades.$id'
 import { Route as SIdRouteImport } from './routes/s.$id'
 import { Route as EspeciesIdRouteImport } from './routes/especies.$id'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AdminReportesRouteImport } from './routes/admin.reportes'
 
 const RetosRoute = RetosRouteImport.update({
@@ -95,6 +96,11 @@ const EspeciesIdRoute = EspeciesIdRouteImport.update({
   path: '/especies/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminReportesRoute = AdminReportesRouteImport.update({
   id: '/admin/reportes',
   path: '/admin/reportes',
@@ -112,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/reportar': typeof ReportarRoute
   '/retos': typeof RetosRoute
   '/admin/reportes': typeof AdminReportesRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/especies/$id': typeof EspeciesIdRoute
   '/s/$id': typeof SIdRoute
   '/sociedades/$id': typeof SociedadesIdRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByTo {
   '/reportar': typeof ReportarRoute
   '/retos': typeof RetosRoute
   '/admin/reportes': typeof AdminReportesRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/especies/$id': typeof EspeciesIdRoute
   '/s/$id': typeof SIdRoute
   '/sociedades/$id': typeof SociedadesIdRoute
@@ -147,6 +155,7 @@ export interface FileRoutesById {
   '/reportar': typeof ReportarRoute
   '/retos': typeof RetosRoute
   '/admin/reportes': typeof AdminReportesRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/especies/$id': typeof EspeciesIdRoute
   '/s/$id': typeof SIdRoute
   '/sociedades/$id': typeof SociedadesIdRoute
@@ -166,6 +175,7 @@ export interface FileRouteTypes {
     | '/reportar'
     | '/retos'
     | '/admin/reportes'
+    | '/auth/callback'
     | '/especies/$id'
     | '/s/$id'
     | '/sociedades/$id'
@@ -183,6 +193,7 @@ export interface FileRouteTypes {
     | '/reportar'
     | '/retos'
     | '/admin/reportes'
+    | '/auth/callback'
     | '/especies/$id'
     | '/s/$id'
     | '/sociedades/$id'
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/reportar'
     | '/retos'
     | '/admin/reportes'
+    | '/auth/callback'
     | '/especies/$id'
     | '/s/$id'
     | '/sociedades/$id'
@@ -218,6 +230,7 @@ export interface RootRouteChildren {
   ReportarRoute: typeof ReportarRoute
   RetosRoute: typeof RetosRoute
   AdminReportesRoute: typeof AdminReportesRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   EspeciesIdRoute: typeof EspeciesIdRoute
   SIdRoute: typeof SIdRoute
   SociedadesIdRoute: typeof SociedadesIdRoute
@@ -325,6 +338,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EspeciesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/reportes': {
       id: '/admin/reportes'
       path: '/admin/reportes'
@@ -346,6 +366,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReportarRoute: ReportarRoute,
   RetosRoute: RetosRoute,
   AdminReportesRoute: AdminReportesRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   EspeciesIdRoute: EspeciesIdRoute,
   SIdRoute: SIdRoute,
   SociedadesIdRoute: SociedadesIdRoute,
