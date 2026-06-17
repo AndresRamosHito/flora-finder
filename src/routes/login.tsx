@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Flower2, Mail, Loader2, ArrowLeft } from "lucide-react";
+import { Flower2, Mail, Loader2, ArrowLeft, LockKeyhole } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useLang, LanguageToggle } from "@/lib/i18n";
@@ -12,7 +12,7 @@ export const Route = createFileRoute("/login")({
       {
         name: "description",
         content:
-          "Entra a OrquIDea con un enlace mágico o tu cuenta de Google para registrar avistamientos de orquídeas.",
+          "Entra a OrquIDea con correo y contraseña, Google o un enlace de recuperación.",
       },
       { name: "robots", content: "noindex, nofollow" },
     ],
@@ -21,37 +21,123 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
+type AuthMode = "signin" | "signup";
+type Status = "idle" | "loading" | "sent" | "error";
+type SentKind = "confirm" | "reset" | "magic";
+
+function authRedirectUrl() {
+  return `${window.location.origin}/auth/callback?next=/onboarding`;
+}
+
+async function nextRouteForUser(userId: string): Promise<"/" | "/onboarding"> {
+  const { data } = await supabase
+    .from("profiles")
+    .select("handle")
+    .eq("id", userId)
+    .maybeSingle();
+  const isDefault = !data?.handle || data.handle.startsWith("spotter_");
+  return isDefault ? "/onboarding" : "/";
+}
+
 function LoginPage() {
   const { t } = useLang();
+  const [mode, setMode] = useState<AuthMode>("signin");
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [status, setStatus] = useState<Status>("idle");
+  const [sentKind, setSentKind] = useState<SentKind>("confirm");
   const [errMsg, setErrMsg] = useState<string | null>(null);
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  // Already signed in? Bounce to onboarding (handle picker) or home.
   useEffect(() => {
     if (!loading && user) {
       void (async () => {
-        const { data } = await supabase
-          .from("profiles")
-          .select("handle")
-          .eq("id", user.id)
-          .maybeSingle();
-        const isDefault = !data?.handle || data.handle.startsWith("spotter_");
-        navigate({ to: isDefault ? "/onboarding" : "/", replace: true });
+        const next = await nextRouteForUser(user.id);
+        navigate({ to: next, replace: true });
       })();
     }
   }, [loading, user, navigate]);
 
-  function authRedirectUrl() {
-    return `${window.location.origin}/auth/callback?next=/onboarding`;
+  async function routeAfterAuth(userId: string) {
+    const next = await nextRouteForUser(userId);
+    navigate({ to: next, replace: true });
   }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email) return;
-    setStatus("sending");
+    if (!email || !password) return;
+    setStatus("loading");
+    setErrMsg(null);
+
+    if (mode === "signup") {
+      if (password.length < 8) {
+        setStatus("error");
+        setErrMsg(t("Usa al menos 8 caracteres.", "Use at least 8 characters."));
+        return;
+      }
+      if (password !== confirmPassword) {
+        setStatus("error");
+        setErrMsg(t("Las contraseñas no coinciden.", "Passwords do not match."));
+        return;
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: authRedirectUrl() },
+      });
+      if (error) {
+        setStatus("error");
+        setErrMsg(error.message);
+        return;
+      }
+      if (data.user && data.session) {
+        await routeAfterAuth(data.user.id);
+        return;
+      }
+      setSentKind("confirm");
+      setStatus("sent");
+      return;
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setStatus("error");
+      setErrMsg(error.message);
+      return;
+    }
+    if (data.user) {
+      await routeAfterAuth(data.user.id);
+    }
+  }
+
+  async function sendPasswordReset() {
+    if (!email) {
+      setErrMsg(t("Escribe tu correo primero.", "Enter your email first."));
+      return;
+    }
+    setStatus("loading");
+    setErrMsg(null);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/password-reset`,
+    });
+    if (error) {
+      setStatus("error");
+      setErrMsg(error.message);
+      return;
+    }
+    setSentKind("reset");
+    setStatus("sent");
+  }
+
+  async function sendMagicLink() {
+    if (!email) {
+      setErrMsg(t("Escribe tu correo primero.", "Enter your email first."));
+      return;
+    }
+    setStatus("loading");
     setErrMsg(null);
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -62,6 +148,7 @@ function LoginPage() {
       setErrMsg(error.message);
       return;
     }
+    setSentKind("magic");
     setStatus("sent");
   }
 
@@ -91,14 +178,52 @@ function LoginPage() {
           </div>
         </div>
 
-        <h2 className="mt-8 font-display text-xl">{t("Entra", "Sign in")}</h2>
+        <h2 className="mt-8 font-display text-xl">
+          {mode === "signin" ? t("Entrar", "Sign in") : t("Crear cuenta", "Create account")}
+        </h2>
 
         <p className="mt-1 text-sm text-muted-foreground">
-          {t(
-            "Continúa con Google o recibe un enlace mágico por correo.",
-            "Continue with Google or get a magic link by email.",
-          )}
+          {mode === "signin"
+            ? t(
+                "Usa tu correo y contraseña para volver a tu mismo perfil y @handle.",
+                "Use your email and password to return to the same profile and @handle.",
+              )
+            : t(
+                "Crea una cuenta con contraseña. Después elegirás un único @handle.",
+                "Create an account with a password. Then you will choose one @handle.",
+              )}
         </p>
+
+        <div className="mt-5 grid grid-cols-2 gap-2 rounded-2xl bg-muted p-1 text-xs font-semibold">
+          <button
+            type="button"
+            onClick={() => {
+              setMode("signin");
+              setStatus("idle");
+              setErrMsg(null);
+            }}
+            className={
+              "rounded-xl px-3 py-2 transition " +
+              (mode === "signin" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")
+            }
+          >
+            {t("Entrar", "Sign in")}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMode("signup");
+              setStatus("idle");
+              setErrMsg(null);
+            }}
+            className={
+              "rounded-xl px-3 py-2 transition " +
+              (mode === "signup" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")
+            }
+          >
+            {t("Crear cuenta", "Create account")}
+          </button>
+        </div>
 
         <button
           type="button"
@@ -145,12 +270,30 @@ function LoginPage() {
         {status === "sent" ? (
           <div className="mt-6 rounded-2xl border border-leaf/30 bg-leaf/5 p-5">
             <div className="flex items-center gap-2 text-leaf font-medium">
-              <Mail size={16} /> {t("Enlace enviado", "Link sent")}
+              <Mail size={16} />
+              {sentKind === "reset"
+                ? t("Enlace para contraseña enviado", "Password link sent")
+                : sentKind === "magic"
+                  ? t("Enlace enviado", "Link sent")
+                  : t("Confirma tu correo", "Confirm your email")}
             </div>
             <p className="mt-2 text-sm text-foreground/80">
-              {t("Revisa tu bandeja en", "Check your inbox at")} <b>{email}</b>{" "}
-              {t("y abre el enlace para entrar.", "and open the link to sign in.")}
+              {sentKind === "reset"
+                ? t(
+                    "Revisa tu correo y abre el enlace para crear una nueva contraseña.",
+                    "Check your email and open the link to create a new password.",
+                  )
+                : sentKind === "magic"
+                  ? t(
+                      "Revisa tu bandeja y abre el enlace para entrar. Después puedes crear una contraseña desde este flujo.",
+                      "Check your inbox and open the link to sign in. Then you can create a password from this flow.",
+                    )
+                  : t(
+                      "Revisa tu correo para confirmar la cuenta. Después volverás a elegir tu @handle una sola vez.",
+                      "Check your email to confirm the account. Then you will choose your @handle only once.",
+                    )}
             </p>
+            <p className="mt-2 text-xs text-muted-foreground break-all">{email}</p>
           </div>
         ) : (
           <form onSubmit={onSubmit} className="mt-6 space-y-3">
@@ -166,17 +309,58 @@ function LoginPage() {
                 className="w-full rounded-xl border border-input bg-card px-4 py-3 text-sm outline-none focus:border-leaf focus:ring-2 focus:ring-leaf/20"
               />
             </label>
+            <label className="block">
+              <span className="sr-only">{t("Contraseña", "Password")}</span>
+              <input
+                type="password"
+                required
+                minLength={8}
+                autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                placeholder={t("Contraseña", "Password")}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-xl border border-input bg-card px-4 py-3 text-sm outline-none focus:border-leaf focus:ring-2 focus:ring-leaf/20"
+              />
+            </label>
+            {mode === "signup" && (
+              <label className="block">
+                <span className="sr-only">{t("Confirmar contraseña", "Confirm password")}</span>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                  placeholder={t("Confirmar contraseña", "Confirm password")}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full rounded-xl border border-input bg-card px-4 py-3 text-sm outline-none focus:border-leaf focus:ring-2 focus:ring-leaf/20"
+                />
+              </label>
+            )}
             {errMsg && <p className="text-xs text-destructive">{errMsg}</p>}
             <button
               type="submit"
-              disabled={status === "sending"}
+              disabled={status === "loading"}
               className="w-full rounded-xl bg-leaf text-leaf-foreground font-semibold py-3 text-sm disabled:opacity-60 inline-flex items-center justify-center gap-2"
             >
-              {status === "sending" && <Loader2 size={14} className="animate-spin" />}
-              {t("Enviar enlace mágico", "Send magic link")}
+              {status === "loading" ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <LockKeyhole size={14} />
+              )}
+              {mode === "signin" ? t("Entrar con contraseña", "Sign in with password") : t("Crear cuenta", "Create account")}
             </button>
           </form>
         )}
+
+        <div className="mt-4 flex flex-col gap-2 text-center text-xs">
+          <button type="button" onClick={sendPasswordReset} className="text-leaf font-semibold">
+            {t("Olvidé mi contraseña / crear contraseña", "Forgot or need to create a password")}
+          </button>
+          <button type="button" onClick={sendMagicLink} className="text-muted-foreground hover:text-foreground">
+            {t("Usar enlace mágico como respaldo", "Use a magic link as backup")}
+          </button>
+        </div>
 
         <p className="mt-8 text-[11px] text-muted-foreground leading-relaxed">
           {t(
