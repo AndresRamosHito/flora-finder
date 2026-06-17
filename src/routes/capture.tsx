@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Camera, Loader2, MapPin, Shield, ArrowLeft, Check, AlertCircle } from "lucide-react";
+import { Camera, Loader2, MapPin, Shield, ArrowLeft, Check, AlertCircle, Lock } from "lucide-react";
 import { Shell, REGION } from "@/components/Shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,17 @@ import { useLang } from "@/lib/i18n";
 
 const MAX_PHOTOS = 8;
 
+type LocationPrivacy = "approx20" | "regional100" | "hidden";
+
+const LOCATION_PRIVACY: Record<
+  LocationPrivacy,
+  { precision: "fuzzed" | "hidden"; radiusKm: 20 | 100 }
+> = {
+  approx20: { precision: "fuzzed", radiusKm: 20 },
+  regional100: { precision: "fuzzed", radiusKm: 100 },
+  hidden: { precision: "hidden", radiusKm: 100 },
+};
+
 export const Route = createFileRoute("/capture")({
   head: () => ({
     meta: [
@@ -17,7 +28,7 @@ export const Route = createFileRoute("/capture")({
       {
         name: "description",
         content:
-          "Registra un nuevo avistamiento de orquídea con fotos y especie sugerida. Eliminamos los datos de GPS antes de subir las fotos.",
+          "Registra un nuevo avistamiento de orquídea con fotos, especie sugerida y ubicación protegida. Eliminamos los datos de GPS antes de subir las fotos.",
       },
       { name: "robots", content: "noindex, nofollow" },
     ],
@@ -36,6 +47,7 @@ function CapturePage() {
   const [previews, setPreviews] = useState<string[]>([]);
   // selectedTaxon below holds the chosen species (id + metadata)
   const [locationLabel, setLocationLabel] = useState("");
+  const [locationPrivacy, setLocationPrivacy] = useState<LocationPrivacy>("approx20");
   const [observedAt, setObservedAt] = useState(() => new Date().toISOString().slice(0, 16));
   const [notes, setNotes] = useState("");
   const [selectedTaxon, setSelectedTaxon] = useState<Taxon | null>(null);
@@ -108,8 +120,12 @@ function CapturePage() {
         });
       }
 
+      const privacy = LOCATION_PRIVACY[locationPrivacy];
       const taxonId = selectedTaxon?.id ?? "";
-      const ins = await supabase
+      const publicRadiusKm = selectedTaxon?.is_sensitive
+        ? Math.max(privacy.radiusKm, 100)
+        : privacy.radiusKm;
+      const ins = await (supabase as any)
         .from("sightings")
         .insert({
           user_id: user.id,
@@ -117,8 +133,10 @@ function CapturePage() {
           // Legacy/thumbnail field: keep first photo here so existing feeds still work.
           photo_url: uploadedPhotos[0]?.photo_url ?? null,
           observed_at: new Date(observedAt).toISOString(),
+          // Store the observer's place text. The public view hides it when precision is hidden.
           location_label: locationLabel || REGION,
-          location_precision: selectedTaxon?.is_sensitive ? "fuzzed" : "fuzzed",
+          location_precision: privacy.precision,
+          public_radius_km: publicRadiusKm,
           notes: notes || null,
           variety: variety.trim() || null,
           origin,
@@ -155,6 +173,10 @@ function CapturePage() {
         <div className="p-6 text-sm text-muted-foreground">{t("Cargando…", "Loading…")}</div>
       </Shell>
     );
+
+  const effectiveRadius = selectedTaxon?.is_sensitive
+    ? Math.max(LOCATION_PRIVACY[locationPrivacy].radiusKm, 100)
+    : LOCATION_PRIVACY[locationPrivacy].radiusKm;
 
   return (
     <Shell>
@@ -331,8 +353,8 @@ function CapturePage() {
 
         <Field
           label={t(
-            "Lugar (texto general, sin coordenadas)",
-            "Place (general text, no coordinates)",
+            "Lugar privado para tu registro",
+            "Private place for your record",
           )}
         >
           <div className="relative">
@@ -349,6 +371,58 @@ function CapturePage() {
               )}
               className="w-full rounded-xl border border-border bg-background pl-9 pr-3 py-2 text-sm"
             />
+          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {t(
+              "Este texto se guarda para ti. Su visibilidad pública depende de la opción de privacidad abajo.",
+              "This text is saved for you. Its public visibility depends on the privacy option below.",
+            )}
+          </p>
+        </Field>
+
+        <Field label={t("Privacidad de ubicación", "Location privacy")}>
+          <div className="space-y-2">
+            <PrivacyOption
+              active={locationPrivacy === "approx20"}
+              onClick={() => setLocationPrivacy("approx20")}
+              title={t("Ocultar sitio exacto · área ~20 km", "Hide exact site · ~20 km area")}
+              body={t(
+                "Opción por defecto. La comunidad ve solo una zona aproximada, no el punto real.",
+                "Default. The community sees only an approximate area, not the real point.",
+              )}
+            />
+            <PrivacyOption
+              active={locationPrivacy === "regional100"}
+              onClick={() => setLocationPrivacy("regional100")}
+              title={t("Oscurecer regionalmente · área ~100 km", "Regional obscuring · ~100 km area")}
+              body={t(
+                "Útil para poblaciones delicadas o sitios con riesgo de colecta.",
+                "Useful for delicate populations or sites at risk of collection.",
+              )}
+            />
+            <PrivacyOption
+              active={locationPrivacy === "hidden"}
+              onClick={() => setLocationPrivacy("hidden")}
+              title={t("Ocultar ubicación pública", "Hide public location")}
+              body={t(
+                "No se muestra punto ni texto de ubicación al público.",
+                "No public point or location text is shown.",
+              )}
+            />
+          </div>
+          <div className="mt-2 rounded-xl bg-leaf/10 border border-leaf/20 px-3 py-2 text-[11px] text-foreground/80 flex gap-2">
+            <Lock size={13} className="text-leaf shrink-0 mt-0.5" />
+            <span>
+              {locationPrivacy === "hidden"
+                ? t(
+                    "Este registro no tendrá ubicación pública.",
+                    "This record will have no public location.",
+                  )
+                : t(
+                    `Área pública aproximada: ${effectiveRadius} km.`,
+                    `Approximate public area: ${effectiveRadius} km.`,
+                  )}
+            </span>
           </div>
         </Field>
 
@@ -374,8 +448,8 @@ function CapturePage() {
           <div className="mt-4 rounded-xl bg-warn/10 border border-warn/30 px-3 py-2.5 text-xs text-foreground/80 flex gap-2">
             <Shield size={14} className="text-warn shrink-0 mt-0.5" />
             {t(
-              "Especie sensible — su ubicación se publicará solo como región amplia, nunca como punto exacto.",
-              "Sensitive species — its location will be published only as a broad area, never as an exact point.",
+              "Especie sensible — si se muestra en mapa, se publicará como área de al menos 100 km.",
+              "Sensitive species — if shown on the map, it will be published as an area of at least 100 km.",
             )}
           </div>
         )}
@@ -405,5 +479,33 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="text-xs font-medium text-foreground/80">{label}</span>
       <div className="mt-1.5">{children}</div>
     </label>
+  );
+}
+
+function PrivacyOption({
+  active,
+  onClick,
+  title,
+  body,
+}: {
+  active: boolean;
+  onClick: () => void;
+  title: string;
+  body: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        "w-full rounded-xl border px-3 py-2 text-left transition " +
+        (active
+          ? "border-leaf bg-leaf/10 text-foreground"
+          : "border-border bg-background text-foreground/80 hover:bg-accent/30")
+      }
+    >
+      <div className="text-xs font-semibold">{title}</div>
+      <div className="mt-0.5 text-[11px] text-muted-foreground leading-snug">{body}</div>
+    </button>
   );
 }
