@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Mail, ShieldAlert, Bug, HelpCircle } from "lucide-react";
+import type { ReactNode } from "react";
 import { Shell } from "@/components/Shell";
 
 const SUPPORT_EMAIL = "andresr@orchidarc.org";
@@ -92,7 +93,7 @@ function SupportPage() {
   );
 }
 
-function SupportCard({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+function SupportCard({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return (
     <div className="rounded-xl border border-border bg-card p-4">
       <div className="mb-2 flex items-center gap-2 font-semibold text-foreground">
