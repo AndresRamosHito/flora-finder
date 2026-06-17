@@ -44,6 +44,10 @@ function LoginPage() {
     }
   }, [loading, user, navigate]);
 
+  function authRedirectUrl() {
+    return `${window.location.origin}/auth/callback?next=/onboarding`;
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email) return;
@@ -51,7 +55,7 @@ function LoginPage() {
     setErrMsg(null);
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: window.location.origin + "/onboarding" },
+      options: { emailRedirectTo: authRedirectUrl() },
     });
     if (error) {
       setStatus("error");
@@ -99,12 +103,16 @@ function LoginPage() {
         <button
           type="button"
           onClick={async () => {
-            const { lovable } = await import("@/integrations/lovable");
-            const result = await lovable.auth.signInWithOAuth("google", {
-              redirect_uri: window.location.origin + "/onboarding",
+            setErrMsg(null);
+            const { error } = await supabase.auth.signInWithOAuth({
+              provider: "google",
+              options: {
+                redirectTo: authRedirectUrl(),
+              },
             });
-            if (result.error)
-              setErrMsg(result.error.message ?? t("Error con Google", "Google sign-in error"));
+            if (error) {
+              setErrMsg(error.message ?? t("Error con Google", "Google sign-in error"));
+            }
           }}
           className="mt-5 w-full rounded-xl border border-input bg-card hover:bg-accent font-semibold py-3 text-sm inline-flex items-center justify-center gap-2"
         >
@@ -130,7 +138,7 @@ function LoginPage() {
         </button>
 
         <div className="mt-5 flex items-center gap-3 text-[10px] uppercase tracking-wider text-muted-foreground">
-          <span className="h-px flex-1 bg-border" /> {t("o con correo", "or with email")}{" "}
+          <span className="h-px flex-1 bg-border" /> {t("o con correo", "or with email")} {" "}
           <span className="h-px flex-1 bg-border" />
         </div>
 
