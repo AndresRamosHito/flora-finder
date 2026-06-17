@@ -145,23 +145,46 @@ function FeedCard({ s, status, index }: { s: SightingRow; status: string | null;
       className="stagger-in block rounded-3xl border border-border/70 bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-leaf/30 transition"
       style={{ animationDelay: index * 40 + "ms" }}
     >
-      <article>
-        <div className="relative h-44 grid place-items-center bg-gradient-to-br from-accent/40 to-secondary/30">
-          <Orchid sciName={sci} size={150} />
-          {!sci && (
-            <div className="absolute inset-0 grid place-items-center gap-2 text-leaf">
-              <HelpCircle size={28} />
-              <span className="text-xs font-semibold">{t("Sin identificar", "Unidentified")}</span>
+      <article className="flex min-h-32">
+        <div className="relative h-32 w-32 shrink-0 grid place-items-center overflow-hidden bg-gradient-to-br from-accent/40 to-secondary/30">
+          {s.photo_url ? (
+            <img
+              src={s.photo_url}
+              alt={
+                sci
+                  ? t(
+                      `Foto de orquídea ${sci}${common ? ` (${common})` : ""} en ${s.location_label ?? "México"}`,
+                      `Photo of orchid ${sci}${common ? ` (${common})` : ""} in ${s.location_label ?? "Mexico"}`,
+                    )
+                  : t(
+                      `Foto de orquídea sin identificar en ${s.location_label ?? "México"}`,
+                      `Photo of an unidentified orchid in ${s.location_label ?? "Mexico"}`,
+                    )
+              }
+              loading="lazy"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <Orchid sciName={sci} size={82} />
+          )}
+          {!sci && !s.photo_url && (
+            <div className="absolute inset-0 grid place-items-center gap-1 text-leaf pointer-events-none">
+              <HelpCircle size={22} />
+              <span className="text-[10px] font-semibold">{t("Sin identificar", "Unidentified")}</span>
             </div>
           )}
         </div>
-        <div className="p-4">
+
+        <div className="min-w-0 flex-1 p-4">
           <div className="flex items-start justify-between gap-2">
-            <div>
-              <div className="font-display italic text-[15px] leading-tight">
+            <div className="min-w-0">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                {sci ? t("ID sugerida", "Suggested ID") : t("Sin ID sugerida", "No suggested ID")}
+              </div>
+              <div className="font-display italic text-[15px] leading-tight truncate">
                 {sci ?? t("Orquídea sin identificar", "Unidentified orchid")}
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-muted-foreground truncate">
                 {common ??
                   t("Ayuda a la comunidad a identificarla", "Help the community identify it")}
               </div>
@@ -272,9 +295,10 @@ function FeedSkeleton() {
   return (
     <>
       {[0, 1, 2].map((i) => (
-        <div key={i} className="rounded-3xl border border-border/70 bg-card overflow-hidden">
-          <div className="h-44 bg-muted animate-pulse" />
-          <div className="p-4 space-y-2">
+        <div key={i} className="flex min-h-32 rounded-3xl border border-border/70 bg-card overflow-hidden">
+          <div className="h-32 w-32 shrink-0 bg-muted animate-pulse" />
+          <div className="flex-1 p-4 space-y-2">
+            <div className="h-3 w-20 bg-muted animate-pulse rounded" />
             <div className="h-4 w-2/3 bg-muted animate-pulse rounded" />
             <div className="h-3 w-1/2 bg-muted animate-pulse rounded" />
             <div className="h-3 w-1/3 bg-muted animate-pulse rounded" />

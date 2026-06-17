@@ -8,6 +8,8 @@ import { stripExifAndDownscale } from "@/lib/exif-strip";
 import { TaxonCombobox, type Taxon } from "@/components/TaxonCombobox";
 import { useLang } from "@/lib/i18n";
 
+const MAX_PHOTOS = 8;
+
 export const Route = createFileRoute("/capture")({
   head: () => ({
     meta: [
@@ -15,7 +17,7 @@ export const Route = createFileRoute("/capture")({
       {
         name: "description",
         content:
-          "Registra un nuevo avistamiento de orquídea con foto y especie sugerida. Eliminamos los datos de GPS antes de subir la foto.",
+          "Registra un nuevo avistamiento de orquídea con fotos y especie sugerida. Eliminamos los datos de GPS antes de subir las fotos.",
       },
       { name: "robots", content: "noindex, nofollow" },
     ],
@@ -30,8 +32,8 @@ function CapturePage() {
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [file, setFile] = useState<Blob | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [files, setFiles] = useState<Blob[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
   // selectedTaxon below holds the chosen species (id + metadata)
   const [locationLabel, setLocationLabel] = useState("");
   const [observedAt, setObservedAt] = useState(() => new Date().toISOString().slice(0, 16));
@@ -47,17 +49,36 @@ function CapturePage() {
     if (!loading && !user) navigate({ to: "/login" });
   }, [loading, user, navigate]);
 
-  async function handleFile(f: File) {
+  useEffect(() => {
+    return () => {
+      previews.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [previews]);
+
+  async function handleFiles(selected: FileList) {
     setError(null);
     setStripping(true);
     try {
-      const cleaned = await stripExifAndDownscale(f);
-      setFile(cleaned);
-      if (preview) URL.revokeObjectURL(preview);
-      setPreview(URL.createObjectURL(cleaned));
+      const incoming = Array.from(selected).slice(0, MAX_PHOTOS);
+      if (incoming.length === 0) return;
+
+      const cleaned = await Promise.all(incoming.map((f) => stripExifAndDownscale(f)));
+      const urls = cleaned.map((blob) => URL.createObjectURL(blob));
+
+      setFiles(cleaned);
+      setPreviews(urls);
+
+      if (selected.length > MAX_PHOTOS) {
+        setError(
+          t(
+            `Solo se guardarán las primeras ${MAX_PHOTOS} fotos.`,
+            `Only the first ${MAX_PHOTOS} photos will be saved.`,
+          ),
+        );
+      }
     } catch (e) {
       setError(
-        (e as Error).message || t("No pudimos procesar la foto.", "We couldn't process the photo."),
+        (e as Error).message || t("No pudimos procesar las fotos.", "We couldn't process the photos."),
       );
     } finally {
       setStripping(false);
@@ -65,33 +86,58 @@ function CapturePage() {
   }
 
   async function handleSubmit() {
-    if (!user || !file) return;
+    if (!user || files.length === 0) return;
     setSubmitting(true);
     setError(null);
     try {
-      const ext = "jpg";
-      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
-      const up = await supabase.storage.from("sightings").upload(path, file, {
-        contentType: "image/jpeg",
-        upsert: false,
-      });
-      if (up.error) throw up.error;
-      const pub = supabase.storage.from("sightings").getPublicUrl(path);
+      const uploadedPhotos: { photo_url: string; storage_path: string; position: number }[] = [];
+
+      for (const [position, photo] of files.entries()) {
+        const path = `${user.id}/${crypto.randomUUID()}-${position}.jpg`;
+        const up = await supabase.storage.from("sightings").upload(path, photo, {
+          contentType: "image/jpeg",
+          upsert: false,
+        });
+        if (up.error) throw up.error;
+
+        const pub = supabase.storage.from("sightings").getPublicUrl(path);
+        uploadedPhotos.push({
+          photo_url: pub.data.publicUrl,
+          storage_path: path,
+          position,
+        });
+      }
 
       const taxonId = selectedTaxon?.id ?? "";
-      const ins = await supabase.from("sightings").insert({
-        user_id: user.id,
-        taxon_id: taxonId || null,
-        photo_url: pub.data.publicUrl,
-        observed_at: new Date(observedAt).toISOString(),
-        location_label: locationLabel || REGION,
-        location_precision: selectedTaxon?.is_sensitive ? "fuzzed" : "fuzzed",
-        notes: notes || null,
-        variety: variety.trim() || null,
-        origin,
-        status: taxonId ? "pending" : "needs_id",
-      });
+      const ins = await supabase
+        .from("sightings")
+        .insert({
+          user_id: user.id,
+          taxon_id: taxonId || null,
+          // Legacy/thumbnail field: keep first photo here so existing feeds still work.
+          photo_url: uploadedPhotos[0]?.photo_url ?? null,
+          observed_at: new Date(observedAt).toISOString(),
+          location_label: locationLabel || REGION,
+          location_precision: selectedTaxon?.is_sensitive ? "fuzzed" : "fuzzed",
+          notes: notes || null,
+          variety: variety.trim() || null,
+          origin,
+          status: taxonId ? "pending" : "needs_id",
+        })
+        .select("id")
+        .single();
       if (ins.error) throw ins.error;
+
+      const photoRows = uploadedPhotos.map((p) => ({
+        sighting_id: ins.data.id,
+        photo_url: p.photo_url,
+        storage_path: p.storage_path,
+        position: p.position,
+      }));
+
+      const photosIns = await (supabase as any).from("sighting_photos").insert(photoRows);
+      if (photosIns.error) throw photosIns.error;
+
       navigate({ to: "/lista" });
     } catch (e) {
       setError(
@@ -124,24 +170,38 @@ function CapturePage() {
         </h1>
         <p className="text-xs text-muted-foreground mt-1">
           {t(
-            "La foto se procesa en tu teléfono — eliminamos los datos de GPS antes de subirla.",
-            "The photo is processed on your phone — we strip GPS data before uploading.",
+            "Las fotos se procesan en tu teléfono — eliminamos los datos de GPS antes de subirlas.",
+            "Photos are processed on your phone — we strip GPS data before uploading.",
           )}
         </p>
 
         <div className="mt-5">
-          {preview ? (
-            <div className="relative rounded-2xl overflow-hidden border border-border bg-card">
-              <img src={preview} alt="" className="w-full h-64 object-cover" />
-              <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-leaf/90 text-leaf-foreground px-2 py-1 text-[10px] font-semibold">
-                <Shield size={11} /> {t("EXIF eliminado", "EXIF stripped")}
-              </span>
-              <button
-                onClick={() => fileRef.current?.click()}
-                className="absolute bottom-2 right-2 rounded-full bg-background/90 px-3 py-1.5 text-xs font-medium border border-border"
-              >
-                {t("Cambiar foto", "Change photo")}
-              </button>
+          {previews.length > 0 ? (
+            <div className="rounded-2xl overflow-hidden border border-border bg-card p-2">
+              <div className="grid grid-cols-2 gap-2">
+                {previews.map((src, i) => (
+                  <div key={src} className="relative aspect-square overflow-hidden rounded-xl bg-muted">
+                    <img src={src} alt="" className="h-full w-full object-cover" />
+                    {i === 0 && (
+                      <span className="absolute top-2 left-2 rounded-full bg-background/90 px-2 py-1 text-[10px] font-semibold border border-border">
+                        {t("Portada", "Cover")}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-leaf/10 text-leaf px-2 py-1 text-[10px] font-semibold">
+                  <Shield size={11} /> {t("EXIF eliminado", "EXIF stripped")}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="rounded-full bg-background px-3 py-1.5 text-xs font-medium border border-border"
+                >
+                  {t("Cambiar fotos", "Change photos")}
+                </button>
+              </div>
             </div>
           ) : (
             <button
@@ -156,7 +216,7 @@ function CapturePage() {
               ) : (
                 <span className="flex flex-col items-center gap-2 text-xs">
                   <Camera size={32} />{" "}
-                  {t("Toca para tomar o elegir foto", "Tap to take or choose a photo")}
+                  {t("Toca para tomar o elegir fotos", "Tap to take or choose photos")}
                 </span>
               )}
             </button>
@@ -166,8 +226,9 @@ function CapturePage() {
             type="file"
             accept="image/*"
             capture="environment"
+            multiple
             className="hidden"
-            onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+            onChange={(e) => e.target.files && handleFiles(e.target.files)}
           />
         </div>
 
@@ -320,14 +381,14 @@ function CapturePage() {
         )}
 
         {error && (
-          <div className="mt-4 rounded-xl bg-destructive/10 border border-destructive/30 px-3 py-2.5 text-xs text-destructive flex gap-2">
+          <div className="mt-4 rounded-xl bg-destructive/10 border border-destructive/30 px-3 py-2 text-xs text-destructive flex gap-2">
             <AlertCircle size={14} className="shrink-0 mt-0.5" /> {error}
           </div>
         )}
 
         <button
           onClick={handleSubmit}
-          disabled={!file || submitting}
+          disabled={files.length === 0 || submitting}
           className="mt-6 w-full rounded-2xl bg-leaf text-leaf-foreground py-3 text-sm font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {submitting ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}

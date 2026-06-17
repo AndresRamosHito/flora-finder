@@ -47,8 +47,9 @@ The app uses Supabase Auth. In the new project's dashboard:
 
 - **Authentication → URL Configuration**
   - Site URL: `https://orquidea.orchidarc.org`
-  - Redirect URLs: add `https://orquidea.orchidarc.org/onboarding` and
-    `http://localhost:3000/onboarding` (local dev).
+  - Redirect URLs: add `https://orquidea.orchidarc.org/auth/callback` and
+    `http://localhost:3000/auth/callback` (local dev). The app appends
+    `?next=/onboarding` at runtime after login.
 - **Authentication → Providers**
   - **Email** is on by default (magic links work immediately).
   - **Google**: enable and paste a Google OAuth client ID + secret
