@@ -6,6 +6,7 @@ import { Shell } from "@/components/Shell";
 import { Orchid } from "@/components/Orchid";
 import { StatusPill } from "@/components/StatusPill";
 import { selectTaxaCatalog } from "@/lib/taxa";
+import { fetchTopPhotos } from "@/lib/likes";
 import { useLang } from "@/lib/i18n";
 
 export const Route = createFileRoute("/especies/")({
@@ -48,6 +49,14 @@ function SpeciesIndexPage() {
       selectTaxaCatalog<Omit<TaxonRow, "is_native">>(
         "id, sci_name, common_name, genus, conservation_status, is_sensitive",
       ),
+  });
+
+  // Community-evaluated photos: the most-liked observation per species becomes
+  // its herbarium thumbnail.
+  const { data: topPhotos } = useQuery({
+    queryKey: ["taxa-top-photos"],
+    queryFn: fetchTopPhotos,
+    staleTime: 1000 * 60 * 5,
   });
 
   const [query, setQuery] = useState("");
@@ -232,7 +241,15 @@ function SpeciesIndexPage() {
                     className="sheet-card flex items-center gap-3 rounded-2xl p-3 hover:border-leaf/40 transition"
                   >
                     <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-accent/40 overflow-hidden">
-                      <Orchid sciName={tx.sci_name} size={44} />
+                      {topPhotos?.get(tx.id) ? (
+                        <img
+                          src={topPhotos.get(tx.id)}
+                          alt={tx.sci_name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <Orchid sciName={tx.sci_name} size={44} />
+                      )}
                     </span>
                     <span className="flex-1 min-w-0">
                       <span className="block font-display italic text-sm leading-tight truncate">
