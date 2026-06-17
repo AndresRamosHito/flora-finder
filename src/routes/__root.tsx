@@ -104,7 +104,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "orquídeas, México, ciencia ciudadana, conservación, OrchidArc, Laelia, Barkeria, biodiversidad",
       },
-
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "OrquIDea" },
       { property: "og:locale", content: "es_MX" },
@@ -123,7 +122,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         property: "og:image:alt",
         content: "OrquIDea — ciencia ciudadana para orquídeas de México",
       },
-
       { name: "twitter:card", content: "summary_large_image" },
       {
         name: "twitter:title",
@@ -213,7 +211,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <AuthSync />
-        <ServiceWorkerRegistration />
+        <PwaRuntimeSetup />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
       </LanguageProvider>
@@ -240,9 +238,45 @@ function AuthSync() {
   return null;
 }
 
-/** Root-level singleton: register the PWA service worker on the client only. */
-function ServiceWorkerRegistration() {
+/** Root-level singleton: make PWA metadata and service worker visible after hydration. */
+function PwaRuntimeSetup() {
   useEffect(() => {
+    const ensureLink = (rel: string, href: string) => {
+      const existing = document.head.querySelector<HTMLLinkElement>(
+        `link[rel="${rel}"][href="${href}"]`,
+      );
+
+      if (existing) {
+        return;
+      }
+
+      const link = document.createElement("link");
+      link.rel = rel;
+      link.href = href;
+      document.head.appendChild(link);
+    };
+
+    const ensureMeta = (name: string, content: string) => {
+      let meta = document.head.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
+
+      if (!meta) {
+        meta = document.createElement("meta");
+        meta.name = name;
+        document.head.appendChild(meta);
+      }
+
+      meta.content = content;
+    };
+
+    ensureLink("manifest", "/manifest.webmanifest");
+    ensureLink("icon", "/favicon.ico");
+    ensureLink("apple-touch-icon", "/apple-touch-icon.png");
+    ensureMeta("theme-color", "#f6f1e4");
+    ensureMeta("application-name", "OrquIDea");
+    ensureMeta("apple-mobile-web-app-capable", "yes");
+    ensureMeta("apple-mobile-web-app-title", "OrquIDea");
+    ensureMeta("apple-mobile-web-app-status-bar-style", "default");
+
     if (!("serviceWorker" in navigator)) {
       return;
     }
