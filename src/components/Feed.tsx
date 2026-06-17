@@ -177,6 +177,9 @@ function FeedCard({ s, status, index }: { s: SightingRow; status: string | null;
         <div className="p-4">
           <div className="flex items-start justify-between gap-2">
             <div>
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                {sci ? t("ID sugerida", "Suggested ID") : t("Sin ID sugerida", "No suggested ID")}
+              </div>
               <div className="font-display italic text-[15px] leading-tight">
                 {sci ?? t("Orquídea sin identificar", "Unidentified orchid")}
               </div>
