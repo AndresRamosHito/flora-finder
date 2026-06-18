@@ -13,6 +13,7 @@ on:
     branches: [main]
     paths:
       - "supabase/migrations/**"
+      - ".github/workflows/db-migrate.yml"
   workflow_dispatch: {}
 
 concurrency:
