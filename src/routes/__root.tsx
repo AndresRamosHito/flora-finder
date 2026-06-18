@@ -91,7 +91,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-title", content: "OrquIDea" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       { name: "application-name", content: "OrquIDea" },
-      { name: "author", content: "OrchidArc" },
+      { name: "author", content: "Orchidarc" },
       { name: "robots", content: "index,follow" },
       { title: "OrquIDea — Ciencia ciudadana de orquídeas" },
       {
@@ -102,7 +102,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "keywords",
         content:
-          "orquídeas, México, ciencia ciudadana, conservación, OrchidArc, Laelia, Barkeria, biodiversidad",
+          "orquídeas, México, ciencia ciudadana, conservación, Orchidarc, Laelia, Barkeria, biodiversidad",
       },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "OrquIDea" },
@@ -160,7 +160,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "@graph": [
             {
               "@type": "Organization",
-              name: "OrchidArc",
+              name: "Orchidarc",
               url: "https://www.orchidarc.org/",
               logo: "https://orquidea.orchidarc.org/icon-512.png",
             },
@@ -169,7 +169,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
               name: "OrquIDea",
               url: ORQUIDEA_URL,
               inLanguage: "es-MX",
-              publisher: { "@type": "Organization", name: "OrchidArc" },
+              publisher: { "@type": "Organization", name: "Orchidarc" },
             },
           ],
         }),
@@ -234,68 +234,6 @@ function AuthSync() {
 
     return () => subscription.unsubscribe();
   }, [router, queryClient]);
-
-  return null;
-}
-
-/** Root-level singleton: make PWA metadata and service worker visible after hydration. */
-function PwaRuntimeSetup() {
-  useEffect(() => {
-    const ensureLink = (rel: string, href: string) => {
-      const existing = document.head.querySelector<HTMLLinkElement>(
-        `link[rel="${rel}"][href="${href}"]`,
-      );
-
-      if (existing) {
-        return;
-      }
-
-      const link = document.createElement("link");
-      link.rel = rel;
-      link.href = href;
-      document.head.appendChild(link);
-    };
-
-    const ensureMeta = (name: string, content: string) => {
-      let meta = document.head.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
-
-      if (!meta) {
-        meta = document.createElement("meta");
-        meta.name = name;
-        document.head.appendChild(meta);
-      }
-
-      meta.content = content;
-    };
-
-    ensureLink("manifest", "/manifest.webmanifest");
-    ensureLink("icon", "/favicon.ico");
-    ensureLink("apple-touch-icon", "/apple-touch-icon.png");
-    ensureMeta("theme-color", "#f6f1e4");
-    ensureMeta("application-name", "OrquIDea");
-    ensureMeta("apple-mobile-web-app-capable", "yes");
-    ensureMeta("apple-mobile-web-app-title", "OrquIDea");
-    ensureMeta("apple-mobile-web-app-status-bar-style", "default");
-
-    if (!("serviceWorker" in navigator)) {
-      return;
-    }
-
-    const registerServiceWorker = () => {
-      navigator.serviceWorker.register("/sw.js").catch((error) => {
-        console.error("Service worker registration failed", error);
-      });
-    };
-
-    if (document.readyState === "complete") {
-      registerServiceWorker();
-      return;
-    }
-
-    window.addEventListener("load", registerServiceWorker, { once: true });
-
-    return () => window.removeEventListener("load", registerServiceWorker);
-  }, []);
 
   return null;
 }
