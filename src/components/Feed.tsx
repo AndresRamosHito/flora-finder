@@ -1,3 +1,4 @@
+import { Suspense, lazy, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
@@ -8,15 +9,27 @@ import {
   MapPin,
   MessageCircle,
   Flower2,
+  ShieldCheck,
   Target,
   Trophy,
 } from "lucide-react";
 import { Orchid } from "@/components/Orchid";
+import type { SightingPoint } from "@/components/SightingsMap";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { StatusPill } from "@/components/StatusPill";
 import { REGION } from "@/components/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useLang, formatRelativeTime } from "@/lib/i18n";
+
+// Leaflet touches `window` at import time, so the map is loaded lazily and only
+// rendered on the client (see DashboardMap's `mounted` guard) to keep the SSR
+// home route happy.
+const SightingsMap = lazy(() =>
+  import("@/components/SightingsMap").then((m) => ({ default: m.SightingsMap })),
+);
+
+// National bounding box — covers the Mexican mainland and peninsulas.
+const NATIONAL_BBOX = { min_lat: 14.3, max_lat: 32.8, min_lng: -118.5, max_lng: -86.6 };
 
 /**
  * Public community feed. Reads the masking view `sightings_public` directly via
@@ -137,6 +150,8 @@ export function Feed() {
           tone="bg-warn/10 text-warn"
         />
       </div>
+
+      <DashboardMap />
 
       <div className="mt-5 space-y-4">
         {isLoading && <FeedSkeleton />}
@@ -317,6 +332,62 @@ function FeedCard({
         </div>
       </article>
     </Link>
+  );
+}
+
+/**
+ * Compact map preview on the home dashboard. Shows the same conservation-safe
+ * approximate areas as the full /mapa page (each sighting as a fuzzed radius,
+ * never an exact point) and links through to it.
+ */
+function DashboardMap() {
+  const { t } = useLang();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const { data } = useQuery({
+    queryKey: ["dashboard-map-bbox", NATIONAL_BBOX],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("sightings_in_bbox", NATIONAL_BBOX);
+      if (error) throw error;
+      return (data ?? []) as SightingPoint[];
+    },
+  });
+
+  const points = (data ?? []).filter((p) => p.lat != null && p.lng != null);
+
+  return (
+    <section className="mt-5">
+      <div className="mb-2 flex items-end justify-between gap-2">
+        <div>
+          <div className="specimen-label">{t("Distribución", "Distribution")}</div>
+          <h2 className="text-base font-display font-semibold tracking-tight">
+            {t("Áreas aproximadas", "Approximate areas")}
+          </h2>
+        </div>
+        <Link to="/mapa" className="text-xs font-semibold text-leaf hover:underline shrink-0">
+          {t("Ver mapa completo →", "Open full map →")}
+        </Link>
+      </div>
+      {mounted ? (
+        <Suspense
+          fallback={
+            <div className="w-full aspect-[16/10] rounded-3xl bg-gradient-to-br from-leaf/15 via-accent/30 to-background animate-pulse" />
+          }
+        >
+          <SightingsMap points={points} bbox={NATIONAL_BBOX} heightClass="aspect-[16/10]" />
+        </Suspense>
+      ) : (
+        <div className="w-full aspect-[16/10] rounded-3xl bg-gradient-to-br from-leaf/15 via-accent/30 to-background animate-pulse" />
+      )}
+      <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        <ShieldCheck size={12} className="text-leaf shrink-0" />
+        {t(
+          "No se publican coordenadas exactas — solo áreas aproximadas.",
+          "Exact coordinates are never published — only approximate areas.",
+        )}
+      </p>
+    </section>
   );
 }
 
