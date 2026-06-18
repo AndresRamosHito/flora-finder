@@ -11,7 +11,7 @@ export const Route = createFileRoute("/")({
         content:
           "App ciudadana para observar y registrar orquídeas silvestres de México. Avistamientos comunitarios, ID colectiva y conservación.",
       },
-      { property: "og:title", content: "OrquIDea · por OrchidArc" },
+      { property: "og:title", content: "OrquIDea · por Orchidarc" },
       {
         property: "og:description",
         content:
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/")({
       },
       { property: "og:url", content: "https://orchid-map-oaxaca.lovable.app/" },
       { property: "og:image", content: "https://orchid-map-oaxaca.lovable.app/og-image.jpg" },
-      { name: "twitter:title", content: "OrquIDea · por OrchidArc" },
+      { name: "twitter:title", content: "OrquIDea · por Orchidarc" },
       {
         name: "twitter:description",
         content: "Orquídeas silvestres de México: avistamientos, ID colectiva y conservación.",
