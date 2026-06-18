@@ -3,11 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   BadgeCheck,
+  BookOpen,
   ExternalLink,
   Globe,
   GraduationCap,
   Leaf,
-  Loader2,
+  Lock,
   Map,
   Plus,
   Shield,
@@ -15,9 +16,12 @@ import {
 import { Shell, REGION } from "@/components/Shell";
 import { Orchid } from "@/components/Orchid";
 import { StatusPill } from "@/components/StatusPill";
+import { LikeButton } from "@/components/LikeButton";
 import { supabase } from "@/integrations/supabase/client";
 import { selectTaxonById } from "@/lib/taxa";
-import { useLang } from "@/lib/i18n";
+import { fetchSpeciesObservations, fetchMyLikes } from "@/lib/likes";
+import { useAuth } from "@/hooks/use-auth";
+import { useLang, formatRelativeTime } from "@/lib/i18n";
 
 export const Route = createFileRoute("/especies/$id")({
   loader: async ({ params }) => {
@@ -79,42 +83,13 @@ export const Route = createFileRoute("/especies/$id")({
   component: SpeciesDetailPage,
 });
 
-type WikiSummary = {
-  title: string;
-  extract: string;
-  url: string;
-  thumbnail: string | null;
-  lang: "es" | "en";
-};
-
-/** Wikipedia REST summary in the user's language first, with fallback. CORS-enabled by Wikimedia. */
-async function fetchWikiSummary(sciName: string, prefer: "es" | "en"): Promise<WikiSummary | null> {
-  const slug = encodeURIComponent(sciName.trim().replaceAll(" ", "_"));
-  const order = prefer === "en" ? (["en", "es"] as const) : (["es", "en"] as const);
-  for (const lang of order) {
-    try {
-      const res = await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${slug}`);
-      if (!res.ok) continue;
-      const j = (await res.json()) as {
-        type?: string;
-        title?: string;
-        extract?: string;
-        thumbnail?: { source?: string };
-        content_urls?: { desktop?: { page?: string } };
-      };
-      if (j.type !== "standard" || !j.extract) continue;
-      return {
-        title: j.title ?? sciName,
-        extract: j.extract,
-        url: j.content_urls?.desktop?.page ?? `https://${lang}.wikipedia.org/wiki/${slug}`,
-        thumbnail: j.thumbnail?.source ?? null,
-        lang,
-      };
-    } catch {
-      // network error — try next language / give up silently
-    }
-  }
-  return null;
+/**
+ * Internet Orchid Species Photo Encyclopedia (IOSPE, orchidspecies.com) has no
+ * stable per-species URL or API, so we deep-link via a site-scoped web search,
+ * which reliably lands on the exact species page as the top result.
+ */
+function iospeUrl(sciName: string): string {
+  return `https://www.google.com/search?q=${encodeURIComponent(`${sciName} site:orchidspecies.com`)}`;
 }
 
 function externalSources(sciName: string, tr: (es: string, en: string) => string) {
@@ -172,6 +147,7 @@ type TaxonDetail = {
 function SpeciesDetailPage() {
   const { t: tr, lang } = useLang();
   const { id } = Route.useParams();
+  const { user } = useAuth();
 
   const taxonQ = useQuery({
     queryKey: ["taxon", id],
@@ -184,27 +160,28 @@ function SpeciesDetailPage() {
 
   const t = taxonQ.data;
 
-  const wikiQ = useQuery({
-    queryKey: ["wiki-summary", t?.sci_name, lang],
-    enabled: !!t?.sci_name,
-    staleTime: 1000 * 60 * 60,
-    queryFn: () => fetchWikiSummary(t!.sci_name, lang),
+  // Community observations of this species, ranked by likes. Drives both the
+  // "see observations" gallery and the herbarium photo (most-liked wins).
+  const obsQ = useQuery({
+    queryKey: ["species-observations", id],
+    enabled: !!t,
+    queryFn: () => fetchSpeciesObservations(id),
   });
 
-  const sightingsQ = useQuery({
-    queryKey: ["taxon-sightings", id],
-    enabled: !!t,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("sightings_public")
-        .select("id, status, location_label, observed_at, created_at, is_masked")
-        .eq("taxon_id", id)
-        .order("created_at", { ascending: false })
-        .limit(5);
-      if (error) throw error;
-      return data ?? [];
-    },
+  const observations = obsQ.data ?? [];
+  const obsIds = observations.map((o) => o.id);
+
+  const myLikesQ = useQuery({
+    queryKey: ["species-my-likes", id, user?.id, obsIds.length],
+    enabled: !!user && obsIds.length > 0,
+    queryFn: () => fetchMyLikes(obsIds, user!.id),
   });
+  const myLikes = myLikesQ.data ?? new Set<string>();
+
+  // Herbarium image priority: the most-liked community photo, then any admin
+  // reference image, then the drawn placeholder.
+  const topCommunityPhoto = observations.find((o) => o.photo_url)?.photo_url ?? null;
+  const heroPhoto = topCommunityPhoto ?? t?.ref_image_url ?? null;
 
   return (
     <Shell active="species">
@@ -229,18 +206,19 @@ function SpeciesDetailPage() {
             {/* Specimen sheet */}
             <article className="sheet-card mt-4 rounded-3xl overflow-hidden">
               <div className="relative h-52 grid place-items-center bg-gradient-to-br from-accent/40 to-secondary/30">
-                {t.ref_image_url ? (
-                  <img
-                    src={t.ref_image_url}
-                    alt={t.sci_name}
-                    className="h-full w-full object-cover"
-                  />
+                {heroPhoto ? (
+                  <img src={heroPhoto} alt={t.sci_name} className="h-full w-full object-cover" />
                 ) : (
                   <Orchid sciName={t.sci_name} size={170} />
                 )}
                 <span className="absolute top-3 left-3 specimen-label rounded bg-background/90 px-2 py-1 border border-border/60">
                   Orchidaceae
                 </span>
+                {topCommunityPhoto && (
+                  <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-background/90 px-2 py-1 text-[10px] font-semibold text-leaf border border-border/60">
+                    <BadgeCheck size={11} /> {tr("Foto de la comunidad", "Community photo")}
+                  </span>
+                )}
               </div>
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2">
@@ -331,51 +309,124 @@ function SpeciesDetailPage() {
               </Link>
             </div>
 
-            {/* Wikipedia snippet */}
+            {/* Reference encyclopedia — IOSPE */}
             <section className="mt-6">
               <div className="specimen-label">
                 {tr("En la enciclopedia", "In the encyclopedia")}
               </div>
-              {wikiQ.isLoading && (
-                <div className="sheet-card mt-2 rounded-2xl p-4 text-xs text-muted-foreground inline-flex items-center gap-2 w-full">
-                  <Loader2 size={13} className="animate-spin" />{" "}
-                  {tr("Buscando resumen en Wikipedia…", "Looking up a Wikipedia summary…")}
+              <a
+                href={iospeUrl(t.sci_name)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="sheet-card mt-2 block rounded-2xl p-4 hover:border-leaf/40 transition"
+              >
+                <div className="flex gap-3">
+                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-leaf/10 text-leaf">
+                    <BookOpen size={20} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold leading-tight">
+                      Internet Orchid Species Photo Encyclopedia
+                    </p>
+                    <p className="mt-0.5 text-[12px] text-muted-foreground leading-snug">
+                      {tr(
+                        "La referencia fotográfica de orquídeas más completa (IOSPE, orchidspecies.com): descripción, cultivo, distribución y fotos de la especie.",
+                        "The most complete orchid photo reference (IOSPE, orchidspecies.com): description, culture, distribution and photos of the species.",
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-2.5 text-[11px] text-leaf font-semibold inline-flex items-center gap-1">
+                  {tr("Abrir en IOSPE", "Open in IOSPE")} <ExternalLink size={11} />
+                </div>
+              </a>
+            </section>
+
+            {/* See observations of this species */}
+            <section className="mt-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="specimen-label">
+                  {tr("Observaciones de esta especie", "Observations of this species")}
+                </div>
+                {observations.length > 0 && (
+                  <span className="text-[11px] text-muted-foreground">{observations.length}</span>
+                )}
+              </div>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                {tr(
+                  "Da me gusta a las mejores fotos: la más valorada se vuelve la imagen de la especie.",
+                  "Like the best photos — the top-rated one becomes the species image.",
+                )}
+              </p>
+
+              {obsQ.isLoading && <div className="mt-2 h-28 rounded-2xl bg-muted animate-pulse" />}
+
+              {obsQ.isSuccess && observations.length === 0 && (
+                <div className="mt-2 rounded-2xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+                  {tr(
+                    "Nadie la ha registrado todavía. ¡Sé la primera persona en encontrarla!",
+                    "No one has logged it yet. Be the first to find it!",
+                  )}
                 </div>
               )}
-              {wikiQ.isSuccess && wikiQ.data && (
-                <a
-                  href={wikiQ.data.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="sheet-card mt-2 block rounded-2xl p-4 hover:border-leaf/40 transition"
-                >
-                  <div className="flex gap-3">
-                    {wikiQ.data.thumbnail && (
-                      <img
-                        src={wikiQ.data.thumbnail}
-                        alt=""
-                        className="h-16 w-16 rounded-xl object-cover shrink-0 border border-border/60"
-                      />
-                    )}
-                    <div className="min-w-0">
-                      <p className="text-sm text-foreground/85 leading-snug line-clamp-5">
-                        {wikiQ.data.extract}
-                      </p>
+
+              {observations.length > 0 && (
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {observations.map((o) => (
+                    <div
+                      key={o.id}
+                      className="sheet-card rounded-2xl overflow-hidden flex flex-col"
+                    >
+                      <Link to="/s/$id" params={{ id: o.id }} className="block">
+                        <div className="relative h-28 grid place-items-center bg-gradient-to-br from-accent/40 to-secondary/30">
+                          {o.photo_url ? (
+                            <img
+                              src={o.photo_url}
+                              alt={t.sci_name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <Orchid sciName={t.sci_name} size={72} />
+                          )}
+                          {o.status === "verified" && (
+                            <span className="absolute top-1.5 right-1.5 grid h-5 w-5 place-items-center rounded-full bg-background/90 text-leaf border border-border/60">
+                              <BadgeCheck size={12} />
+                            </span>
+                          )}
+                        </div>
+                        <div className="px-2.5 pt-2 text-[11px]">
+                          <div className="flex items-center gap-1 text-foreground/80 truncate">
+                            {o.is_masked ? (
+                              <>
+                                <Lock size={11} className="shrink-0" />
+                                <span className="truncate">
+                                  {tr("Ubicación protegida", "Protected location")}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="truncate">{o.location_label ?? REGION}</span>
+                            )}
+                          </div>
+                          <div className="text-muted-foreground">
+                            {formatRelativeTime(o.observed_at ?? o.created_at, lang)}
+                          </div>
+                        </div>
+                      </Link>
+                      <div className="px-2.5 pb-2 pt-1.5 mt-auto flex justify-end">
+                        <LikeButton
+                          sightingId={o.id}
+                          count={o.like_count}
+                          liked={myLikes.has(o.id)}
+                          size="sm"
+                          invalidateKeys={[
+                            ["species-observations", id],
+                            ["species-my-likes", id, user?.id],
+                            ["taxa-top-photos"],
+                          ]}
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <div className="mt-2.5 text-[11px] text-leaf font-semibold inline-flex items-center gap-1">
-                    {tr("Leer en Wikipedia", "Read on Wikipedia")} (
-                    {wikiQ.data.lang === "es" ? tr("español", "Spanish") : tr("inglés", "English")}
-                    ) <ExternalLink size={11} />
-                  </div>
-                </a>
-              )}
-              {wikiQ.isSuccess && !wikiQ.data && (
-                <div className="sheet-card mt-2 rounded-2xl p-4 text-xs text-muted-foreground">
-                  {tr(
-                    "No encontramos un artículo de Wikipedia para esta especie. Prueba las fuentes de abajo.",
-                    "We couldn't find a Wikipedia article for this species. Try the sources below.",
-                  )}
+                  ))}
                 </div>
               )}
             </section>
@@ -405,51 +456,6 @@ function SpeciesDetailPage() {
                   </a>
                 ))}
               </div>
-            </section>
-
-            {/* Recent community sightings */}
-            <section className="mt-6">
-              <div className="specimen-label">
-                {tr("Avistamientos de la comunidad", "Community sightings")}
-              </div>
-              {sightingsQ.isLoading && (
-                <div className="mt-2 h-14 rounded-2xl bg-muted animate-pulse" />
-              )}
-              {sightingsQ.isSuccess && sightingsQ.data.length === 0 && (
-                <div className="mt-2 rounded-2xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-                  {tr(
-                    "Nadie la ha registrado todavía. ¡Sé la primera persona en encontrarla!",
-                    "No one has logged it yet. Be the first to find it!",
-                  )}
-                </div>
-              )}
-              <ul className="mt-2 space-y-2">
-                {(sightingsQ.data ?? [])
-                  .filter((s) => s.id != null)
-                  .map((s) => (
-                    <li key={s.id}>
-                      <Link
-                        to="/s/$id"
-                        params={{ id: s.id! }}
-                        className="sheet-card flex items-center justify-between gap-2 rounded-2xl px-3.5 py-2.5 text-xs hover:border-leaf/40 transition"
-                      >
-                        <span className="truncate text-foreground/85">
-                          {s.is_masked
-                            ? tr("Ubicación protegida", "Protected location")
-                            : (s.location_label ?? REGION)}
-                        </span>
-                        <span className="flex items-center gap-2 shrink-0 text-muted-foreground">
-                          {new Date(s.observed_at ?? s.created_at ?? Date.now()).toLocaleDateString(
-                            lang === "en" ? "en-US" : "es-MX",
-                          )}
-                          {s.status === "verified" && (
-                            <BadgeCheck size={12} className="text-leaf" />
-                          )}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-              </ul>
             </section>
           </>
         )}

@@ -9,9 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SupportRouteImport } from './routes/support'
 import { Route as RetosRouteImport } from './routes/retos'
 import { Route as ReportarRouteImport } from './routes/reportar'
 import { Route as RankingRouteImport } from './routes/ranking'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MapaRouteImport } from './routes/mapa'
 import { Route as LoginRouteImport } from './routes/login'
@@ -26,6 +29,16 @@ import { Route as EspeciesIdRouteImport } from './routes/especies.$id'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AdminReportesRouteImport } from './routes/admin.reportes'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RetosRoute = RetosRouteImport.update({
   id: '/retos',
   path: '/retos',
@@ -39,6 +52,11 @@ const ReportarRoute = ReportarRouteImport.update({
 const RankingRoute = RankingRouteImport.update({
   id: '/ranking',
   path: '/ranking',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -114,9 +132,12 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/mapa': typeof MapaRoute
   '/onboarding': typeof OnboardingRoute
+  '/privacy': typeof PrivacyRoute
   '/ranking': typeof RankingRoute
   '/reportar': typeof ReportarRoute
   '/retos': typeof RetosRoute
+  '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/admin/reportes': typeof AdminReportesRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/especies/$id': typeof EspeciesIdRoute
@@ -132,9 +153,12 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mapa': typeof MapaRoute
   '/onboarding': typeof OnboardingRoute
+  '/privacy': typeof PrivacyRoute
   '/ranking': typeof RankingRoute
   '/reportar': typeof ReportarRoute
   '/retos': typeof RetosRoute
+  '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/admin/reportes': typeof AdminReportesRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/especies/$id': typeof EspeciesIdRoute
@@ -151,9 +175,12 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/mapa': typeof MapaRoute
   '/onboarding': typeof OnboardingRoute
+  '/privacy': typeof PrivacyRoute
   '/ranking': typeof RankingRoute
   '/reportar': typeof ReportarRoute
   '/retos': typeof RetosRoute
+  '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/admin/reportes': typeof AdminReportesRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/especies/$id': typeof EspeciesIdRoute
@@ -171,9 +198,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/mapa'
     | '/onboarding'
+    | '/privacy'
     | '/ranking'
     | '/reportar'
     | '/retos'
+    | '/support'
+    | '/terms'
     | '/admin/reportes'
     | '/auth/callback'
     | '/especies/$id'
@@ -189,9 +219,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/mapa'
     | '/onboarding'
+    | '/privacy'
     | '/ranking'
     | '/reportar'
     | '/retos'
+    | '/support'
+    | '/terms'
     | '/admin/reportes'
     | '/auth/callback'
     | '/especies/$id'
@@ -207,9 +240,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/mapa'
     | '/onboarding'
+    | '/privacy'
     | '/ranking'
     | '/reportar'
     | '/retos'
+    | '/support'
+    | '/terms'
     | '/admin/reportes'
     | '/auth/callback'
     | '/especies/$id'
@@ -226,9 +262,12 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MapaRoute: typeof MapaRoute
   OnboardingRoute: typeof OnboardingRoute
+  PrivacyRoute: typeof PrivacyRoute
   RankingRoute: typeof RankingRoute
   ReportarRoute: typeof ReportarRoute
   RetosRoute: typeof RetosRoute
+  SupportRoute: typeof SupportRoute
+  TermsRoute: typeof TermsRoute
   AdminReportesRoute: typeof AdminReportesRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   EspeciesIdRoute: typeof EspeciesIdRoute
@@ -240,6 +279,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/retos': {
       id: '/retos'
       path: '/retos'
@@ -259,6 +312,13 @@ declare module '@tanstack/react-router' {
       path: '/ranking'
       fullPath: '/ranking'
       preLoaderRoute: typeof RankingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -362,9 +422,12 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MapaRoute: MapaRoute,
   OnboardingRoute: OnboardingRoute,
+  PrivacyRoute: PrivacyRoute,
   RankingRoute: RankingRoute,
   ReportarRoute: ReportarRoute,
   RetosRoute: RetosRoute,
+  SupportRoute: SupportRoute,
+  TermsRoute: TermsRoute,
   AdminReportesRoute: AdminReportesRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   EspeciesIdRoute: EspeciesIdRoute,

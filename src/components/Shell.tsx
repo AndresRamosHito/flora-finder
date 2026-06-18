@@ -38,7 +38,7 @@ export function Shell({ children, active = "feed" }: { children: ReactNode; acti
                 Orqu<span className="font-bold text-orchid">ID</span>ea
               </div>
               <div className="text-[10px] text-muted-foreground flex items-center gap-1">
-                {t("por OrchidArc · Orquídeas de", "by OrchidArc · Orchids of")} <MapPin size={9} />{" "}
+                {t("por Orchidarc · Orquídeas de", "by Orchidarc · Orchids of")} <MapPin size={9} />{" "}
                 {REGION}
               </div>
             </div>
@@ -47,13 +47,13 @@ export function Shell({ children, active = "feed" }: { children: ReactNode; acti
             <LanguageToggle />
             <Link
               to="/reportar"
-              aria-label={t("Reportar comercio ilegal", "Report illegal trade")}
+              aria-label={t("Reportar", "Report")}
               className="grid h-9 w-9 place-items-center rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition"
             >
               <ShieldAlert size={16} />
             </Link>
             <span className="hidden xs:inline-flex items-center gap-1 rounded-full bg-leaf/10 text-leaf px-2 py-1 text-[10px] font-semibold">
-              <Leaf size={10} /> {t("Solo observar", "Observe only")}
+              <Leaf size={10} /> {t("Solo observar", "Observe only")}
             </span>
             {!loading &&
               (user ? (

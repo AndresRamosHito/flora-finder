@@ -27,11 +27,35 @@ function OnboardingPage() {
   const navigate = useNavigate();
   const [handle, setHandle] = useState("");
   const [busy, setBusy] = useState(false);
+  const [checkingProfile, setCheckingProfile] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
-  // Not signed in? Go to login.
   useEffect(() => {
-    if (!loading && !user) navigate({ to: "/login", replace: true });
+    if (loading) return;
+    if (!user) {
+      navigate({ to: "/login", replace: true });
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("handle")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      const hasClaimedHandle = !!data?.handle && !data.handle.startsWith("spotter_");
+      if (hasClaimedHandle) {
+        navigate({ to: "/", replace: true });
+        return;
+      }
+      setCheckingProfile(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [loading, user, navigate]);
 
   async function submit(e: React.FormEvent) {
@@ -47,7 +71,7 @@ function OnboardingPage() {
     navigate({ to: "/", replace: true });
   }
 
-  if (loading || !user) {
+  if (loading || !user || checkingProfile) {
     return (
       <div className="min-h-screen grid place-items-center text-muted-foreground">
         <Loader2 className="animate-spin" />

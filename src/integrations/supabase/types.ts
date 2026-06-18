@@ -258,6 +258,46 @@ export type Database = {
           },
         ]
       }
+      sighting_likes: {
+        Row: {
+          created_at: string
+          sighting_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          sighting_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          sighting_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sighting_likes_sighting_id_fkey"
+            columns: ["sighting_id"]
+            isOneToOne: false
+            referencedRelation: "sightings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sighting_likes_sighting_id_fkey"
+            columns: ["sighting_id"]
+            isOneToOne: false
+            referencedRelation: "sightings_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sighting_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sightings: {
         Row: {
           created_at: string
@@ -1111,6 +1151,33 @@ export type Database = {
           status: Database["public"]["Enums"]["sighting_status"]
           taxon_id: string
           user_id: string
+        }[]
+      }
+      species_observations: {
+        Args: { p_taxon_id: string }
+        Returns: {
+          id: string
+          user_id: string
+          taxon_id: string
+          sci_name: string
+          common_name: string
+          is_masked: boolean
+          status: Database["public"]["Enums"]["sighting_status"]
+          location_label: string
+          observed_at: string
+          created_at: string
+          photo_url: string
+          variety: string
+          origin: Database["public"]["Enums"]["sighting_origin"]
+          like_count: number
+        }[]
+      }
+      species_top_photos: {
+        Args: never
+        Returns: {
+          taxon_id: string
+          photo_url: string
+          like_count: number
         }[]
       }
       sightings_in_bbox: {
