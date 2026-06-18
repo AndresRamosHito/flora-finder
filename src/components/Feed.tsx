@@ -12,6 +12,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { Orchid } from "@/components/Orchid";
+import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { StatusPill } from "@/components/StatusPill";
 import { REGION } from "@/components/Shell";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +26,7 @@ import { useLang, formatRelativeTime } from "@/lib/i18n";
  */
 type SightingRow = {
   id: string;
+  user_id: string | null;
   taxon_id: string | null;
   sci_name: string | null;
   common_name: string | null;
@@ -44,12 +46,19 @@ type TaxonStatusRow = {
   conservation_status: string | null;
 };
 
+type ProfileSummary = {
+  id: string;
+  handle: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+};
+
 async function fetchFeed() {
   const [feedRes, taxaRes] = await Promise.all([
     supabase
       .from("sightings_public")
       .select(
-        "id, taxon_id, sci_name, common_name, is_sensitive, is_masked, status, location_label, location_precision, observed_at, created_at, photo_url",
+        "id, user_id, taxon_id, sci_name, common_name, is_sensitive, is_masked, status, location_label, location_precision, observed_at, created_at, photo_url",
       )
       .order("created_at", { ascending: false })
       .limit(40),
@@ -57,12 +66,31 @@ async function fetchFeed() {
   ]);
   if (feedRes.error) throw feedRes.error;
   if (taxaRes.error) throw taxaRes.error;
+
+  const rows = ((feedRes.data as SightingRow[]) ?? []) as SightingRow[];
+  const userIds = Array.from(
+    new Set(rows.map((row) => row.user_id).filter((id): id is string => Boolean(id))),
+  );
+  const profilesById = new Map<string, ProfileSummary>();
+
+  if (userIds.length > 0) {
+    const profilesRes = await supabase
+      .from("profiles")
+      .select("id, handle, display_name, avatar_url")
+      .in("id", userIds);
+    if (profilesRes.error) throw profilesRes.error;
+    for (const profile of ((profilesRes.data ?? []) as ProfileSummary[])) {
+      profilesById.set(profile.id, profile);
+    }
+  }
+
   const statusBySci = new Map<string, string | null>(
     (taxaRes.data as TaxonStatusRow[]).map((t) => [t.sci_name, t.conservation_status]),
   );
   return {
-    rows: (feedRes.data as SightingRow[]) ?? [],
+    rows,
     statusBySci,
+    profilesById,
   };
 }
 
@@ -126,6 +154,7 @@ export function Feed() {
             key={s.id}
             s={s}
             index={i}
+            profile={s.user_id ? (data.profilesById.get(s.user_id) ?? null) : null}
             status={s.sci_name ? (data.statusBySci.get(s.sci_name) ?? null) : null}
           />
         ))}
@@ -134,12 +163,24 @@ export function Feed() {
   );
 }
 
-function FeedCard({ s, status, index }: { s: SightingRow; status: string | null; index: number }) {
+function FeedCard({
+  s,
+  status,
+  index,
+  profile,
+}: {
+  s: SightingRow;
+  status: string | null;
+  index: number;
+  profile: ProfileSummary | null;
+}) {
   const { t, lang } = useLang();
   const sci = s.sci_name;
   const common = s.common_name;
   const masked = !!s.is_masked;
   const hiddenLocation = s.location_precision === "hidden";
+  const profileLabel = profile?.display_name ?? profile?.handle ?? t("Spotter", "Spotter");
+
   return (
     <Link
       to="/s/$id"
@@ -180,6 +221,21 @@ function FeedCard({ s, status, index }: { s: SightingRow; status: string | null;
         </div>
 
         <div className="min-w-0 flex-1 p-4">
+          <div className="mb-2 flex items-center gap-2">
+            <ProfileAvatar
+              url={profile?.avatar_url}
+              label={profileLabel}
+              size="sm"
+              className="bg-accent text-muted-foreground"
+            />
+            <div className="min-w-0 leading-tight">
+              <div className="truncate text-[11px] font-semibold text-foreground/85">{profileLabel}</div>
+              <div className="truncate text-[10px] text-muted-foreground">
+                @{profile?.handle ?? "spotter"}
+              </div>
+            </div>
+          </div>
+
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground">

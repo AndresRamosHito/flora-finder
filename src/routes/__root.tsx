@@ -91,7 +91,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-title", content: "OrquIDea" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       { name: "application-name", content: "OrquIDea" },
-      { name: "author", content: "OrchidArc" },
+      { name: "author", content: "Orchidarc" },
       { name: "robots", content: "index,follow" },
       { title: "OrquIDea — Ciencia ciudadana de orquídeas" },
       {
@@ -102,7 +102,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "keywords",
         content:
-          "orquídeas, México, ciencia ciudadana, conservación, OrchidArc, Laelia, Barkeria, biodiversidad",
+          "orquídeas, México, ciencia ciudadana, conservación, Orchidarc, Laelia, Barkeria, biodiversidad",
       },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "OrquIDea" },
@@ -160,7 +160,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "@graph": [
             {
               "@type": "Organization",
-              name: "OrchidArc",
+              name: "Orchidarc",
               url: "https://www.orchidarc.org/",
               logo: "https://orquidea.orchidarc.org/icon-512.png",
             },
@@ -169,7 +169,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
               name: "OrquIDea",
               url: ORQUIDEA_URL,
               inLanguage: "es-MX",
-              publisher: { "@type": "Organization", name: "OrchidArc" },
+              publisher: { "@type": "Organization", name: "Orchidarc" },
             },
           ],
         }),
