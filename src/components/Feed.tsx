@@ -321,7 +321,9 @@ function FeedCard({
               className="h-11 w-11 bg-accent text-muted-foreground"
             />
             <div className="min-w-0 leading-tight">
-              <div className="truncate text-[15px] font-semibold text-foreground">{profileLabel}</div>
+              <div className="truncate text-[15px] font-semibold text-foreground">
+                {profileLabel}
+              </div>
               <div className="truncate text-[11px] text-muted-foreground">
                 @{profile?.handle ?? "spotter"}
               </div>
@@ -337,7 +339,8 @@ function FeedCard({
                 {sci ?? t("Orquídea sin identificar", "Unidentified orchid")}
               </div>
               <div className="text-xs text-muted-foreground truncate">
-                {common ?? t("Ayuda a la comunidad a identificarla", "Help the community identify it")}
+                {common ??
+                  t("Ayuda a la comunidad a identificarla", "Help the community identify it")}
               </div>
             </div>
             {status && <StatusPill status={status} />}
@@ -411,62 +414,6 @@ function ObservationStatusBadge({
     <span className="inline-flex items-center rounded-full border border-warn/55 bg-warn/10 px-2.5 py-1 font-semibold text-warn">
       {t("En revisión", "Under review")}
     </span>
-  );
-}
-
-/**
- * Compact map preview on the home dashboard. Shows the same conservation-safe
- * approximate areas as the full /mapa page (each sighting as a fuzzed radius,
- * never an exact point) and links through to it.
- */
-function DashboardMap() {
-  const { t } = useLang();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  const { data } = useQuery({
-    queryKey: ["dashboard-map-bbox", NATIONAL_BBOX],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("sightings_in_bbox", NATIONAL_BBOX);
-      if (error) throw error;
-      return (data ?? []) as SightingPoint[];
-    },
-  });
-
-  const points = (data ?? []).filter((p) => p.lat != null && p.lng != null);
-
-  return (
-    <section className="mt-5">
-      <div className="mb-2 flex items-end justify-between gap-2">
-        <div>
-          <div className="specimen-label">{t("Distribución", "Distribution")}</div>
-          <h2 className="text-base font-display font-semibold tracking-tight">
-            {t("Áreas aproximadas", "Approximate areas")}
-          </h2>
-        </div>
-        <Link to="/mapa" className="text-xs font-semibold text-leaf hover:underline shrink-0">
-          {t("Ver mapa completo →", "Open full map →")}
-        </Link>
-      </div>
-      {mounted ? (
-        <Suspense
-          fallback={
-            <div className="w-full aspect-[16/10] rounded-3xl bg-gradient-to-br from-leaf/15 via-accent/30 to-background animate-pulse" />
-          }
-        >
-          <SightingsMap points={points} bbox={NATIONAL_BBOX} heightClass="aspect-[16/10]" />
-        </Suspense>
-      ) : (
-        <div className="w-full aspect-[16/10] rounded-3xl bg-gradient-to-br from-leaf/15 via-accent/30 to-background animate-pulse" />
-      )}
-      <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-        <ShieldCheck size={12} className="text-leaf shrink-0" />
-        {t(
-          "No se publican coordenadas exactas — solo áreas aproximadas.",
-          "Exact coordinates are never published — only approximate areas.",
-        )}
-      </p>
-    </section>
   );
 }
 
