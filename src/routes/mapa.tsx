@@ -53,7 +53,7 @@ function MapPage() {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [taxon, setTaxon] = useState(especie ?? "");
 
-  const all = data ?? [];
+  const all = useMemo(() => data ?? [], [data]);
 
   const filtered = useMemo(() => {
     const q = taxon.trim().toLowerCase();
@@ -113,12 +113,18 @@ function MapPage() {
         </div>
 
         <div className="mt-3">
-          <SightingsMap points={filtered as any} bbox={BBOX} heightClass="h-[56vh] min-h-[320px]" />
+          <SightingsMap points={filtered} bbox={BBOX} heightClass="h-[56vh] min-h-[320px]" />
         </div>
 
         <div className="mt-3 flex items-center gap-4 text-[11px] flex-wrap">
-          <Legend dotClass="bg-leaf/40 border border-leaf" label={t("Área verificada", "Verified area")} />
-          <Legend dotClass="bg-orchid/40 border border-orchid" label={t("Área pendiente", "Pending area")} />
+          <Legend
+            dotClass="bg-leaf/40 border border-leaf"
+            label={t("Área verificada", "Verified area")}
+          />
+          <Legend
+            dotClass="bg-orchid/40 border border-orchid"
+            label={t("Área pendiente", "Pending area")}
+          />
         </div>
 
         <div className="mt-3 rounded-2xl bg-card border border-border p-3 text-xs text-foreground/80 flex gap-2">

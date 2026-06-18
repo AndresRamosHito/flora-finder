@@ -282,7 +282,7 @@ function PwaRuntimeSetup() {
     }
 
     const registerServiceWorker = () => {
-      navigator.serviceWorker.register("/sw.js").catch(error => {
+      navigator.serviceWorker.register("/sw.js").catch((error) => {
         console.error("Service worker registration failed", error);
       });
     };

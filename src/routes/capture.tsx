@@ -1,6 +1,16 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Camera, Loader2, MapPin, Shield, ArrowLeft, Check, AlertCircle, Lock, Mountain } from "lucide-react";
+import {
+  Camera,
+  Loader2,
+  MapPin,
+  Shield,
+  ArrowLeft,
+  Check,
+  AlertCircle,
+  Lock,
+  Mountain,
+} from "lucide-react";
 import { Shell, REGION } from "@/components/Shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -94,7 +104,8 @@ function CapturePage() {
       }
     } catch (e) {
       setError(
-        (e as Error).message || t("No pudimos procesar las fotos.", "We couldn't process the photos."),
+        (e as Error).message ||
+          t("No pudimos procesar las fotos.", "We couldn't process the photos."),
       );
     } finally {
       setStripping(false);
@@ -145,7 +156,7 @@ function CapturePage() {
       const publicRadiusKm = selectedTaxon?.is_sensitive
         ? Math.max(privacy.radiusKm, 100)
         : privacy.radiusKm;
-      const ins = await (supabase as any)
+      const ins = await supabase
         .from("sightings")
         .insert({
           user_id: user.id,
@@ -176,7 +187,7 @@ function CapturePage() {
         position: p.position,
       }));
 
-      const photosIns = await (supabase as any).from("sighting_photos").insert(photoRows);
+      const photosIns = await supabase.from("sighting_photos").insert(photoRows);
       if (photosIns.error) throw photosIns.error;
 
       navigate({ to: "/lista" });
@@ -225,7 +236,10 @@ function CapturePage() {
             <div className="rounded-2xl overflow-hidden border border-border bg-card p-2">
               <div className="grid grid-cols-2 gap-2">
                 {previews.map((src, i) => (
-                  <div key={src} className="relative aspect-square overflow-hidden rounded-xl bg-muted">
+                  <div
+                    key={src}
+                    className="relative aspect-square overflow-hidden rounded-xl bg-muted"
+                  >
                     <img src={src} alt="" className="h-full w-full object-cover" />
                     {i === 0 && (
                       <span className="absolute top-2 left-2 rounded-full bg-background/90 px-2 py-1 text-[10px] font-semibold border border-border">
@@ -372,12 +386,7 @@ function CapturePage() {
           </div>
         </Field>
 
-        <Field
-          label={t(
-            "Lugar privado para tu registro",
-            "Private place for your record",
-          )}
-        >
+        <Field label={t("Lugar privado para tu registro", "Private place for your record")}>
           <div className="relative">
             <MapPin
               size={14}
@@ -415,7 +424,10 @@ function CapturePage() {
             <PrivacyOption
               active={locationPrivacy === "regional100"}
               onClick={() => setLocationPrivacy("regional100")}
-              title={t("Oscurecer regionalmente · área ~100 km", "Regional obscuring · ~100 km area")}
+              title={t(
+                "Oscurecer regionalmente · área ~100 km",
+                "Regional obscuring · ~100 km area",
+              )}
               body={t(
                 "Útil para poblaciones delicadas o sitios con riesgo de colecta.",
                 "Useful for delicate populations or sites at risk of collection.",

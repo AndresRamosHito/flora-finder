@@ -157,7 +157,7 @@ function SightingDetail() {
   const photosQ = useQuery({
     queryKey: ["sighting-photos", id],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("sighting_photos")
         .select("id, photo_url, position")
         .eq("sighting_id", id)
@@ -334,7 +334,10 @@ function SightingDetail() {
               {photos.length > 1 && (
                 <div className="grid grid-cols-4 gap-2 border-t border-border/70 bg-background/50 p-2">
                   {photos.map((p, i) => (
-                    <div key={p.id} className="relative aspect-square overflow-hidden rounded-xl bg-muted">
+                    <div
+                      key={p.id}
+                      className="relative aspect-square overflow-hidden rounded-xl bg-muted"
+                    >
                       <img src={p.photo_url} alt="" className="h-full w-full object-cover" />
                       {i === 0 && (
                         <span className="absolute left-1.5 top-1.5 rounded-full bg-background/90 px-1.5 py-0.5 text-[9px] font-semibold border border-border">
@@ -430,7 +433,7 @@ function SightingDetail() {
                   {t("Discusión", "Discussion")}
                 </h2>
                 <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
-                  <CheckCircle2 size={12} /> {" "}
+                  <CheckCircle2 size={12} />{" "}
                   {t("3 acuerdos → verificado", "3 agreements → verified")}
                 </span>
               </div>
@@ -470,7 +473,7 @@ function SightingDetail() {
                       </div>
                       {taxon && (
                         <div className="mt-2 rounded-lg bg-leaf/10 text-leaf px-2.5 py-1.5 text-xs">
-                          {t("Sugiere:", "Suggests:")} {" "}
+                          {t("Sugiere:", "Suggests:")}{" "}
                           <span className="italic font-semibold">{taxon.sci_name}</span>
                           {taxon.common_name && (
                             <span className="opacity-70"> · {taxon.common_name}</span>
@@ -503,7 +506,7 @@ function SightingDetail() {
                                     : "bg-leaf/10 text-leaf hover:bg-leaf/20")
                               }
                             >
-                              <ThumbsUp size={11} /> {" "}
+                              <ThumbsUp size={11} />{" "}
                               {isMine
                                 ? t("Tu sugerencia", "Your suggestion")
                                 : iAgree

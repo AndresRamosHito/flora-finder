@@ -20,14 +20,16 @@ export const Route = createFileRoute("/")({
       { property: "og:url", content: "https://orchid-map-oaxaca.lovable.app/" },
       { property: "og:image", content: "https://orchid-map-oaxaca.lovable.app/og-image.jpg" },
       { name: "twitter:title", content: "OrquIDea · por OrchidArc" },
-      { name: "twitter:description", content: "Orquídeas silvestres de México: avistamientos, ID colectiva y conservación." },
+      {
+        name: "twitter:description",
+        content: "Orquídeas silvestres de México: avistamientos, ID colectiva y conservación.",
+      },
       { name: "twitter:image", content: "https://orchid-map-oaxaca.lovable.app/og-image.jpg" },
     ],
     links: [{ rel: "canonical", href: "https://orchid-map-oaxaca.lovable.app/" }],
   }),
   component: HomePage,
 });
-
 
 function HomePage() {
   return (

@@ -8,6 +8,7 @@ import {
   Globe,
   GraduationCap,
   Leaf,
+  Loader2,
   Lock,
   Map,
   Plus,
@@ -83,6 +84,48 @@ export const Route = createFileRoute("/especies/$id")({
   component: SpeciesDetailPage,
 });
 
+type WikiSummary = {
+  title: string;
+  extract: string;
+  url: string;
+  thumbnail: string | null;
+  lang: "es" | "en";
+};
+
+/**
+ * Wikipedia REST summary for a NAME (we pass the genus), the user's language
+ * first with a fallback. CORS-enabled by Wikimedia. Returns a lead image +
+ * extract + the article URL, so the card links to the genus page.
+ */
+async function fetchWikiSummary(name: string, prefer: "es" | "en"): Promise<WikiSummary | null> {
+  const slug = encodeURIComponent(name.trim().replaceAll(" ", "_"));
+  const order = prefer === "en" ? (["en", "es"] as const) : (["es", "en"] as const);
+  for (const lang of order) {
+    try {
+      const res = await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${slug}`);
+      if (!res.ok) continue;
+      const j = (await res.json()) as {
+        type?: string;
+        title?: string;
+        extract?: string;
+        thumbnail?: { source?: string };
+        content_urls?: { desktop?: { page?: string } };
+      };
+      if (j.type !== "standard" || !j.extract) continue;
+      return {
+        title: j.title ?? name,
+        extract: j.extract,
+        url: j.content_urls?.desktop?.page ?? `https://${lang}.wikipedia.org/wiki/${slug}`,
+        thumbnail: j.thumbnail?.source ?? null,
+        lang,
+      };
+    } catch {
+      // network error — try next language / give up silently
+    }
+  }
+  return null;
+}
+
 /**
  * Internet Orchid Species Photo Encyclopedia (IOSPE, orchidspecies.com) has no
  * stable per-species URL or API, so we deep-link via a site-scoped web search,
@@ -95,6 +138,15 @@ function iospeUrl(sciName: string): string {
 function externalSources(sciName: string, tr: (es: string, en: string) => string) {
   const q = encodeURIComponent(sciName);
   return [
+    {
+      name: "IOSPE",
+      detail: tr(
+        "Internet Orchid Species · enciclopedia fotográfica",
+        "Internet Orchid Species · photo encyclopedia",
+      ),
+      href: iospeUrl(sciName),
+      icon: <BookOpen size={15} />,
+    },
     {
       name: "EncicloVida",
       detail: tr("CONABIO · biodiversidad mexicana", "CONABIO · Mexican biodiversity"),
@@ -159,6 +211,15 @@ function SpeciesDetailPage() {
   });
 
   const t = taxonQ.data;
+
+  // Wikipedia summary for the GENUS (image + extract + link to the genus page).
+  const genus = t ? (t.genus ?? t.sci_name.split(" ")[0]) : null;
+  const wikiQ = useQuery({
+    queryKey: ["wiki-genus", genus, lang],
+    enabled: !!genus,
+    staleTime: 1000 * 60 * 60,
+    queryFn: () => fetchWikiSummary(genus!, lang),
+  });
 
   // Community observations of this species, ranked by likes. Drives both the
   // "see observations" gallery and the herbarium photo (most-liked wins).
@@ -309,37 +370,56 @@ function SpeciesDetailPage() {
               </Link>
             </div>
 
-            {/* Reference encyclopedia — IOSPE */}
+            {/* Genus in the encyclopedia — Wikipedia (image + link to the genus page) */}
             <section className="mt-6">
               <div className="specimen-label">
-                {tr("En la enciclopedia", "In the encyclopedia")}
+                {tr("El género en la enciclopedia", "The genus in the encyclopedia")}
               </div>
-              <a
-                href={iospeUrl(t.sci_name)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="sheet-card mt-2 block rounded-2xl p-4 hover:border-leaf/40 transition"
-              >
-                <div className="flex gap-3">
-                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-leaf/10 text-leaf">
-                    <BookOpen size={20} />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold leading-tight">
-                      Internet Orchid Species Photo Encyclopedia
-                    </p>
-                    <p className="mt-0.5 text-[12px] text-muted-foreground leading-snug">
-                      {tr(
-                        "La referencia fotográfica de orquídeas más completa (IOSPE, orchidspecies.com): descripción, cultivo, distribución y fotos de la especie.",
-                        "The most complete orchid photo reference (IOSPE, orchidspecies.com): description, culture, distribution and photos of the species.",
-                      )}
-                    </p>
+              {wikiQ.isLoading && (
+                <div className="sheet-card mt-2 rounded-2xl p-4 text-xs text-muted-foreground inline-flex items-center gap-2 w-full">
+                  <Loader2 size={13} className="animate-spin" />{" "}
+                  {tr("Buscando el género en Wikipedia…", "Looking up the genus on Wikipedia…")}
+                </div>
+              )}
+              {wikiQ.isSuccess && wikiQ.data && (
+                <a
+                  href={wikiQ.data.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="sheet-card mt-2 block rounded-2xl p-4 hover:border-leaf/40 transition"
+                >
+                  <div className="flex gap-3">
+                    {wikiQ.data.thumbnail && (
+                      <img
+                        src={wikiQ.data.thumbnail}
+                        alt={genus ?? ""}
+                        className="h-16 w-16 rounded-xl object-cover shrink-0 border border-border/60"
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold italic leading-tight">
+                        {wikiQ.data.title}
+                      </p>
+                      <p className="mt-0.5 text-sm text-foreground/85 leading-snug line-clamp-4">
+                        {wikiQ.data.extract}
+                      </p>
+                    </div>
                   </div>
+                  <div className="mt-2.5 text-[11px] text-leaf font-semibold inline-flex items-center gap-1">
+                    {tr("Ver el género en Wikipedia", "View the genus on Wikipedia")} (
+                    {wikiQ.data.lang === "es" ? tr("español", "Spanish") : tr("inglés", "English")})
+                    <ExternalLink size={11} />
+                  </div>
+                </a>
+              )}
+              {wikiQ.isSuccess && !wikiQ.data && (
+                <div className="sheet-card mt-2 rounded-2xl p-4 text-xs text-muted-foreground">
+                  {tr(
+                    "No encontramos un artículo de Wikipedia para este género. Prueba las fuentes de abajo.",
+                    "We couldn't find a Wikipedia article for this genus. Try the sources below.",
+                  )}
                 </div>
-                <div className="mt-2.5 text-[11px] text-leaf font-semibold inline-flex items-center gap-1">
-                  {tr("Abrir en IOSPE", "Open in IOSPE")} <ExternalLink size={11} />
-                </div>
-              </a>
+              )}
             </section>
 
             {/* See observations of this species */}
