@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Camera, Loader2, MapPin, Shield, ArrowLeft, Check, AlertCircle, Lock } from "lucide-react";
-import { Camera, Loader2, MapPin, Shield, ArrowLeft, Check, AlertCircle, Mountain } from "lucide-react";
+import { Camera, Loader2, MapPin, Shield, ArrowLeft, Check, AlertCircle, Lock, Mountain } from "lucide-react";
 import { Shell, REGION } from "@/components/Shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,8 +29,7 @@ export const Route = createFileRoute("/capture")({
       {
         name: "description",
         content:
-          "Registra un nuevo avistamiento de orquídea con fotos, especie sugerida y ubicación protegida. Eliminamos los datos de GPS antes de subir las fotos.",
-          "Registra un nuevo avistamiento de orquídea con fotos, altitud, hábitat y especie sugerida. Eliminamos los datos de GPS antes de subir las fotos.",
+          "Registra un nuevo avistamiento de orquídea con fotos, altitud, hábitat, especie sugerida y ubicación protegida. Eliminamos los datos de GPS antes de subir las fotos.",
       },
       { name: "robots", content: "noindex, nofollow" },
     ],
@@ -158,7 +156,6 @@ function CapturePage() {
           location_label: locationLabel || REGION,
           location_precision: privacy.precision,
           public_radius_km: publicRadiusKm,
-          location_precision: "fuzzed",
           altitude_m: altitude,
           altitude_accuracy_m: altitude == null ? null : Number.parseInt(altitudeAccuracyM, 10),
           habitat_type: habitatType || null,

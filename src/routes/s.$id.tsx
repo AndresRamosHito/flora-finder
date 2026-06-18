@@ -83,7 +83,7 @@ export const Route = createFileRoute("/s/$id")({
                 image: s.photo_url ?? undefined,
                 url,
                 inLanguage: "es-MX",
-                publisher: { "@type": "Organization", name: "OrchidArc" },
+                publisher: { "@type": "Organization", name: "Orchidarc" },
               }),
             },
           ]
@@ -151,6 +151,9 @@ function SightingDetail() {
         user ? fetchHasLiked(id, user.id) : Promise.resolve(false),
       ]);
       return { count, liked };
+    },
+  });
+
   const photosQ = useQuery({
     queryKey: ["sighting-photos", id],
     queryFn: async () => {
@@ -181,7 +184,7 @@ function SightingDetail() {
         supabase.from("profiles").select("id, handle, display_name"),
       ]);
       if (comm.error) throw comm.error;
-      const taxaById = new Map((taxa.data ?? []).map((t) => [t.id, t]));
+      const taxaById = new Map((taxa.data ?? []).map((tx) => [tx.id, tx]));
       const profById = new Map((profs.data ?? []).map((p) => [p.id, p]));
       const agreeBy = new Map<string, string[]>();
       for (const a of agree.data ?? []) {
@@ -365,30 +368,18 @@ function SightingDetail() {
                   <StatusBadge status={s.status} />
                 </div>
 
-                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
-                  <span>{formatRelativeTime(s.observed_at ?? s.created_at, lang)}</span>
-                  {hiddenLocation ? (
-                    <span className="inline-flex items-center gap-1">
-                      <Lock size={12} /> {t("Ubicación oculta", "Location hidden")}
-                    </span>
-                  ) : s.is_masked ? (
-                    <span className="inline-flex items-center gap-1">
-                      <Lock size={12} /> {t("Área aproximada", "Approximate area")}
-                      {s.public_radius_km ? ` · ~${s.public_radius_km} km` : ""}
-                      {s.location_label ? ` · ${s.location_label}` : ""}
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1">
-                      <MapPin size={12} /> {s.location_label ?? REGION}
-                    </span>
-                  )}
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
                     <span>{formatRelativeTime(s.observed_at ?? s.created_at, lang)}</span>
-                    {s.is_masked ? (
+                    {hiddenLocation ? (
                       <span className="inline-flex items-center gap-1">
-                        <Lock size={12} /> {t("Ubicación protegida · ", "Protected location · ")}
-                        {REGION}
+                        <Lock size={12} /> {t("Ubicación oculta", "Location hidden")}
+                      </span>
+                    ) : s.is_masked ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Lock size={12} /> {t("Área aproximada", "Approximate area")}
+                        {s.public_radius_km ? ` · ~${s.public_radius_km} km` : ""}
+                        {s.location_label ? ` · ${s.location_label}` : ""}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1">
@@ -466,7 +457,7 @@ function SightingDetail() {
                     : null;
                   const prof = commentsQ.data!.profById.get(c.user_id);
                   const agrees = commentsQ.data!.agreeBy.get(c.id) ?? [];
-                  const support = 1 + agrees.length; // suggester + agreers
+                  const support = 1 + agrees.length;
                   const iAgree = user ? agrees.includes(user.id) : false;
                   const isMine = user?.id === c.user_id;
                   return (
