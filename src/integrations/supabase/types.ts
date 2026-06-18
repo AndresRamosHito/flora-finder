@@ -758,10 +758,12 @@ export type Database = {
           lat: number | null
           lng: number | null
           location_label: string | null
+          location_precision: Database["public"]["Enums"]["location_precision"] | null
           notes: string | null
           observed_at: string | null
           origin: Database["public"]["Enums"]["sighting_origin"] | null
           photo_url: string | null
+          public_radius_km: number | null
           sci_name: string | null
           status: Database["public"]["Enums"]["sighting_status"] | null
           taxon_id: string | null
