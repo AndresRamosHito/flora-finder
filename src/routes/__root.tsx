@@ -237,3 +237,65 @@ function AuthSync() {
 
   return null;
 }
+
+/** Root-level singleton: make PWA metadata and service worker visible after hydration. */
+function PwaRuntimeSetup() {
+  useEffect(() => {
+    const ensureLink = (rel: string, href: string) => {
+      const existing = document.head.querySelector<HTMLLinkElement>(
+        `link[rel="${rel}"][href="${href}"]`,
+      );
+
+      if (existing) {
+        return;
+      }
+
+      const link = document.createElement("link");
+      link.rel = rel;
+      link.href = href;
+      document.head.appendChild(link);
+    };
+
+    const ensureMeta = (name: string, content: string) => {
+      let meta = document.head.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
+
+      if (!meta) {
+        meta = document.createElement("meta");
+        meta.name = name;
+        document.head.appendChild(meta);
+      }
+
+      meta.content = content;
+    };
+
+    ensureLink("manifest", "/manifest.webmanifest");
+    ensureLink("icon", "/favicon.ico");
+    ensureLink("apple-touch-icon", "/apple-touch-icon.png");
+    ensureMeta("theme-color", "#f6f1e4");
+    ensureMeta("application-name", "OrquIDea");
+    ensureMeta("apple-mobile-web-app-capable", "yes");
+    ensureMeta("apple-mobile-web-app-title", "OrquIDea");
+    ensureMeta("apple-mobile-web-app-status-bar-style", "default");
+
+    if (!("serviceWorker" in navigator)) {
+      return;
+    }
+
+    const registerServiceWorker = () => {
+      navigator.serviceWorker.register("/sw.js").catch((error) => {
+        console.error("Service worker registration failed", error);
+      });
+    };
+
+    if (document.readyState === "complete") {
+      registerServiceWorker();
+      return;
+    }
+
+    window.addEventListener("load", registerServiceWorker, { once: true });
+
+    return () => window.removeEventListener("load", registerServiceWorker);
+  }, []);
+
+  return null;
+}
