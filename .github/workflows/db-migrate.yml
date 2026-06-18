@@ -13,6 +13,7 @@ on:
     branches: [main]
     paths:
       - "supabase/migrations/**"
+      - ".github/workflows/db-migrate.yml"
   workflow_dispatch: {}
 
 concurrency:
@@ -38,4 +39,8 @@ jobs:
             exit 0
           fi
           supabase link --project-ref "$PROJECT_REF"
-          supabase db push
+          # --include-all applies pending migrations even when their version
+          # timestamp predates the last one already applied remotely. Parallel
+          # feature branches can land migrations out of order, and without this
+          # `db push` refuses them; all our migrations are idempotent, so it's safe.
+          supabase db push --include-all
