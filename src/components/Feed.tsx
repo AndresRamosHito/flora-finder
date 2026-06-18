@@ -288,11 +288,9 @@ function FeedCard({
       className="stagger-in rounded-3xl border border-border/70 bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-leaf/30 transition"
       style={{ animationDelay: index * 40 + "ms" }}
     >
-      <div className="flex">
-        {/* Image + the observation's date and review status sit together so the
-            column matches the height of the details beside it. */}
-        <Link to="/s/$id" params={{ id: s.id }} className="block w-32 shrink-0 self-stretch">
-          <div className="relative h-32 w-32 grid place-items-center overflow-hidden bg-gradient-to-br from-accent/40 to-secondary/30">
+      <div className="flex min-h-[154px]">
+        <Link to="/s/$id" params={{ id: s.id }} className="block w-36 shrink-0 self-stretch">
+          <div className="relative h-full min-h-[154px] w-36 grid place-items-center overflow-hidden bg-gradient-to-br from-accent/40 to-secondary/30">
             {s.photo_url ? (
               <img
                 src={s.photo_url}
@@ -301,49 +299,29 @@ function FeedCard({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <Orchid sciName={sci} size={82} />
+              <Orchid sciName={sci} size={96} />
             )}
             {!sci && !s.photo_url && (
               <div className="absolute inset-0 grid place-items-center gap-1 text-leaf pointer-events-none">
-                <HelpCircle size={22} />
+                <HelpCircle size={24} />
                 <span className="text-[10px] font-semibold">
                   {t("Sin identificar", "Unidentified")}
                 </span>
               </div>
             )}
           </div>
-          <div className="px-2 py-2 text-center">
-            <div className="text-[11px] text-muted-foreground">
-              {formatRelativeTime(s.observed_at ?? s.created_at, lang)}
-            </div>
-            <div className="mt-1">
-              {s.status === "verified" ? (
-                <span className="inline-flex items-center gap-1 text-leaf font-medium text-[11px]">
-                  <BadgeCheck size={12} /> {t("verificado", "verified")}
-                </span>
-              ) : s.status === "needs_id" || !s.taxon_id ? (
-                <span className="text-orchid font-medium text-[11px]">
-                  {t("necesita ID", "needs ID")}
-                </span>
-              ) : (
-                <span className="text-muted-foreground text-[11px]">
-                  {t("en revisión", "under review")}
-                </span>
-              )}
-            </div>
-          </div>
         </Link>
 
         <Link to="/s/$id" params={{ id: s.id }} className="block min-w-0 flex-1 p-4">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             <ProfileAvatar
               url={profile?.avatar_url}
               label={profileLabel}
               size="md"
-              className="bg-accent text-muted-foreground"
+              className="h-11 w-11 bg-accent text-muted-foreground"
             />
             <div className="min-w-0 leading-tight">
-              <div className="truncate text-sm font-semibold text-foreground">{profileLabel}</div>
+              <div className="truncate text-[15px] font-semibold text-foreground">{profileLabel}</div>
               <div className="truncate text-[11px] text-muted-foreground">
                 @{profile?.handle ?? "spotter"}
               </div>
@@ -355,15 +333,19 @@ function FeedCard({
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
                 {sci ? t("ID sugerida", "Suggested ID") : t("Sin ID sugerida", "No suggested ID")}
               </div>
-              <div className="font-display italic text-[15px] leading-tight truncate">
+              <div className="font-display italic text-[16px] leading-tight truncate">
                 {sci ?? t("Orquídea sin identificar", "Unidentified orchid")}
               </div>
               <div className="text-xs text-muted-foreground truncate">
-                {common ??
-                  t("Ayuda a la comunidad a identificarla", "Help the community identify it")}
+                {common ?? t("Ayuda a la comunidad a identificarla", "Help the community identify it")}
               </div>
             </div>
             {status && <StatusPill status={status} />}
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+            <span>{formatRelativeTime(s.observed_at ?? s.created_at, lang)}</span>
+            <ObservationStatusBadge status={s.status} hasTaxon={Boolean(s.taxon_id)} />
           </div>
         </Link>
       </div>
@@ -397,6 +379,94 @@ function FeedCard({
         </div>
       </div>
     </article>
+  );
+}
+
+function ObservationStatusBadge({
+  status,
+  hasTaxon,
+}: {
+  status: string | null;
+  hasTaxon: boolean;
+}) {
+  const { t } = useLang();
+
+  if (status === "verified") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full border border-leaf/45 bg-leaf/10 px-2.5 py-1 font-semibold text-leaf">
+        <BadgeCheck size={12} /> {t("Verificada", "Verified")}
+      </span>
+    );
+  }
+
+  if (status === "needs_id" || !hasTaxon) {
+    return (
+      <span className="inline-flex items-center rounded-full border border-orchid/45 bg-orchid/10 px-2.5 py-1 font-semibold text-orchid">
+        {t("Necesita ID", "Needs ID")}
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center rounded-full border border-warn/55 bg-warn/10 px-2.5 py-1 font-semibold text-warn">
+      {t("En revisión", "Under review")}
+    </span>
+  );
+}
+
+/**
+ * Compact map preview on the home dashboard. Shows the same conservation-safe
+ * approximate areas as the full /mapa page (each sighting as a fuzzed radius,
+ * never an exact point) and links through to it.
+ */
+function DashboardMap() {
+  const { t } = useLang();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const { data } = useQuery({
+    queryKey: ["dashboard-map-bbox", NATIONAL_BBOX],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("sightings_in_bbox", NATIONAL_BBOX);
+      if (error) throw error;
+      return (data ?? []) as SightingPoint[];
+    },
+  });
+
+  const points = (data ?? []).filter((p) => p.lat != null && p.lng != null);
+
+  return (
+    <section className="mt-5">
+      <div className="mb-2 flex items-end justify-between gap-2">
+        <div>
+          <div className="specimen-label">{t("Distribución", "Distribution")}</div>
+          <h2 className="text-base font-display font-semibold tracking-tight">
+            {t("Áreas aproximadas", "Approximate areas")}
+          </h2>
+        </div>
+        <Link to="/mapa" className="text-xs font-semibold text-leaf hover:underline shrink-0">
+          {t("Ver mapa completo →", "Open full map →")}
+        </Link>
+      </div>
+      {mounted ? (
+        <Suspense
+          fallback={
+            <div className="w-full aspect-[16/10] rounded-3xl bg-gradient-to-br from-leaf/15 via-accent/30 to-background animate-pulse" />
+          }
+        >
+          <SightingsMap points={points} bbox={NATIONAL_BBOX} heightClass="aspect-[16/10]" />
+        </Suspense>
+      ) : (
+        <div className="w-full aspect-[16/10] rounded-3xl bg-gradient-to-br from-leaf/15 via-accent/30 to-background animate-pulse" />
+      )}
+      <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        <ShieldCheck size={12} className="text-leaf shrink-0" />
+        {t(
+          "No se publican coordenadas exactas — solo áreas aproximadas.",
+          "Exact coordinates are never published — only approximate areas.",
+        )}
+      </p>
+    </section>
   );
 }
 
@@ -474,14 +544,14 @@ function FeedSkeleton() {
       {[0, 1, 2].map((i) => (
         <div
           key={i}
-          className="flex min-h-32 rounded-3xl border border-border/70 bg-card overflow-hidden"
+          className="flex min-h-[154px] rounded-3xl border border-border/70 bg-card overflow-hidden"
         >
-          <div className="h-32 w-32 shrink-0 bg-muted animate-pulse" />
+          <div className="h-auto min-h-[154px] w-36 shrink-0 bg-muted animate-pulse" />
           <div className="flex-1 p-4 space-y-2">
+            <div className="h-10 w-10 bg-muted animate-pulse rounded-full" />
             <div className="h-3 w-20 bg-muted animate-pulse rounded" />
             <div className="h-4 w-2/3 bg-muted animate-pulse rounded" />
             <div className="h-3 w-1/2 bg-muted animate-pulse rounded" />
-            <div className="h-3 w-1/3 bg-muted animate-pulse rounded" />
           </div>
         </div>
       ))}
