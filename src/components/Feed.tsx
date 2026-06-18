@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
@@ -7,28 +7,18 @@ import {
   HelpCircle,
   MessageCircle,
   Flower2,
-  ShieldCheck,
+  Search,
   Target,
   Trophy,
+  X,
 } from "lucide-react";
 import { Orchid } from "@/components/Orchid";
-import type { SightingPoint } from "@/components/SightingsMap";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { StatusPill } from "@/components/StatusPill";
 import { LikeButton } from "@/components/LikeButton";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useLang, formatRelativeTime } from "@/lib/i18n";
-
-// Leaflet touches `window` at import time, so the map is loaded lazily and only
-// rendered on the client (see DashboardMap's `mounted` guard) to keep the SSR
-// home route happy.
-const SightingsMap = lazy(() =>
-  import("@/components/SightingsMap").then((m) => ({ default: m.SightingsMap })),
-);
-
-// National bounding box — covers the Mexican mainland and peninsulas.
-const NATIONAL_BBOX = { min_lat: 14.3, max_lat: 32.8, min_lng: -118.5, max_lng: -86.6 };
 
 /**
  * Public community feed. Reads the masking view `sightings_public` directly via
@@ -65,15 +55,31 @@ type ProfileSummary = {
   avatar_url: string | null;
 };
 
-async function fetchFeed(userId: string | null) {
+/** Strip characters that have special meaning in PostgREST `.or()` filters. */
+function sanitizeSearch(raw: string): string {
+  return raw.replace(/[%,()*\\]/g, " ").trim();
+}
+
+async function fetchFeed(userId: string | null, search: string) {
+  const term = sanitizeSearch(search);
+  let feedQuery = supabase
+    .from("sightings_public")
+    .select(
+      "id, user_id, taxon_id, sci_name, common_name, is_sensitive, is_masked, status, location_label, location_precision, observed_at, created_at, photo_url",
+    )
+    .order("created_at", { ascending: false })
+    .limit(40);
+
+  // When searching, match across the species name, common name and the public
+  // location label of every sighting (not just the 40 most recent).
+  if (term) {
+    feedQuery = feedQuery.or(
+      `sci_name.ilike.%${term}%,common_name.ilike.%${term}%,location_label.ilike.%${term}%`,
+    );
+  }
+
   const [feedRes, taxaRes] = await Promise.all([
-    supabase
-      .from("sightings_public")
-      .select(
-        "id, user_id, taxon_id, sci_name, common_name, is_sensitive, is_masked, status, location_label, location_precision, observed_at, created_at, photo_url",
-      )
-      .order("created_at", { ascending: false })
-      .limit(40),
+    feedQuery,
     supabase.from("taxa").select("id, sci_name, conservation_status"),
   ]);
   if (feedRes.error) throw feedRes.error;
@@ -132,9 +138,20 @@ export function Feed() {
   const { t } = useLang();
   const { user } = useAuth();
   const userId = user?.id ?? null;
+
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  // Debounce so we don't hit the DB on every keystroke.
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(id);
+  }, [search]);
+  const searching = debouncedSearch.length > 0;
+
   const { data, isLoading, error } = useQuery({
-    queryKey: [...FEED_QUERY_KEY, userId],
-    queryFn: () => fetchFeed(userId),
+    queryKey: [...FEED_QUERY_KEY, userId, debouncedSearch],
+    queryFn: () => fetchFeed(userId, debouncedSearch),
+    placeholderData: (prev) => prev,
   });
 
   return (
@@ -150,31 +167,68 @@ export function Feed() {
         )}
       </p>
 
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        <ExploreCard
-          to="/especies"
-          icon={<BookOpen size={16} />}
-          label={t("Herbario", "Herbarium")}
-          hint={t("1300+ especies", "1300+ species")}
-          tone="bg-leaf/10 text-leaf"
+      <div className="relative mt-4">
+        <Search
+          size={15}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
         />
-        <ExploreCard
-          to="/retos"
-          icon={<Target size={16} />}
-          label={t("Retos", "Quests")}
-          hint={t("Salidas y misiones", "Outings & missions")}
-          tone="bg-orchid/10 text-orchid"
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t(
+            "Busca avistamientos por especie o lugar…",
+            "Search sightings by species or place…",
+          )}
+          className="w-full rounded-xl border border-input bg-card pl-9 pr-9 py-2.5 text-sm outline-none focus:border-leaf focus:ring-2 focus:ring-leaf/20"
         />
-        <ExploreCard
-          to="/ranking"
-          icon={<Trophy size={16} />}
-          label={t("Ranking", "Ranking")}
-          hint={t("Top spotters", "Top spotters")}
-          tone="bg-warn/10 text-warn"
-        />
+        {search && (
+          <button
+            type="button"
+            aria-label={t("Limpiar búsqueda", "Clear search")}
+            onClick={() => setSearch("")}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X size={15} />
+          </button>
+        )}
       </div>
 
-      <DashboardMap />
+      {!searching && (
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <ExploreCard
+            to="/especies"
+            icon={<BookOpen size={16} />}
+            label={t("Herbario", "Herbarium")}
+            hint={t("1300+ especies", "1300+ species")}
+            tone="bg-leaf/10 text-leaf"
+          />
+          <ExploreCard
+            to="/retos"
+            icon={<Target size={16} />}
+            label={t("Retos", "Quests")}
+            hint={t("Salidas y misiones", "Outings & missions")}
+            tone="bg-orchid/10 text-orchid"
+          />
+          <ExploreCard
+            to="/ranking"
+            icon={<Trophy size={16} />}
+            label={t("Ranking", "Ranking")}
+            hint={t("Top spotters", "Top spotters")}
+            tone="bg-warn/10 text-warn"
+          />
+        </div>
+      )}
+
+      {searching && (
+        <div className="specimen-label mt-5">
+          {isLoading
+            ? t("Buscando…", "Searching…")
+            : t(
+                `${data?.rows.length ?? 0} resultados para “${debouncedSearch}”`,
+                `${data?.rows.length ?? 0} results for “${debouncedSearch}”`,
+              )}
+        </div>
+      )}
 
       <div className="mt-5 space-y-4">
         {isLoading && <FeedSkeleton />}
@@ -186,7 +240,7 @@ export function Feed() {
             )}
           </div>
         )}
-        {data && data.rows.length === 0 && <EmptyFeed />}
+        {data && data.rows.length === 0 && (searching ? <NoSearchResults /> : <EmptyFeed />)}
         {data?.rows.map((s, i) => (
           <FeedCard
             key={s.id}
@@ -346,62 +400,6 @@ function FeedCard({
   );
 }
 
-/**
- * Compact map preview on the home dashboard. Shows the same conservation-safe
- * approximate areas as the full /mapa page (each sighting as a fuzzed radius,
- * never an exact point) and links through to it.
- */
-function DashboardMap() {
-  const { t } = useLang();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  const { data } = useQuery({
-    queryKey: ["dashboard-map-bbox", NATIONAL_BBOX],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("sightings_in_bbox", NATIONAL_BBOX);
-      if (error) throw error;
-      return (data ?? []) as SightingPoint[];
-    },
-  });
-
-  const points = (data ?? []).filter((p) => p.lat != null && p.lng != null);
-
-  return (
-    <section className="mt-5">
-      <div className="mb-2 flex items-end justify-between gap-2">
-        <div>
-          <div className="specimen-label">{t("Distribución", "Distribution")}</div>
-          <h2 className="text-base font-display font-semibold tracking-tight">
-            {t("Áreas aproximadas", "Approximate areas")}
-          </h2>
-        </div>
-        <Link to="/mapa" className="text-xs font-semibold text-leaf hover:underline shrink-0">
-          {t("Ver mapa completo →", "Open full map →")}
-        </Link>
-      </div>
-      {mounted ? (
-        <Suspense
-          fallback={
-            <div className="w-full aspect-[16/10] rounded-3xl bg-gradient-to-br from-leaf/15 via-accent/30 to-background animate-pulse" />
-          }
-        >
-          <SightingsMap points={points} bbox={NATIONAL_BBOX} heightClass="aspect-[16/10]" />
-        </Suspense>
-      ) : (
-        <div className="w-full aspect-[16/10] rounded-3xl bg-gradient-to-br from-leaf/15 via-accent/30 to-background animate-pulse" />
-      )}
-      <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-        <ShieldCheck size={12} className="text-leaf shrink-0" />
-        {t(
-          "No se publican coordenadas exactas — solo áreas aproximadas.",
-          "Exact coordinates are never published — only approximate areas.",
-        )}
-      </p>
-    </section>
-  );
-}
-
 function ExploreCard({
   to,
   icon,
@@ -440,6 +438,32 @@ function EmptyFeed() {
           "When the first spotters log orchids, they'll appear here.",
         )}
       </p>
+    </div>
+  );
+}
+
+function NoSearchResults() {
+  const { t } = useLang();
+  return (
+    <div className="rounded-3xl border border-dashed border-border bg-card/60 p-8 text-center">
+      <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-leaf/10 text-leaf">
+        <Search size={20} />
+      </div>
+      <p className="mt-3 text-sm text-foreground/80 font-medium">
+        {t("Sin avistamientos para tu búsqueda.", "No sightings match your search.")}
+      </p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        {t(
+          "Prueba con otra especie o lugar, o explora el herbario completo.",
+          "Try another species or place, or explore the full herbarium.",
+        )}
+      </p>
+      <Link
+        to="/especies"
+        className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-leaf text-leaf-foreground px-4 py-2 text-xs font-semibold"
+      >
+        <BookOpen size={13} /> {t("Ir al herbario", "Browse herbarium")}
+      </Link>
     </div>
   );
 }
