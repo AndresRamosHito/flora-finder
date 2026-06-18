@@ -14,16 +14,16 @@ export const Route = createFileRoute("/mapa")({
   }),
   head: () => ({
     meta: [
-      { title: "Mapa de orquídeas · OrquIDea" },
+      { title: "Áreas aproximadas de orquídeas · OrquIDea" },
       {
         name: "description",
         content:
-          "Mapa de avistamientos de orquídeas de México con clustering, filtros y protección de ubicación para especies sensibles.",
+          "Mapa de áreas aproximadas de avistamientos de orquídeas de México. No se publican coordenadas exactas.",
       },
-      { property: "og:title", content: "Mapa de orquídeas · OrquIDea" },
+      { property: "og:title", content: "Áreas aproximadas de orquídeas · OrquIDea" },
       {
         property: "og:description",
-        content: "Mapa interactivo de avistamientos de orquídeas de México.",
+        content: "Mapa de áreas amplias de avistamientos, con protección de ubicación.",
       },
       { property: "og:url", content: "https://orchid-map-oaxaca.lovable.app/mapa" },
     ],
@@ -51,7 +51,6 @@ function MapPage() {
   });
 
   const [status, setStatus] = useState<StatusFilter>("all");
-  const [showSensitive, setShowSensitive] = useState(true);
   const [taxon, setTaxon] = useState(especie ?? "");
 
   const all = data ?? [];
@@ -60,7 +59,6 @@ function MapPage() {
     const q = taxon.trim().toLowerCase();
     return all.filter((p) => {
       if (p.lat == null || p.lng == null) return false;
-      if (!showSensitive && (p.is_sensitive || p.is_masked)) return false;
       if (status === "verified" && p.status !== "verified") return false;
       if (status === "pending" && p.status === "verified") return false;
       if (q) {
@@ -69,9 +67,9 @@ function MapPage() {
       }
       return true;
     });
-  }, [all, status, showSensitive, taxon]);
+  }, [all, status, taxon]);
 
-  const hiddenMasked = all.filter((p) => p.is_masked && p.lat == null).length;
+  const hidden = all.filter((p) => p.lat == null || p.lng == null).length;
 
   return (
     <Shell active="map">
@@ -79,11 +77,13 @@ function MapPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="specimen-label">{t("Orquídeas de México", "Orchids of Mexico")}</div>
-            <h1 className="mt-0.5 text-2xl font-display font-semibold">{t("Mapa", "Map")}</h1>
-            <p className="text-xs text-muted-foreground mt-1 max-w-[28ch]">
+            <h1 className="mt-0.5 text-2xl font-display font-semibold">
+              {t("Áreas aproximadas", "Approximate areas")}
+            </h1>
+            <p className="text-xs text-muted-foreground mt-1 max-w-[32ch]">
               {t(
-                "Coordenadas redondeadas a cuadrícula. Especies sensibles solo como área.",
-                "Coordinates rounded to a grid. Sensitive species shown only as an area.",
+                "No se publican coordenadas exactas. Cada círculo representa una zona pública aproximada, normalmente 20 km o 100 km.",
+                "Exact coordinates are not published. Each circle is an approximate public area, usually 20 km or 100 km.",
               )}
             </p>
           </div>
@@ -103,9 +103,6 @@ function MapPage() {
             <Chip active={status === "pending"} onClick={() => setStatus("pending")}>
               {t("Pendientes", "Pending")}
             </Chip>
-            <Chip active={showSensitive} onClick={() => setShowSensitive((v) => !v)}>
-              {showSensitive ? t("Sensibles ✓", "Sensitive ✓") : t("Sensibles", "Sensitive")}
-            </Chip>
           </div>
           <input
             value={taxon}
@@ -116,32 +113,28 @@ function MapPage() {
         </div>
 
         <div className="mt-3">
-          <SightingsMap points={filtered} bbox={BBOX} heightClass="h-[56vh] min-h-[320px]" />
+          <SightingsMap points={filtered as any} bbox={BBOX} heightClass="h-[56vh] min-h-[320px]" />
         </div>
 
         <div className="mt-3 flex items-center gap-4 text-[11px] flex-wrap">
-          <Legend dotClass="bg-leaf" label={t("Verificado", "Verified")} />
-          <Legend dotClass="bg-orchid" label={t("Pendiente", "Pending")} />
-          <Legend
-            dotClass="bg-warn/40 border border-warn"
-            label={t("Sensible (área)", "Sensitive (area)")}
-          />
+          <Legend dotClass="bg-leaf/40 border border-leaf" label={t("Área verificada", "Verified area")} />
+          <Legend dotClass="bg-orchid/40 border border-orchid" label={t("Área pendiente", "Pending area")} />
         </div>
 
         <div className="mt-3 rounded-2xl bg-card border border-border p-3 text-xs text-foreground/80 flex gap-2">
           <Info size={14} className="text-leaf shrink-0 mt-0.5" />
           <div>
             {isLoading
-              ? t("Cargando puntos…", "Loading points…")
+              ? t("Cargando áreas…", "Loading areas…")
               : t(
-                  `${filtered.length} avistamientos en México.`,
-                  `${filtered.length} sightings in Mexico.`,
+                  `${filtered.length} áreas públicas aproximadas en México.`,
+                  `${filtered.length} approximate public areas in Mexico.`,
                 )}
-            {hiddenMasked > 0 && (
+            {hidden > 0 && (
               <>
                 {" · "}
-                <Lock size={11} className="inline" /> {hiddenMasked}{" "}
-                {t("ocultos por completo.", "fully hidden.")}
+                <Lock size={11} className="inline" /> {hidden}{" "}
+                {t("avistamientos sin ubicación pública.", "sightings with no public location.")}
               </>
             )}
           </div>

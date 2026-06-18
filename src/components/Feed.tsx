@@ -32,6 +32,7 @@ type SightingRow = {
   is_masked: boolean | null;
   status: string | null;
   location_label: string | null;
+  location_precision: string | null;
   observed_at: string | null;
   created_at: string;
   photo_url: string | null;
@@ -48,7 +49,7 @@ async function fetchFeed() {
     supabase
       .from("sightings_public")
       .select(
-        "id, taxon_id, sci_name, common_name, is_sensitive, is_masked, status, location_label, observed_at, created_at, photo_url",
+        "id, taxon_id, sci_name, common_name, is_sensitive, is_masked, status, location_label, location_precision, observed_at, created_at, photo_url",
       )
       .order("created_at", { ascending: false })
       .limit(40),
@@ -138,6 +139,7 @@ function FeedCard({ s, status, index }: { s: SightingRow; status: string | null;
   const sci = s.sci_name;
   const common = s.common_name;
   const masked = !!s.is_masked;
+  const hiddenLocation = s.location_precision === "hidden";
   return (
     <Link
       to="/s/$id"
@@ -212,10 +214,14 @@ function FeedCard({ s, status, index }: { s: SightingRow; status: string | null;
               (masked ? "text-muted-foreground" : "text-foreground/80")
             }
           >
-            {masked ? (
+            {hiddenLocation ? (
               <>
-                <Lock size={13} /> {t("Ubicación protegida · ~", "Protected location · ~")}
-                {REGION}
+                <Lock size={13} /> {t("Ubicación oculta", "Location hidden")}
+              </>
+            ) : masked ? (
+              <>
+                <Lock size={13} /> {t("Área aproximada · ~", "Approximate area · ~")}
+                {s.location_label ?? REGION}
               </>
             ) : (
               <>
@@ -226,10 +232,15 @@ function FeedCard({ s, status, index }: { s: SightingRow; status: string | null;
 
           {masked && (
             <div className="mt-2 rounded-lg bg-warn/10 text-[11px] text-foreground/75 px-2.5 py-1.5 leading-snug">
-              {t(
-                "Especie sensible — ubicación exacta oculta para prevenir el saqueo.",
-                "Sensitive species — exact location hidden to prevent poaching.",
-              )}
+              {hiddenLocation
+                ? t(
+                    "El observador ocultó la ubicación pública de este registro.",
+                    "The observer hid the public location for this record.",
+                  )
+                : t(
+                    "Ubicación aproximada — el sitio exacto no se publica.",
+                    "Approximate location — the exact site is not published.",
+                  )}
             </div>
           )}
 

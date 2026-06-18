@@ -8,7 +8,7 @@ import {
   Plus,
   LogIn,
   UserCircle,
-  Map,
+  Trophy,
   Users,
   BookOpen,
 } from "lucide-react";
@@ -85,10 +85,10 @@ export function Shell({ children, active = "feed" }: { children: ReactNode; acti
             active={active === "feed"}
           />
           <NavLink
-            to="/mapa"
-            icon={<Map size={20} />}
-            label={t("Mapa", "Map")}
-            active={active === "map"}
+            to="/ranking"
+            icon={<Trophy size={20} />}
+            label={t("Ranking", "Ranking")}
+            active={active === "board"}
           />
           <button
             type="button"
