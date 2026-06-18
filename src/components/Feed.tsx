@@ -288,9 +288,9 @@ function FeedCard({
       className="stagger-in rounded-3xl border border-border/70 bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-leaf/30 transition"
       style={{ animationDelay: index * 40 + "ms" }}
     >
-      <div className="flex min-h-[154px]">
-        <Link to="/s/$id" params={{ id: s.id }} className="block w-36 shrink-0 self-stretch">
-          <div className="relative h-full min-h-[154px] w-36 grid place-items-center overflow-hidden bg-gradient-to-br from-accent/40 to-secondary/30">
+      <div className="flex min-h-40">
+        <Link to="/s/$id" params={{ id: s.id }} className="block h-40 w-40 shrink-0">
+          <div className="relative h-40 w-40 grid place-items-center overflow-hidden bg-gradient-to-br from-accent/40 to-secondary/30">
             {s.photo_url ? (
               <img
                 src={s.photo_url}
@@ -299,7 +299,7 @@ function FeedCard({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <Orchid sciName={sci} size={96} />
+              <Orchid sciName={sci} size={108} />
             )}
             {!sci && !s.photo_url && (
               <div className="absolute inset-0 grid place-items-center gap-1 text-leaf pointer-events-none">
@@ -414,62 +414,6 @@ function ObservationStatusBadge({
   );
 }
 
-/**
- * Compact map preview on the home dashboard. Shows the same conservation-safe
- * approximate areas as the full /mapa page (each sighting as a fuzzed radius,
- * never an exact point) and links through to it.
- */
-function DashboardMap() {
-  const { t } = useLang();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  const { data } = useQuery({
-    queryKey: ["dashboard-map-bbox", NATIONAL_BBOX],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("sightings_in_bbox", NATIONAL_BBOX);
-      if (error) throw error;
-      return (data ?? []) as SightingPoint[];
-    },
-  });
-
-  const points = (data ?? []).filter((p) => p.lat != null && p.lng != null);
-
-  return (
-    <section className="mt-5">
-      <div className="mb-2 flex items-end justify-between gap-2">
-        <div>
-          <div className="specimen-label">{t("Distribución", "Distribution")}</div>
-          <h2 className="text-base font-display font-semibold tracking-tight">
-            {t("Áreas aproximadas", "Approximate areas")}
-          </h2>
-        </div>
-        <Link to="/mapa" className="text-xs font-semibold text-leaf hover:underline shrink-0">
-          {t("Ver mapa completo →", "Open full map →")}
-        </Link>
-      </div>
-      {mounted ? (
-        <Suspense
-          fallback={
-            <div className="w-full aspect-[16/10] rounded-3xl bg-gradient-to-br from-leaf/15 via-accent/30 to-background animate-pulse" />
-          }
-        >
-          <SightingsMap points={points} bbox={NATIONAL_BBOX} heightClass="aspect-[16/10]" />
-        </Suspense>
-      ) : (
-        <div className="w-full aspect-[16/10] rounded-3xl bg-gradient-to-br from-leaf/15 via-accent/30 to-background animate-pulse" />
-      )}
-      <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-        <ShieldCheck size={12} className="text-leaf shrink-0" />
-        {t(
-          "No se publican coordenadas exactas — solo áreas aproximadas.",
-          "Exact coordinates are never published — only approximate areas.",
-        )}
-      </p>
-    </section>
-  );
-}
-
 function ExploreCard({
   to,
   icon,
@@ -544,9 +488,9 @@ function FeedSkeleton() {
       {[0, 1, 2].map((i) => (
         <div
           key={i}
-          className="flex min-h-[154px] rounded-3xl border border-border/70 bg-card overflow-hidden"
+          className="flex min-h-40 rounded-3xl border border-border/70 bg-card overflow-hidden"
         >
-          <div className="h-auto min-h-[154px] w-36 shrink-0 bg-muted animate-pulse" />
+          <div className="h-40 w-40 shrink-0 bg-muted animate-pulse" />
           <div className="flex-1 p-4 space-y-2">
             <div className="h-10 w-10 bg-muted animate-pulse rounded-full" />
             <div className="h-3 w-20 bg-muted animate-pulse rounded" />
