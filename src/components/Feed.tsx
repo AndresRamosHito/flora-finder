@@ -5,8 +5,6 @@ import {
   BadgeCheck,
   BookOpen,
   HelpCircle,
-  Lock,
-  MapPin,
   MessageCircle,
   Flower2,
   ShieldCheck,
@@ -17,7 +15,8 @@ import { Orchid } from "@/components/Orchid";
 import type { SightingPoint } from "@/components/SightingsMap";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { StatusPill } from "@/components/StatusPill";
-import { REGION } from "@/components/Shell";
+import { LikeButton } from "@/components/LikeButton";
+import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useLang, formatRelativeTime } from "@/lib/i18n";
 
@@ -66,7 +65,7 @@ type ProfileSummary = {
   avatar_url: string | null;
 };
 
-async function fetchFeed() {
+async function fetchFeed(userId: string | null) {
   const [feedRes, taxaRes] = await Promise.all([
     supabase
       .from("sightings_public")
@@ -97,6 +96,24 @@ async function fetchFeed() {
     }
   }
 
+  // Community likes for the visible sightings: one query gives both the public
+  // counts and (filtered to the viewer) which ones they've already liked.
+  const likeCountById = new Map<string, number>();
+  const likedByMe = new Set<string>();
+  const sightingIds = rows.map((row) => row.id);
+  if (sightingIds.length > 0) {
+    const likesRes = await supabase
+      .from("sighting_likes")
+      .select("sighting_id, user_id")
+      .in("sighting_id", sightingIds);
+    if (!likesRes.error) {
+      for (const like of (likesRes.data ?? []) as { sighting_id: string; user_id: string }[]) {
+        likeCountById.set(like.sighting_id, (likeCountById.get(like.sighting_id) ?? 0) + 1);
+        if (userId && like.user_id === userId) likedByMe.add(like.sighting_id);
+      }
+    }
+  }
+
   const statusBySci = new Map<string, string | null>(
     (taxaRes.data as TaxonStatusRow[]).map((t) => [t.sci_name, t.conservation_status]),
   );
@@ -104,14 +121,20 @@ async function fetchFeed() {
     rows,
     statusBySci,
     profilesById,
+    likeCountById,
+    likedByMe,
   };
 }
 
+const FEED_QUERY_KEY = ["sightings-public-feed"] as const;
+
 export function Feed() {
   const { t } = useLang();
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
   const { data, isLoading, error } = useQuery({
-    queryKey: ["sightings-public-feed"],
-    queryFn: fetchFeed,
+    queryKey: [...FEED_QUERY_KEY, userId],
+    queryFn: () => fetchFeed(userId),
   });
 
   return (
@@ -171,6 +194,8 @@ export function Feed() {
             index={i}
             profile={s.user_id ? (data.profilesById.get(s.user_id) ?? null) : null}
             status={s.sci_name ? (data.statusBySci.get(s.sci_name) ?? null) : null}
+            likeCount={data.likeCountById.get(s.id) ?? 0}
+            liked={data.likedByMe.has(s.id)}
           />
         ))}
       </div>
@@ -183,77 +208,95 @@ function FeedCard({
   status,
   index,
   profile,
+  likeCount,
+  liked,
 }: {
   s: SightingRow;
   status: string | null;
   index: number;
   profile: ProfileSummary | null;
+  likeCount: number;
+  liked: boolean;
 }) {
   const { t, lang } = useLang();
   const sci = s.sci_name;
   const common = s.common_name;
-  const masked = !!s.is_masked;
-  const hiddenLocation = s.location_precision === "hidden";
   const profileLabel = profile?.display_name ?? profile?.handle ?? t("Spotter", "Spotter");
+  const photoAlt = sci
+    ? t(
+        `Foto de orquídea ${sci}${common ? ` (${common})` : ""}`,
+        `Photo of orchid ${sci}${common ? ` (${common})` : ""}`,
+      )
+    : t("Foto de orquídea sin identificar", "Photo of an unidentified orchid");
 
   return (
-    <Link
-      to="/s/$id"
-      params={{ id: s.id }}
-      className="stagger-in block rounded-3xl border border-border/70 bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-leaf/30 transition"
+    <article
+      className="stagger-in rounded-3xl border border-border/70 bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-leaf/30 transition"
       style={{ animationDelay: index * 40 + "ms" }}
     >
-      <article className="flex min-h-32">
-        <div className="relative h-32 w-32 shrink-0 grid place-items-center overflow-hidden bg-gradient-to-br from-accent/40 to-secondary/30">
-          {s.photo_url ? (
-            <img
-              src={s.photo_url}
-              alt={
-                sci
-                  ? t(
-                      `Foto de orquídea ${sci}${common ? ` (${common})` : ""} en ${s.location_label ?? "México"}`,
-                      `Photo of orchid ${sci}${common ? ` (${common})` : ""} in ${s.location_label ?? "Mexico"}`,
-                    )
-                  : t(
-                      `Foto de orquídea sin identificar en ${s.location_label ?? "México"}`,
-                      `Photo of an unidentified orchid in ${s.location_label ?? "Mexico"}`,
-                    )
-              }
-              loading="lazy"
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <Orchid sciName={sci} size={82} />
-          )}
-          {!sci && !s.photo_url && (
-            <div className="absolute inset-0 grid place-items-center gap-1 text-leaf pointer-events-none">
-              <HelpCircle size={22} />
-              <span className="text-[10px] font-semibold">
-                {t("Sin identificar", "Unidentified")}
-              </span>
+      <div className="flex">
+        {/* Image + the observation's date and review status sit together so the
+            column matches the height of the details beside it. */}
+        <Link to="/s/$id" params={{ id: s.id }} className="block w-32 shrink-0 self-stretch">
+          <div className="relative h-32 w-32 grid place-items-center overflow-hidden bg-gradient-to-br from-accent/40 to-secondary/30">
+            {s.photo_url ? (
+              <img
+                src={s.photo_url}
+                alt={photoAlt}
+                loading="lazy"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <Orchid sciName={sci} size={82} />
+            )}
+            {!sci && !s.photo_url && (
+              <div className="absolute inset-0 grid place-items-center gap-1 text-leaf pointer-events-none">
+                <HelpCircle size={22} />
+                <span className="text-[10px] font-semibold">
+                  {t("Sin identificar", "Unidentified")}
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="px-2 py-2 text-center">
+            <div className="text-[11px] text-muted-foreground">
+              {formatRelativeTime(s.observed_at ?? s.created_at, lang)}
             </div>
-          )}
-        </div>
+            <div className="mt-1">
+              {s.status === "verified" ? (
+                <span className="inline-flex items-center gap-1 text-leaf font-medium text-[11px]">
+                  <BadgeCheck size={12} /> {t("verificado", "verified")}
+                </span>
+              ) : s.status === "needs_id" || !s.taxon_id ? (
+                <span className="text-orchid font-medium text-[11px]">
+                  {t("necesita ID", "needs ID")}
+                </span>
+              ) : (
+                <span className="text-muted-foreground text-[11px]">
+                  {t("en revisión", "under review")}
+                </span>
+              )}
+            </div>
+          </div>
+        </Link>
 
-        <div className="min-w-0 flex-1 p-4">
-          <div className="mb-2 flex items-center gap-2">
+        <Link to="/s/$id" params={{ id: s.id }} className="block min-w-0 flex-1 p-4">
+          <div className="flex items-center gap-2.5">
             <ProfileAvatar
               url={profile?.avatar_url}
               label={profileLabel}
-              size="sm"
+              size="md"
               className="bg-accent text-muted-foreground"
             />
             <div className="min-w-0 leading-tight">
-              <div className="truncate text-[11px] font-semibold text-foreground/85">
-                {profileLabel}
-              </div>
-              <div className="truncate text-[10px] text-muted-foreground">
+              <div className="truncate text-sm font-semibold text-foreground">{profileLabel}</div>
+              <div className="truncate text-[11px] text-muted-foreground">
                 @{profile?.handle ?? "spotter"}
               </div>
             </div>
           </div>
 
-          <div className="flex items-start justify-between gap-2">
+          <div className="mt-3 flex items-start justify-between gap-2">
             <div className="min-w-0">
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
                 {sci ? t("ID sugerida", "Suggested ID") : t("Sin ID sugerida", "No suggested ID")}
@@ -268,70 +311,38 @@ function FeedCard({
             </div>
             {status && <StatusPill status={status} />}
           </div>
+        </Link>
+      </div>
 
-          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
-            <span>{formatRelativeTime(s.observed_at ?? s.created_at, lang)}</span>
-            <span>·</span>
-            {s.status === "verified" ? (
-              <span className="inline-flex items-center gap-1 text-leaf font-medium">
-                <BadgeCheck size={12} /> {t("verificado", "verified")}
-              </span>
-            ) : s.status === "needs_id" || !s.taxon_id ? (
-              <span className="text-orchid font-medium">{t("necesita ID", "needs ID")}</span>
-            ) : (
-              <span>{t("en revisión", "under review")}</span>
-            )}
-          </div>
-
-          <div
-            className={
-              "mt-2 flex items-center gap-1.5 text-xs " +
-              (masked ? "text-muted-foreground" : "text-foreground/80")
-            }
+      {/* Full-width action bar. The long buttons fill the card's base; the like
+          button stops propagation so it never navigates. */}
+      <div className="flex items-stretch border-t border-border/60 divide-x divide-border/60">
+        <Link
+          to="/s/$id"
+          params={{ id: s.id }}
+          className="flex-1 inline-flex items-center justify-center gap-1.5 py-3 text-xs font-semibold text-muted-foreground hover:bg-accent/40 hover:text-foreground transition"
+        >
+          <MessageCircle size={15} /> {t("Discusión", "Discussion")}
+        </Link>
+        {sci && s.taxon_id && (
+          <Link
+            to="/especies/$id"
+            params={{ id: s.taxon_id }}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 py-3 text-xs font-semibold text-muted-foreground hover:bg-accent/40 hover:text-foreground transition"
           >
-            {hiddenLocation ? (
-              <>
-                <Lock size={13} /> {t("Ubicación oculta", "Location hidden")}
-              </>
-            ) : masked ? (
-              <>
-                <Lock size={13} /> {t("Área aproximada · ~", "Approximate area · ~")}
-                {s.location_label ?? REGION}
-              </>
-            ) : (
-              <>
-                <MapPin size={13} /> {s.location_label ?? REGION}
-              </>
-            )}
-          </div>
-
-          {masked && (
-            <div className="mt-2 rounded-lg bg-warn/10 text-[11px] text-foreground/75 px-2.5 py-1.5 leading-snug">
-              {hiddenLocation
-                ? t(
-                    "El observador ocultó la ubicación pública de este registro.",
-                    "The observer hid the public location for this record.",
-                  )
-                : t(
-                    "Ubicación aproximada — el sitio exacto no se publica.",
-                    "Approximate location — the exact site is not published.",
-                  )}
-            </div>
-          )}
-
-          <div className="mt-3 flex items-center gap-4 text-[11px] text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-              <MessageCircle size={12} /> {t("Discusión", "Discussion")}
-            </span>
-            {sci && (
-              <span className="inline-flex items-center gap-1">
-                <BookOpen size={12} /> {t("Ver ficha", "View profile")}
-              </span>
-            )}
-          </div>
+            <BookOpen size={15} /> {t("Ver ficha", "View profile")}
+          </Link>
+        )}
+        <div className="flex items-center justify-center px-3 py-1.5">
+          <LikeButton
+            sightingId={s.id}
+            count={likeCount}
+            liked={liked}
+            invalidateKeys={[[...FEED_QUERY_KEY]]}
+          />
         </div>
-      </article>
-    </Link>
+      </div>
+    </article>
   );
 }
 
