@@ -83,7 +83,7 @@ export const Route = createFileRoute("/s/$id")({
                 image: s.photo_url ?? undefined,
                 url,
                 inLanguage: "es-MX",
-                publisher: { "@type": "Organization", name: "OrchidArc" },
+                publisher: { "@type": "Organization", name: "Orchidarc" },
               }),
             },
           ]
@@ -104,6 +104,8 @@ type SightingOne = {
   status: "needs_id" | "pending" | "verified" | "rejected" | string | null;
   notes: string | null;
   location_label: string | null;
+  location_precision: string | null;
+  public_radius_km: number | null;
   observed_at: string | null;
   created_at: string;
   photo_url: string | null;
@@ -149,6 +151,9 @@ function SightingDetail() {
         user ? fetchHasLiked(id, user.id) : Promise.resolve(false),
       ]);
       return { count, liked };
+    },
+  });
+
   const photosQ = useQuery({
     queryKey: ["sighting-photos", id],
     queryFn: async () => {
@@ -179,7 +184,7 @@ function SightingDetail() {
         supabase.from("profiles").select("id, handle, display_name"),
       ]);
       if (comm.error) throw comm.error;
-      const taxaById = new Map((taxa.data ?? []).map((t) => [t.id, t]));
+      const taxaById = new Map((taxa.data ?? []).map((tx) => [tx.id, tx]));
       const profById = new Map((profs.data ?? []).map((p) => [p.id, p]));
       const agreeBy = new Map<string, string[]>();
       for (const a of agree.data ?? []) {
@@ -257,6 +262,7 @@ function SightingDetail() {
       ? [{ id: "legacy-photo", photo_url: s.photo_url, position: 0 }]
       : [];
   const mainPhoto = photos[0] ?? null;
+  const hiddenLocation = s?.location_precision === "hidden";
 
   return (
     <Shell active="feed">
@@ -365,10 +371,15 @@ function SightingDetail() {
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
                     <span>{formatRelativeTime(s.observed_at ?? s.created_at, lang)}</span>
-                    {s.is_masked ? (
+                    {hiddenLocation ? (
                       <span className="inline-flex items-center gap-1">
-                        <Lock size={12} /> {t("Ubicación protegida · ", "Protected location · ")}
-                        {REGION}
+                        <Lock size={12} /> {t("Ubicación oculta", "Location hidden")}
+                      </span>
+                    ) : s.is_masked ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Lock size={12} /> {t("Área aproximada", "Approximate area")}
+                        {s.public_radius_km ? ` · ~${s.public_radius_km} km` : ""}
+                        {s.location_label ? ` · ${s.location_label}` : ""}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1">
@@ -388,14 +399,19 @@ function SightingDetail() {
                   />
                 </div>
 
-                {s.is_sensitive && (
+                {(s.is_sensitive || s.is_masked) && (
                   <div className="mt-3 rounded-xl bg-warn/10 border border-warn/30 px-3 py-2 text-[12px] text-foreground/80 flex gap-2">
                     <ShieldCheck size={14} className="text-warn shrink-0 mt-0.5" />
                     <div>
-                      {t(
-                        "Especie sensible. Las coordenadas exactas no se muestran a nadie excepto al observador y los verificadores.",
-                        "Sensitive species. Exact coordinates are shown to no one except the observer and the verifiers.",
-                      )}
+                      {hiddenLocation
+                        ? t(
+                            "El observador ocultó la ubicación pública de este registro.",
+                            "The observer hid the public location for this record.",
+                          )
+                        : t(
+                            "El sitio exacto no se publica; solo se muestra un área aproximada.",
+                            "The exact site is not published; only an approximate area is shown.",
+                          )}
                     </div>
                   </div>
                 )}
@@ -441,7 +457,7 @@ function SightingDetail() {
                     : null;
                   const prof = commentsQ.data!.profById.get(c.user_id);
                   const agrees = commentsQ.data!.agreeBy.get(c.id) ?? [];
-                  const support = 1 + agrees.length; // suggester + agreers
+                  const support = 1 + agrees.length;
                   const iAgree = user ? agrees.includes(user.id) : false;
                   const isMine = user?.id === c.user_id;
                   return (
