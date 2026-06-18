@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -29,11 +29,11 @@ import { habitatLabel } from "@/lib/habitats";
 export const Route = createFileRoute("/lista")({
   head: () => ({
     meta: [
-      { title: "Mi life list de orquídeas · OrquIDea" },
+      { title: "Mi life list de orquﾃｭdeas ﾂｷ OrquIDea" },
       {
         name: "description",
         content:
-          "Tu life list personal de orquídeas observadas: avistamientos, especies únicas y verificados por la comunidad.",
+          "Tu life list personal de orquﾃｭdeas observadas: avistamientos, especies ﾃｺnicas y verificados por la comunidad.",
       },
       { name: "robots", content: "noindex, nofollow" },
     ],
@@ -60,6 +60,23 @@ type TaxonOption = {
   conservation_status: string | null;
   is_sensitive: boolean;
 };
+
+type ProfileUpdatePayload = Partial<
+  Pick<
+    ProfileMeta,
+    "display_name" | "region" | "bio" | "favorite_taxon_id" | "avatar_url" | "avatar_storage_path"
+  >
+>;
+
+type ProfileUpdateTable = {
+  update: (values: ProfileUpdatePayload) => {
+    eq: (column: "id", value: string) => PromiseLike<{ error: { message: string } | null }>;
+  };
+};
+
+function profilesUpdateTable() {
+  return supabase.from("profiles") as unknown as ProfileUpdateTable;
+}
 
 function ListPage() {
   const { t, lang } = useLang();
@@ -132,13 +149,7 @@ function ListPage() {
       bio: profile.bio ?? "",
       favorite_taxon_id: profile.favorite_taxon_id ?? "",
     });
-  }, [
-    profile?.display_name,
-    profile?.region,
-    profile?.bio,
-    profile?.favorite_taxon_id,
-    editingProfile,
-  ]);
+  }, [profile, editingProfile]);
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -177,7 +188,7 @@ function ListPage() {
     setSavingProfile(true);
     setProfileError(null);
     try {
-      const profilesTable = supabase.from("profiles") as any;
+      const profilesTable = profilesUpdateTable();
       const { error } = await profilesTable
         .update({
           display_name: draft.display_name.trim().slice(0, 80) || null,
@@ -228,7 +239,7 @@ function ListPage() {
       if (uploadError) throw uploadError;
 
       const { data: publicData } = supabase.storage.from("profile-photos").getPublicUrl(path);
-      const profilesTable = supabase.from("profiles") as any;
+      const profilesTable = profilesUpdateTable();
       const { error } = await profilesTable
         .update({ avatar_url: publicData.publicUrl, avatar_storage_path: path })
         .eq("id", user.id);
@@ -247,7 +258,7 @@ function ListPage() {
     setProfileError(null);
     try {
       const oldPath = profile?.avatar_storage_path;
-      const profilesTable = supabase.from("profiles") as any;
+      const profilesTable = profilesUpdateTable();
       const { error } = await profilesTable
         .update({ avatar_url: null, avatar_storage_path: null })
         .eq("id", user.id);
@@ -264,14 +275,14 @@ function ListPage() {
   if (loading || !user)
     return (
       <Shell active="list">
-        <div className="p-6 text-sm text-muted-foreground">{t("Cargando…", "Loading…")}</div>
+        <div className="p-6 text-sm text-muted-foreground">{t("Cargando窶ｦ", "Loading窶ｦ")}</div>
       </Shell>
     );
 
   return (
     <Shell active="list">
       <div className="px-4 pt-5 pb-10">
-        <h1 className="sr-only">{t("Mi life list de orquídeas", "My orchid life list")}</h1>
+        <h1 className="sr-only">{t("Mi life list de orquﾃｭdeas", "My orchid life list")}</h1>
 
         <div className="rounded-3xl bg-gradient-to-br from-leaf to-leaf/70 text-leaf-foreground p-5">
           <div className="flex items-start justify-between gap-3">
@@ -283,7 +294,7 @@ function ListPage() {
                 className="bg-background/20 text-leaf-foreground"
               />
               <div className="min-w-0">
-                <div className="text-xs opacity-80 truncate">@{profile?.handle ?? "—"}</div>
+                <div className="text-xs opacity-80 truncate">@{profile?.handle ?? "-"}</div>
                 <div className="font-display text-xl font-semibold truncate">
                   {profile?.display_name ?? t("Mi lista", "My list")}
                 </div>
@@ -330,7 +341,9 @@ function ListPage() {
             className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-background/15 px-3 py-1.5 text-xs font-semibold hover:bg-background/25 transition"
           >
             {editingProfile ? <X size={13} /> : <Edit3 size={13} />}
-            {editingProfile ? t("Cerrar edición", "Close editor") : t("Editar perfil", "Edit profile")}
+            {editingProfile
+              ? t("Cerrar ediciﾃｳn", "Close editor")
+              : t("Editar perfil", "Edit profile")}
           </button>
 
           {editingProfile && (
@@ -343,7 +356,11 @@ function ListPage() {
             >
               <div className="flex flex-wrap items-center gap-2">
                 <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-background/20 px-3 py-1.5 text-xs font-semibold hover:bg-background/30 transition">
-                  {uploadingAvatar ? <Loader2 size={13} className="animate-spin" /> : <Camera size={13} />}
+                  {uploadingAvatar ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <Camera size={13} />
+                  )}
                   {t("Cambiar foto", "Change photo")}
                   <input
                     type="file"
@@ -367,7 +384,7 @@ function ListPage() {
 
               <label className="block space-y-1">
                 <span className="text-[11px] font-semibold uppercase tracking-wide opacity-80">
-                  {t("Nombre público", "Public name")}
+                  {t("Nombre pﾃｺblico", "Public name")}
                 </span>
                 <input
                   value={draft.display_name}
@@ -380,7 +397,7 @@ function ListPage() {
 
               <label className="block space-y-1">
                 <span className="text-[11px] font-semibold uppercase tracking-wide opacity-80">
-                  {t("Región", "Region")}
+                  {t("Regiﾃｳn", "Region")}
                 </span>
                 <input
                   value={draft.region}
@@ -393,7 +410,7 @@ function ListPage() {
 
               <label className="block space-y-1">
                 <span className="text-[11px] font-semibold uppercase tracking-wide opacity-80">
-                  {t("Descripción breve", "Brief description")}
+                  {t("Descripciﾃｳn breve", "Brief description")}
                 </span>
                 <textarea
                   value={draft.bio}
@@ -401,12 +418,14 @@ function ListPage() {
                   maxLength={280}
                   rows={3}
                   placeholder={t(
-                    "Ej. Busco Laelia, tomo fotos en bosque mesófilo…",
-                    "E.g. I look for Laelia and photograph cloud forest orchids…",
+                    "Ej. Busco Laelia, tomo fotos en bosque mesﾃｳfilo窶ｦ",
+                    "E.g. I look for Laelia and photograph cloud forest orchids窶ｦ",
                   )}
                   className="w-full resize-none rounded-xl border border-background/25 bg-background/90 px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-background/40"
                 />
-                <span className="block text-right text-[10px] opacity-75">{draft.bio.length}/280</span>
+                <span className="block text-right text-[10px] opacity-75">
+                  {draft.bio.length}/280
+                </span>
               </label>
 
               <label className="block space-y-1">
@@ -422,7 +441,7 @@ function ListPage() {
                   {taxa.map((tx) => (
                     <option key={tx.id} value={tx.id}>
                       {tx.sci_name}
-                      {tx.common_name ? ` · ${tx.common_name}` : ""}
+                      {tx.common_name ? ` ﾂｷ ${tx.common_name}` : ""}
                     </option>
                   ))}
                 </select>
@@ -440,7 +459,11 @@ function ListPage() {
                   disabled={savingProfile}
                   className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-background text-leaf px-3 py-2 text-sm font-semibold disabled:opacity-60"
                 >
-                  {savingProfile ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                  {savingProfile ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Save size={14} />
+                  )}
                   {t("Guardar perfil", "Save profile")}
                 </button>
                 <button
@@ -470,7 +493,7 @@ function ListPage() {
                   ["all", t("Todas", "All")],
                   ["verified", t("Verificadas", "Verified")],
                   ["needs_id", t("Necesitan ID", "Need ID")],
-                  ["pending", t("En revisión", "Under review")],
+                  ["pending", t("En revisiﾃｳn", "Under review")],
                 ] as const
               ).map(([v, label]) => (
                 <button
@@ -497,8 +520,8 @@ function ListPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={t(
-                  "Busca por especie, lugar o hábitat…",
-                  "Search by species, place, or habitat…",
+                  "Busca por especie, lugar o hﾃ｡bitat窶ｦ",
+                  "Search by species, place, or habitat窶ｦ",
                 )}
                 className="w-full rounded-xl border border-input bg-card pl-9 pr-3 py-2 text-sm outline-none focus:border-leaf focus:ring-2 focus:ring-leaf/20"
               />
@@ -507,13 +530,13 @@ function ListPage() {
         )}
 
         {isLoading && (
-          <p className="mt-3 text-sm text-muted-foreground">{t("Cargando…", "Loading…")}</p>
+          <p className="mt-3 text-sm text-muted-foreground">{t("Cargando窶ｦ", "Loading窶ｦ")}</p>
         )}
         {!isLoading && sightings.length === 0 && (
           <div className="mt-4 rounded-2xl border border-dashed border-border p-6 text-center">
             <Flower2 className="mx-auto text-leaf" size={28} />
             <p className="mt-2 text-sm font-medium">
-              {t("Aún no has registrado orquídeas.", "You haven't logged any orchids yet.")}
+              {t("Aﾃｺn no has registrado orquﾃｭdeas.", "You haven't logged any orchids yet.")}
             </p>
             <Link
               to="/capture"
@@ -526,7 +549,7 @@ function ListPage() {
 
         {!isLoading && sightings.length > 0 && visible.length === 0 && (
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            {t("Ninguna observación coincide con el filtro.", "No observations match the filter.")}
+            {t("Ninguna observaciﾃｳn coincide con el filtro.", "No observations match the filter.")}
           </p>
         )}
 
@@ -565,7 +588,7 @@ function ListPage() {
                         lang === "en" ? "en-US" : "es-MX",
                       )}
                     </span>
-                    <span>·</span>
+                    <span>ﾂｷ</span>
                     <span className="truncate">{s.location_label ?? REGION}</span>
                   </div>
                   {(s.altitude_m != null || habitat) && (
@@ -574,10 +597,10 @@ function ListPage() {
                       {s.altitude_m != null && (
                         <span>
                           {s.altitude_m} m
-                          {s.altitude_accuracy_m ? ` ±${s.altitude_accuracy_m} m` : ""}
+                          {s.altitude_accuracy_m ? ` ﾂｱ${s.altitude_accuracy_m} m` : ""}
                         </span>
                       )}
-                      {s.altitude_m != null && habitat && <span>·</span>}
+                      {s.altitude_m != null && habitat && <span>ﾂｷ</span>}
                       {habitat && <span className="truncate">{habitat}</span>}
                     </div>
                   )}
@@ -592,7 +615,7 @@ function ListPage() {
                       </span>
                     ) : (
                       <span className="text-muted-foreground">
-                        {t("en revisión", "under review")}
+                        {t("en revisiﾃｳn", "under review")}
                       </span>
                     )}
                   </div>
@@ -602,7 +625,7 @@ function ListPage() {
                   params={{ id: s.id }}
                   className="absolute inset-0"
                   aria-label={t(
-                    `Ver avistamiento de ${tx?.sci_name ?? "orquídea sin identificar"}`,
+                    `Ver avistamiento de ${tx?.sci_name ?? "orquﾃｭdea sin identificar"}`,
                     `View sighting of ${tx?.sci_name ?? "unidentified orchid"}`,
                   )}
                 />

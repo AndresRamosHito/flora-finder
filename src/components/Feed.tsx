@@ -79,7 +79,7 @@ async function fetchFeed() {
       .select("id, handle, display_name, avatar_url")
       .in("id", userIds);
     if (profilesRes.error) throw profilesRes.error;
-    for (const profile of ((profilesRes.data ?? []) as ProfileSummary[])) {
+    for (const profile of (profilesRes.data ?? []) as ProfileSummary[]) {
       profilesById.set(profile.id, profile);
     }
   }
@@ -229,7 +229,9 @@ function FeedCard({
               className="bg-accent text-muted-foreground"
             />
             <div className="min-w-0 leading-tight">
-              <div className="truncate text-[11px] font-semibold text-foreground/85">{profileLabel}</div>
+              <div className="truncate text-[11px] font-semibold text-foreground/85">
+                {profileLabel}
+              </div>
               <div className="truncate text-[10px] text-muted-foreground">
                 @{profile?.handle ?? "spotter"}
               </div>
