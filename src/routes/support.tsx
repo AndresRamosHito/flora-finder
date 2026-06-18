@@ -28,7 +28,8 @@ function SupportPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-leaf">OrquIDea</p>
           <h1 className="font-display text-3xl font-semibold tracking-tight">Support</h1>
           <p className="text-muted-foreground">
-            Contact and safety information for users, reviewers, contributors, and conservation partners.
+            Contact and safety information for users, reviewers, contributors, and conservation
+            partners.
           </p>
         </header>
 
@@ -37,7 +38,8 @@ function SupportPage() {
             <Mail size={18} className="text-leaf" /> Contact
           </div>
           <p>
-            For account help, data questions, species-location concerns, or app-store review inquiries, email:
+            For account help, data questions, species-location concerns, or app-store review
+            inquiries, email:
           </p>
           <p>
             <a className="font-semibold text-leaf underline" href={`mailto:${SUPPORT_EMAIL}`}>
@@ -77,15 +79,23 @@ function SupportPage() {
         <section className="space-y-3 rounded-xl border border-border bg-card p-4">
           <h2 className="text-lg font-semibold">Español</h2>
           <p>
-            Para ayuda con tu cuenta, datos, ubicaciones sensibles, errores técnicos o preguntas sobre
-            OrquIDea, escribe a <a className="font-semibold text-leaf underline" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
+            Para ayuda con tu cuenta, datos, ubicaciones sensibles, errores técnicos o preguntas
+            sobre OrquIDea, escribe a{" "}
+            <a className="font-semibold text-leaf underline" href={`mailto:${SUPPORT_EMAIL}`}>
+              {SUPPORT_EMAIL}
+            </a>
+            .
           </p>
         </section>
 
         <footer className="border-t border-border pt-4 text-muted-foreground">
           <p className="flex flex-wrap gap-x-3 gap-y-1">
-            <Link to="/privacy" className="font-medium text-leaf underline">Privacy Policy</Link>
-            <Link to="/terms" className="font-medium text-leaf underline">Terms of Use</Link>
+            <Link to="/privacy" className="font-medium text-leaf underline">
+              Privacy Policy
+            </Link>
+            <Link to="/terms" className="font-medium text-leaf underline">
+              Terms of Use
+            </Link>
           </p>
         </footer>
       </article>

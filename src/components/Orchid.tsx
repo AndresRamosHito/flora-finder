@@ -1,7 +1,13 @@
 import { paletteFor } from "@/lib/orchid-palette";
 
 /** Stylized SVG orchid keyed by scientific name. */
-export function Orchid({ sciName, size = 120 }: { sciName: string | null | undefined; size?: number }) {
+export function Orchid({
+  sciName,
+  size = 120,
+}: {
+  sciName: string | null | undefined;
+  size?: number;
+}) {
   const t = paletteFor(sciName);
   const uid = "g_" + (sciName ?? "x").replace(/\W/g, "_") + "_" + size;
   const tepals = [90, 162, 234, 306, 18];
@@ -20,7 +26,14 @@ export function Orchid({ sciName, size = 120 }: { sciName: string | null | undef
       <circle cx="60" cy="58" r="56" fill={"url(#" + uid + "bg)"} />
       {tepals.map((a, i) => (
         <g key={i} transform={`rotate(${a} 60 60)`}>
-          <ellipse cx="60" cy="28" rx="13" ry="27" fill={"url(#" + uid + "p)"} stroke="rgba(0,0,0,0.06)" />
+          <ellipse
+            cx="60"
+            cy="28"
+            rx="13"
+            ry="27"
+            fill={"url(#" + uid + "p)"}
+            stroke="rgba(0,0,0,0.06)"
+          />
         </g>
       ))}
       <ellipse cx="60" cy="80" rx="17" ry="20" fill={t.lip} opacity="0.95" />

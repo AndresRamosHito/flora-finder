@@ -172,7 +172,9 @@ function FeedCard({ s, status, index }: { s: SightingRow; status: string | null;
           {!sci && !s.photo_url && (
             <div className="absolute inset-0 grid place-items-center gap-1 text-leaf pointer-events-none">
               <HelpCircle size={22} />
-              <span className="text-[10px] font-semibold">{t("Sin identificar", "Unidentified")}</span>
+              <span className="text-[10px] font-semibold">
+                {t("Sin identificar", "Unidentified")}
+              </span>
             </div>
           )}
         </div>
@@ -306,7 +308,10 @@ function FeedSkeleton() {
   return (
     <>
       {[0, 1, 2].map((i) => (
-        <div key={i} className="flex min-h-32 rounded-3xl border border-border/70 bg-card overflow-hidden">
+        <div
+          key={i}
+          className="flex min-h-32 rounded-3xl border border-border/70 bg-card overflow-hidden"
+        >
           <div className="h-32 w-32 shrink-0 bg-muted animate-pulse" />
           <div className="flex-1 p-4 space-y-2">
             <div className="h-3 w-20 bg-muted animate-pulse rounded" />

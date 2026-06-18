@@ -15,7 +15,13 @@ export type HabitatType =
   | "cultivated_collection"
   | "other";
 
-export const HABITAT_OPTIONS: { value: HabitatType; es: string; en: string; hintEs: string; hintEn: string }[] = [
+export const HABITAT_OPTIONS: {
+  value: HabitatType;
+  es: string;
+  en: string;
+  hintEs: string;
+  hintEn: string;
+}[] = [
   {
     value: "cloud_forest",
     es: "Bosque mesófilo de montaña",

@@ -17,7 +17,11 @@ export async function stripExifAndDownscale(file: File, maxEdge = 1600): Promise
     if (!ctx) throw new Error("Canvas no disponible");
     ctx.drawImage(img, 0, 0, width, height);
     const blob: Blob = await new Promise((resolve, reject) => {
-      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Encoding failed"))), "image/jpeg", 0.82);
+      canvas.toBlob(
+        (b) => (b ? resolve(b) : reject(new Error("Encoding failed"))),
+        "image/jpeg",
+        0.82,
+      );
     });
     return blob;
   } finally {

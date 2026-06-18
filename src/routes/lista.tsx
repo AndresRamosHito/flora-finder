@@ -1,7 +1,16 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Flower2, BadgeCheck, HelpCircle, MapPin, Plus, Award, Search, Mountain } from "lucide-react";
+import {
+  Flower2,
+  BadgeCheck,
+  HelpCircle,
+  MapPin,
+  Plus,
+  Award,
+  Search,
+  Mountain,
+} from "lucide-react";
 import { Shell, REGION } from "@/components/Shell";
 import { Orchid } from "@/components/Orchid";
 import { StatusPill } from "@/components/StatusPill";
@@ -36,9 +45,11 @@ function ListPage() {
     enabled: !!user,
     queryFn: async () => {
       const [sRes, pRes, tRes] = await Promise.all([
-        (supabase as any)
+        supabase
           .from("sightings")
-          .select("id, taxon_id, photo_url, location_label, observed_at, created_at, status, notes, altitude_m, altitude_accuracy_m, habitat_type, habitat_description")
+          .select(
+            "id, taxon_id, photo_url, location_label, observed_at, created_at, status, notes, altitude_m, altitude_accuracy_m, habitat_type, habitat_description",
+          )
           .eq("user_id", user!.id)
           .order("observed_at", { ascending: false, nullsFirst: false }),
         supabase
@@ -62,7 +73,7 @@ function ListPage() {
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return sightings.filter((s: any) => {
+    return sightings.filter((s) => {
       if (filter !== "all" && s.status !== filter) return false;
       if (q) {
         const tx = s.taxon_id ? data?.taxaById.get(s.taxon_id) : null;
@@ -82,8 +93,8 @@ function ListPage() {
       </Shell>
     );
 
-  const species = new Set(sightings.filter((s: any) => s.taxon_id).map((s: any) => s.taxon_id!));
-  const verified = sightings.filter((s: any) => s.status === "verified").length;
+  const species = new Set(sightings.filter((s) => s.taxon_id).map((s) => s.taxon_id!));
+  const verified = sightings.filter((s) => s.status === "verified").length;
   const profile = data?.profile;
 
   return (
@@ -191,7 +202,7 @@ function ListPage() {
         )}
 
         <ul className="mt-3 space-y-3">
-          {visible.map((s: any) => {
+          {visible.map((s) => {
             const tx = s.taxon_id ? data?.taxaById.get(s.taxon_id) : null;
             const habitat = habitatLabel(s.habitat_type, lang);
             return (
@@ -233,7 +244,8 @@ function ListPage() {
                       <Mountain size={11} />
                       {s.altitude_m != null && (
                         <span>
-                          {s.altitude_m} m{ s.altitude_accuracy_m ? ` ±${s.altitude_accuracy_m} m` : "" }
+                          {s.altitude_m} m
+                          {s.altitude_accuracy_m ? ` ±${s.altitude_accuracy_m} m` : ""}
                         </span>
                       )}
                       {s.altitude_m != null && habitat && <span>·</span>}

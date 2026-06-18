@@ -22,7 +22,9 @@ export function useAuth(): AuthState {
 
   useEffect(() => {
     let mounted = true;
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return;
       setState({ session, user: session?.user ?? null, loading: false });
     });
