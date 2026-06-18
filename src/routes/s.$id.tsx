@@ -17,8 +17,10 @@ import {
 import { Shell, REGION } from "@/components/Shell";
 import { Orchid } from "@/components/Orchid";
 import { TaxonCombobox } from "@/components/TaxonCombobox";
+import { LikeButton } from "@/components/LikeButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { fetchLikeCount, fetchHasLiked } from "@/lib/likes";
 import { useLang, formatRelativeTime } from "@/lib/i18n";
 
 export const Route = createFileRoute("/s/$id")({
@@ -139,6 +141,14 @@ function SightingDetail() {
     },
   });
 
+  const likesQ = useQuery({
+    queryKey: ["sighting-likes", id, user?.id],
+    queryFn: async () => {
+      const [count, liked] = await Promise.all([
+        fetchLikeCount(id),
+        user ? fetchHasLiked(id, user.id) : Promise.resolve(false),
+      ]);
+      return { count, liked };
   const photosQ = useQuery({
     queryKey: ["sighting-photos", id],
     queryFn: async () => {
@@ -352,18 +362,30 @@ function SightingDetail() {
                   <StatusBadge status={s.status} />
                 </div>
 
-                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
-                  <span>{formatRelativeTime(s.observed_at ?? s.created_at, lang)}</span>
-                  {s.is_masked ? (
-                    <span className="inline-flex items-center gap-1">
-                      <Lock size={12} /> {t("Ubicación protegida · ", "Protected location · ")}
-                      {REGION}
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1">
-                      <MapPin size={12} /> {s.location_label ?? REGION}
-                    </span>
-                  )}
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
+                    <span>{formatRelativeTime(s.observed_at ?? s.created_at, lang)}</span>
+                    {s.is_masked ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Lock size={12} /> {t("Ubicación protegida · ", "Protected location · ")}
+                        {REGION}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1">
+                        <MapPin size={12} /> {s.location_label ?? REGION}
+                      </span>
+                    )}
+                  </div>
+                  <LikeButton
+                    sightingId={s.id}
+                    count={likesQ.data?.count ?? 0}
+                    liked={likesQ.data?.liked ?? false}
+                    invalidateKeys={[
+                      ["sighting-likes", id],
+                      ["species-observations", s.taxon_id ?? ""],
+                      ["taxa-top-photos"],
+                    ]}
+                  />
                 </div>
 
                 {s.is_sensitive && (
