@@ -41,16 +41,23 @@ select count(*) as taxa, count(distinct genus) as genera from public.taxa;
 -- expect ~1322 taxa across ~163 genera, genus populated
 ```
 
-## 3. Auth (magic link + Google)
+## 3. Auth (password + Google + magic-link backup)
 
 The app uses Supabase Auth. In the new project's dashboard:
 
 - **Authentication → URL Configuration**
   - Site URL: `https://orquidea.orchidarc.org`
-  - Redirect URLs: add `https://orquidea.orchidarc.org/onboarding` and
-    `http://localhost:3000/onboarding` (local dev).
+  - Redirect URLs: add:
+    - `https://orquidea.orchidarc.org/auth/callback`
+    - `https://orquidea.orchidarc.org/login`
+    - `http://localhost:3000/auth/callback`
+    - `http://localhost:3000/login`
+  - The app appends `?next=/onboarding` for OAuth/magic-link sign-in and
+    `?reset=1` for password recovery.
 - **Authentication → Providers**
-  - **Email** is on by default (magic links work immediately).
+  - **Email**: enable Email provider and make sure email/password signups are
+    allowed. Password sign-in is now the primary path.
+  - Magic links remain available only as a backup.
   - **Google**: enable and paste a Google OAuth client ID + secret
     (Google Cloud Console → OAuth consent + credentials; authorized redirect URI
     is the value Supabase shows on that provider page).
@@ -87,17 +94,3 @@ drifted. Add two repository secrets:
   - `SUPABASE_ACCESS_TOKEN` = a personal access token from
     https://supabase.com/dashboard/account/tokens
   - `SUPABASE_DB_PASSWORD` = your database password, **raw** (no URL-encoding)
-
-The CLI resolves the connection from the project ref (`rbjjogsafaplaqfqhohe`, set
-in the workflow), so there's no connection string to hand-build. After the
-secrets exist, run the workflow once to apply everything; from then on every
-merged migration applies automatically — no more "frontend shipped but the
-column doesn't exist."
-
-## 7. Retire the old project
-
-Once the app is verified against the new project, the Lovable-managed
-`muniabnnsasurbooeing` can be abandoned. There's no data to migrate out of it —
-the catalog is rebuilt from the checklist and there's no meaningful user data yet.
-(If real sightings/profiles accumulate there before you cut over, export them via
-the REST API with the anon key and we'll write an import step.)

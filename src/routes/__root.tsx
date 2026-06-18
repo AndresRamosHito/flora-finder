@@ -87,6 +87,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "width=device-width, initial-scale=1, viewport-fit=cover",
       },
       { name: "theme-color", content: "#f6f1e4" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: "OrquIDea" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "application-name", content: "OrquIDea" },
       { name: "author", content: "OrchidArc" },
       { name: "robots", content: "index,follow" },
       { title: "OrquIDea — Ciencia ciudadana de orquídeas" },
@@ -100,7 +104,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "orquídeas, México, ciencia ciudadana, conservación, OrchidArc, Laelia, Barkeria, biodiversidad",
       },
-
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "OrquIDea" },
       { property: "og:locale", content: "es_MX" },
@@ -119,7 +122,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         property: "og:image:alt",
         content: "OrquIDea — ciencia ciudadana para orquídeas de México",
       },
-
       { name: "twitter:card", content: "summary_large_image" },
       {
         name: "twitter:title",
@@ -185,6 +187,14 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="es">
       <head>
         <HeadContent />
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <meta name="theme-color" content="#f6f1e4" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="OrquIDea" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="application-name" content="OrquIDea" />
       </head>
       <body>
         {children}
@@ -201,6 +211,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <AuthSync />
+        <PwaRuntimeSetup />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
       </LanguageProvider>
@@ -223,6 +234,68 @@ function AuthSync() {
 
     return () => subscription.unsubscribe();
   }, [router, queryClient]);
+
+  return null;
+}
+
+/** Root-level singleton: make PWA metadata and service worker visible after hydration. */
+function PwaRuntimeSetup() {
+  useEffect(() => {
+    const ensureLink = (rel: string, href: string) => {
+      const existing = document.head.querySelector<HTMLLinkElement>(
+        `link[rel="${rel}"][href="${href}"]`,
+      );
+
+      if (existing) {
+        return;
+      }
+
+      const link = document.createElement("link");
+      link.rel = rel;
+      link.href = href;
+      document.head.appendChild(link);
+    };
+
+    const ensureMeta = (name: string, content: string) => {
+      let meta = document.head.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
+
+      if (!meta) {
+        meta = document.createElement("meta");
+        meta.name = name;
+        document.head.appendChild(meta);
+      }
+
+      meta.content = content;
+    };
+
+    ensureLink("manifest", "/manifest.webmanifest");
+    ensureLink("icon", "/favicon.ico");
+    ensureLink("apple-touch-icon", "/apple-touch-icon.png");
+    ensureMeta("theme-color", "#f6f1e4");
+    ensureMeta("application-name", "OrquIDea");
+    ensureMeta("apple-mobile-web-app-capable", "yes");
+    ensureMeta("apple-mobile-web-app-title", "OrquIDea");
+    ensureMeta("apple-mobile-web-app-status-bar-style", "default");
+
+    if (!("serviceWorker" in navigator)) {
+      return;
+    }
+
+    const registerServiceWorker = () => {
+      navigator.serviceWorker.register("/sw.js").catch(error => {
+        console.error("Service worker registration failed", error);
+      });
+    };
+
+    if (document.readyState === "complete") {
+      registerServiceWorker();
+      return;
+    }
+
+    window.addEventListener("load", registerServiceWorker, { once: true });
+
+    return () => window.removeEventListener("load", registerServiceWorker);
+  }, []);
 
   return null;
 }

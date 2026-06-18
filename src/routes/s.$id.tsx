@@ -111,6 +111,12 @@ type SightingOne = {
   lng: number | null;
 };
 
+type SightingPhoto = {
+  id: string;
+  photo_url: string;
+  position: number;
+};
+
 type CommentRow = {
   id: string;
   user_id: string;
@@ -143,6 +149,19 @@ function SightingDetail() {
         user ? fetchHasLiked(id, user.id) : Promise.resolve(false),
       ]);
       return { count, liked };
+  const photosQ = useQuery({
+    queryKey: ["sighting-photos", id],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("sighting_photos")
+        .select("id, photo_url, position")
+        .eq("sighting_id", id)
+        .order("position", { ascending: true });
+      if (error) {
+        if ((error as { code?: string }).code === "42P01") return [];
+        throw error;
+      }
+      return (data ?? []) as SightingPhoto[];
     },
   });
 
@@ -232,6 +251,12 @@ function SightingDetail() {
   });
 
   const s = sightingQ.data;
+  const photos = photosQ.data?.length
+    ? photosQ.data
+    : s?.photo_url
+      ? [{ id: "legacy-photo", photo_url: s.photo_url, position: 0 }]
+      : [];
+  const mainPhoto = photos[0] ?? null;
 
   return (
     <Shell active="feed">
@@ -270,9 +295,9 @@ function SightingDetail() {
                     )}
               </h1>
               <div className="relative h-56 grid place-items-center bg-gradient-to-br from-accent/40 to-secondary/30">
-                {s.photo_url ? (
+                {mainPhoto ? (
                   <img
-                    src={s.photo_url}
+                    src={mainPhoto.photo_url}
                     alt={
                       s.sci_name
                         ? t(
@@ -290,7 +315,7 @@ function SightingDetail() {
                   <Orchid sciName={s.sci_name} size={180} />
                 )}
 
-                {!s.sci_name && !s.photo_url && (
+                {!s.sci_name && !mainPhoto && (
                   <div className="absolute inset-0 grid place-items-center gap-2 text-leaf pointer-events-none">
                     <HelpCircle size={28} />
                     <span className="text-xs font-semibold">
@@ -299,6 +324,21 @@ function SightingDetail() {
                   </div>
                 )}
               </div>
+
+              {photos.length > 1 && (
+                <div className="grid grid-cols-4 gap-2 border-t border-border/70 bg-background/50 p-2">
+                  {photos.map((p, i) => (
+                    <div key={p.id} className="relative aspect-square overflow-hidden rounded-xl bg-muted">
+                      <img src={p.photo_url} alt="" className="h-full w-full object-cover" />
+                      {i === 0 && (
+                        <span className="absolute left-1.5 top-1.5 rounded-full bg-background/90 px-1.5 py-0.5 text-[9px] font-semibold border border-border">
+                          {t("Portada", "Cover")}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2">
@@ -374,7 +414,7 @@ function SightingDetail() {
                   {t("Discusión", "Discussion")}
                 </h2>
                 <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
-                  <CheckCircle2 size={12} />{" "}
+                  <CheckCircle2 size={12} /> {" "}
                   {t("3 acuerdos → verificado", "3 agreements → verified")}
                 </span>
               </div>
@@ -414,7 +454,7 @@ function SightingDetail() {
                       </div>
                       {taxon && (
                         <div className="mt-2 rounded-lg bg-leaf/10 text-leaf px-2.5 py-1.5 text-xs">
-                          {t("Sugiere:", "Suggests:")}{" "}
+                          {t("Sugiere:", "Suggests:")} {" "}
                           <span className="italic font-semibold">{taxon.sci_name}</span>
                           {taxon.common_name && (
                             <span className="opacity-70"> · {taxon.common_name}</span>
@@ -447,7 +487,7 @@ function SightingDetail() {
                                     : "bg-leaf/10 text-leaf hover:bg-leaf/20")
                               }
                             >
-                              <ThumbsUp size={11} />{" "}
+                              <ThumbsUp size={11} /> {" "}
                               {isMine
                                 ? t("Tu sugerencia", "Your suggestion")
                                 : iAgree

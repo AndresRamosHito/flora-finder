@@ -1,13 +1,14 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Flower2, BadgeCheck, HelpCircle, MapPin, Plus, Award, Search } from "lucide-react";
+import { Flower2, BadgeCheck, HelpCircle, MapPin, Plus, Award, Search, Mountain } from "lucide-react";
 import { Shell, REGION } from "@/components/Shell";
 import { Orchid } from "@/components/Orchid";
 import { StatusPill } from "@/components/StatusPill";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useLang } from "@/lib/i18n";
+import { habitatLabel } from "@/lib/habitats";
 
 export const Route = createFileRoute("/lista")({
   head: () => ({
@@ -30,18 +31,14 @@ function ListPage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!loading && !user) navigate({ to: "/login" });
-  }, [loading, user, navigate]);
-
   const { data, isLoading } = useQuery({
     queryKey: ["my-list", user?.id],
     enabled: !!user,
     queryFn: async () => {
       const [sRes, pRes, tRes] = await Promise.all([
-        supabase
+        (supabase as any)
           .from("sightings")
-          .select("id, taxon_id, photo_url, location_label, observed_at, created_at, status, notes")
+          .select("id, taxon_id, photo_url, location_label, observed_at, created_at, status, notes, altitude_m, altitude_accuracy_m, habitat_type, habitat_description")
           .eq("user_id", user!.id)
           .order("observed_at", { ascending: false, nullsFirst: false }),
         supabase
@@ -65,17 +62,18 @@ function ListPage() {
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return sightings.filter((s) => {
+    return sightings.filter((s: any) => {
       if (filter !== "all" && s.status !== filter) return false;
       if (q) {
         const tx = s.taxon_id ? data?.taxaById.get(s.taxon_id) : null;
+        const habitat = habitatLabel(s.habitat_type, lang) ?? "";
         const hay =
-          `${tx?.sci_name ?? ""} ${tx?.common_name ?? ""} ${s.location_label ?? ""}`.toLowerCase();
+          `${tx?.sci_name ?? ""} ${tx?.common_name ?? ""} ${s.location_label ?? ""} ${habitat} ${s.habitat_description ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     });
-  }, [sightings, filter, search, data]);
+  }, [sightings, filter, search, data, lang]);
 
   if (loading || !user)
     return (
@@ -84,8 +82,8 @@ function ListPage() {
       </Shell>
     );
 
-  const species = new Set(sightings.filter((s) => s.taxon_id).map((s) => s.taxon_id!));
-  const verified = sightings.filter((s) => s.status === "verified").length;
+  const species = new Set(sightings.filter((s: any) => s.taxon_id).map((s: any) => s.taxon_id!));
+  const verified = sightings.filter((s: any) => s.status === "verified").length;
   const profile = data?.profile;
 
   return (
@@ -159,8 +157,8 @@ function ListPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={t(
-                  "Busca en tu lista por especie o lugar…",
-                  "Search your list by species or place…",
+                  "Busca por especie, lugar o hábitat…",
+                  "Search by species, place, or habitat…",
                 )}
                 className="w-full rounded-xl border border-input bg-card pl-9 pr-3 py-2 text-sm outline-none focus:border-leaf focus:ring-2 focus:ring-leaf/20"
               />
@@ -193,8 +191,9 @@ function ListPage() {
         )}
 
         <ul className="mt-3 space-y-3">
-          {visible.map((s) => {
+          {visible.map((s: any) => {
             const tx = s.taxon_id ? data?.taxaById.get(s.taxon_id) : null;
+            const habitat = habitatLabel(s.habitat_type, lang);
             return (
               <li
                 key={s.id}
@@ -229,6 +228,18 @@ function ListPage() {
                     <span>·</span>
                     <span className="truncate">{s.location_label ?? REGION}</span>
                   </div>
+                  {(s.altitude_m != null || habitat) && (
+                    <div className="mt-1 text-[11px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
+                      <Mountain size={11} />
+                      {s.altitude_m != null && (
+                        <span>
+                          {s.altitude_m} m{ s.altitude_accuracy_m ? ` ±${s.altitude_accuracy_m} m` : "" }
+                        </span>
+                      )}
+                      {s.altitude_m != null && habitat && <span>·</span>}
+                      {habitat && <span className="truncate">{habitat}</span>}
+                    </div>
+                  )}
                   <div className="mt-1 text-[11px]">
                     {s.status === "verified" ? (
                       <span className="text-leaf inline-flex items-center gap-1">
