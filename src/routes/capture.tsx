@@ -1,12 +1,13 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Camera, Loader2, MapPin, Shield, ArrowLeft, Check, AlertCircle } from "lucide-react";
+import { Camera, Loader2, MapPin, Shield, ArrowLeft, Check, AlertCircle, Mountain } from "lucide-react";
 import { Shell, REGION } from "@/components/Shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { stripExifAndDownscale } from "@/lib/exif-strip";
 import { TaxonCombobox, type Taxon } from "@/components/TaxonCombobox";
 import { useLang } from "@/lib/i18n";
+import { HABITAT_OPTIONS, type HabitatType } from "@/lib/habitats";
 
 const MAX_PHOTOS = 8;
 
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/capture")({
       {
         name: "description",
         content:
-          "Registra un nuevo avistamiento de orquídea con fotos y especie sugerida. Eliminamos los datos de GPS antes de subir las fotos.",
+          "Registra un nuevo avistamiento de orquídea con fotos, altitud, hábitat y especie sugerida. Eliminamos los datos de GPS antes de subir las fotos.",
       },
       { name: "robots", content: "noindex, nofollow" },
     ],
@@ -27,15 +28,18 @@ export const Route = createFileRoute("/capture")({
 });
 
 function CapturePage() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [files, setFiles] = useState<Blob[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
-  // selectedTaxon below holds the chosen species (id + metadata)
   const [locationLabel, setLocationLabel] = useState("");
+  const [altitudeM, setAltitudeM] = useState("");
+  const [altitudeAccuracyM, setAltitudeAccuracyM] = useState("100");
+  const [habitatType, setHabitatType] = useState<HabitatType | "">("");
+  const [habitatDescription, setHabitatDescription] = useState("");
   const [observedAt, setObservedAt] = useState(() => new Date().toISOString().slice(0, 16));
   const [notes, setNotes] = useState("");
   const [selectedTaxon, setSelectedTaxon] = useState<Taxon | null>(null);
@@ -85,11 +89,27 @@ function CapturePage() {
     }
   }
 
+  function parsedAltitude() {
+    const value = altitudeM.trim();
+    if (!value) return null;
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isNaN(parsed) || parsed < -500 || parsed > 6000) {
+      throw new Error(
+        t(
+          "La altitud debe estar entre -500 y 6000 m.",
+          "Altitude must be between -500 and 6000 m.",
+        ),
+      );
+    }
+    return parsed;
+  }
+
   async function handleSubmit() {
     if (!user || files.length === 0) return;
     setSubmitting(true);
     setError(null);
     try {
+      const altitude = parsedAltitude();
       const uploadedPhotos: { photo_url: string; storage_path: string; position: number }[] = [];
 
       for (const [position, photo] of files.entries()) {
@@ -109,16 +129,19 @@ function CapturePage() {
       }
 
       const taxonId = selectedTaxon?.id ?? "";
-      const ins = await supabase
+      const ins = await (supabase as any)
         .from("sightings")
         .insert({
           user_id: user.id,
           taxon_id: taxonId || null,
-          // Legacy/thumbnail field: keep first photo here so existing feeds still work.
           photo_url: uploadedPhotos[0]?.photo_url ?? null,
           observed_at: new Date(observedAt).toISOString(),
           location_label: locationLabel || REGION,
-          location_precision: selectedTaxon?.is_sensitive ? "fuzzed" : "fuzzed",
+          location_precision: "fuzzed",
+          altitude_m: altitude,
+          altitude_accuracy_m: altitude == null ? null : Number.parseInt(altitudeAccuracyM, 10),
+          habitat_type: habitatType || null,
+          habitat_description: habitatDescription.trim() || null,
           notes: notes || null,
           variety: variety.trim() || null,
           origin,
@@ -242,7 +265,6 @@ function CapturePage() {
             value={selectedTaxon?.id ?? ""}
             onChange={(_id, tx) => {
               setSelectedTaxon(tx);
-              // Exotics can't be wild observations — default them to "en colección".
               if (tx && !tx.is_native) setOrigin("collection");
             }}
             placeholder={t(
@@ -297,7 +319,6 @@ function CapturePage() {
               ] as const
             ).map((opt) => {
               const active = origin === opt.v;
-              // A non-native taxon can only be a collection record, never wild.
               const disabled = opt.v === "wild" && !!selectedTaxon && !selectedTaxon.is_native;
               return (
                 <button
@@ -352,6 +373,91 @@ function CapturePage() {
           </div>
         </Field>
 
+        <div className="mt-4 rounded-2xl border border-border bg-card p-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-foreground/80">
+            <Mountain size={14} className="text-leaf" />
+            {t("Contexto botánico", "Botanical context")}
+          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground leading-snug">
+            {t(
+              "No tomamos coordenadas GPS. Puedes registrar una altitud estimada y el hábitat alrededor de la planta.",
+              "We do not take GPS coordinates. You can record estimated altitude and the habitat around the plant.",
+            )}
+          </p>
+
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <label className="block">
+              <span className="text-[11px] font-medium text-foreground/80">
+                {t("Altitud estimada (m)", "Estimated altitude (m)")}
+              </span>
+              <input
+                inputMode="numeric"
+                value={altitudeM}
+                onChange={(e) => setAltitudeM(e.target.value.replace(/[^0-9-]/g, "").slice(0, 5))}
+                placeholder="1800"
+                className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="block">
+              <span className="text-[11px] font-medium text-foreground/80">
+                {t("Precisión", "Accuracy")}
+              </span>
+              <select
+                value={altitudeAccuracyM}
+                onChange={(e) => setAltitudeAccuracyM(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+              >
+                <option value="50">±50 m</option>
+                <option value="100">±100 m</option>
+                <option value="250">±250 m</option>
+                <option value="500">±500 m</option>
+                <option value="1000">±1000 m</option>
+              </select>
+            </label>
+          </div>
+
+          <label className="block mt-3">
+            <span className="text-[11px] font-medium text-foreground/80">
+              {t("Tipo de hábitat", "Habitat type")}
+            </span>
+            <select
+              value={habitatType}
+              onChange={(e) => setHabitatType(e.target.value as HabitatType | "")}
+              className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+            >
+              <option value="">{t("— No estoy seguro —", "— Not sure —")}</option>
+              {HABITAT_OPTIONS.map((h) => (
+                <option key={h.value} value={h.value}>
+                  {lang === "en" ? h.en : h.es}
+                </option>
+              ))}
+            </select>
+            {habitatType && (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {lang === "en"
+                  ? HABITAT_OPTIONS.find((h) => h.value === habitatType)?.hintEn
+                  : HABITAT_OPTIONS.find((h) => h.value === habitatType)?.hintEs}
+              </p>
+            )}
+          </label>
+
+          <label className="block mt-3">
+            <span className="text-[11px] font-medium text-foreground/80">
+              {t("Descripción del hábitat alrededor", "Surrounding habitat description")}
+            </span>
+            <textarea
+              value={habitatDescription}
+              onChange={(e) => setHabitatDescription(e.target.value)}
+              rows={3}
+              placeholder={t(
+                "Ej. ladera húmeda orientada al este, encinos bajos, suelo calizo, muchas bromelias; planta epífita a 3 m del suelo.",
+                "e.g. humid east-facing slope, low oaks, limestone soil, many bromeliads; epiphyte 3 m above ground.",
+              )}
+              className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+            />
+          </label>
+        </div>
+
         <Field label={t("Cuándo", "When")}>
           <input
             type="datetime-local"
@@ -361,11 +467,15 @@ function CapturePage() {
           />
         </Field>
 
-        <Field label={t("Notas (hábitat, hospedero, etc.)", "Notes (habitat, host tree, etc.)")}>
+        <Field label={t("Notas adicionales", "Additional notes")}>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
+            placeholder={t(
+              "Hospedero, número de plantas, floración, frutos, polinizadores, amenazas visibles…",
+              "Host tree, number of plants, flowering, fruits, pollinators, visible threats…",
+            )}
             className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
           />
         </Field>
