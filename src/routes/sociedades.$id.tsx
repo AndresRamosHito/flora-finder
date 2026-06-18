@@ -28,7 +28,7 @@ type Msg = {
   body: string | null;
   created_at: string;
   user_id: string | null;
-  author?: { handle: string | null; avatar_url: string | null } | null;
+  author?: { handle: string | null; display_name: string | null } | null;
 };
 
 function SocietyDetail() {
@@ -73,19 +73,35 @@ function SocietyDetail() {
 
   const isMember = !!membershipQ.data;
 
-  const { data: messages, isLoading } = useQuery({
+  const messagesQ = useQuery({
     queryKey: ["society-messages", id, isMember],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("society_messages")
-        .select(
-          "id, body, created_at, user_id, author:profiles!society_messages_user_id_fkey(handle, avatar_url)",
-        )
+        .select("id, body, created_at, user_id")
         .eq("society_id", id)
         .order("created_at", { ascending: true })
         .limit(200);
       if (error) throw error;
-      return (data ?? []) as Msg[];
+
+      const rows = (data ?? []) as Omit<Msg, "author">[];
+      const userIds = Array.from(
+        new Set(rows.map((m) => m.user_id).filter((uid): uid is string => Boolean(uid))),
+      );
+
+      if (userIds.length === 0) return rows as Msg[];
+
+      const profiles = await supabase
+        .from("profiles")
+        .select("id, handle, display_name")
+        .in("id", userIds);
+      if (profiles.error) throw profiles.error;
+
+      const byId = new Map((profiles.data ?? []).map((p) => [p.id, p]));
+      return rows.map((m) => ({
+        ...m,
+        author: m.user_id ? (byId.get(m.user_id) ?? null) : null,
+      })) as Msg[];
     },
     enabled: !!user && isMember,
   });
@@ -112,7 +128,7 @@ function SocietyDetail() {
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages]);
+  }, [messagesQ.data]);
 
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
@@ -182,6 +198,9 @@ function SocietyDetail() {
 
   if (loading || !user) return null;
 
+  const messages = messagesQ.data ?? [];
+  const messagesError = messagesQ.error instanceof Error ? messagesQ.error.message : null;
+
   return (
     <Shell active="community">
       <div className="flex flex-col h-[calc(100vh-60px-96px)]">
@@ -220,9 +239,9 @@ function SocietyDetail() {
           </div>
         </div>
 
-        {error && (
+        {(error || messagesError) && (
           <div className="mx-4 mt-3 rounded-xl bg-destructive/10 border border-destructive/30 px-3 py-2 text-xs text-destructive flex gap-2">
-            <AlertCircle size={14} className="shrink-0 mt-0.5" /> {error}
+            <AlertCircle size={14} className="shrink-0 mt-0.5" /> {error || messagesError}
           </div>
         )}
 
@@ -267,10 +286,10 @@ function SocietyDetail() {
         ) : (
           <>
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-              {isLoading && (
+              {messagesQ.isLoading && (
                 <div className="text-xs text-muted-foreground">{t("Cargando…", "Loading…")}</div>
               )}
-              {(messages ?? []).length === 0 && !isLoading && (
+              {messages.length === 0 && !messagesQ.isLoading && !messagesError && (
                 <div className="text-xs text-muted-foreground text-center py-8">
                   {t(
                     "Sin mensajes todavía. Sé el primero en saludar.",
@@ -278,7 +297,7 @@ function SocietyDetail() {
                   )}
                 </div>
               )}
-              {(messages ?? []).map((m) => {
+              {messages.map((m) => {
                 const mine = m.user_id === user.id;
                 return (
                   <div key={m.id} className={"flex " + (mine ? "justify-end" : "justify-start")}>
@@ -292,7 +311,7 @@ function SocietyDetail() {
                     >
                       {!mine && (
                         <div className="text-[10px] font-semibold opacity-70 mb-0.5">
-                          @{m.author?.handle ?? "anon"}
+                          @{m.author?.handle ?? m.author?.display_name ?? "anon"}
                         </div>
                       )}
                       <div className="whitespace-pre-wrap break-words">{m.body}</div>
