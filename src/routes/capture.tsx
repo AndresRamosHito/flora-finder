@@ -10,11 +10,12 @@ import {
   AlertCircle,
   Lock,
   Mountain,
+  Crosshair,
 } from "lucide-react";
 import { Shell, REGION } from "@/components/Shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { stripExifAndDownscale } from "@/lib/exif-strip";
+import { stripExifAndDownscale, type GpsCoords } from "@/lib/exif-strip";
 import { TaxonCombobox, type Taxon } from "@/components/TaxonCombobox";
 import { useLang } from "@/lib/i18n";
 import { HABITAT_OPTIONS, type HabitatType } from "@/lib/habitats";
@@ -57,6 +58,9 @@ function CapturePage() {
   const [files, setFiles] = useState<Blob[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [locationLabel, setLocationLabel] = useState("");
+  const [lat, setLat] = useState("");
+  const [lng, setLng] = useState("");
+  const [photoGps, setPhotoGps] = useState<GpsCoords | null>(null);
   const [locationPrivacy, setLocationPrivacy] = useState<LocationPrivacy>("approx20");
   const [altitudeM, setAltitudeM] = useState("");
   const [altitudeAccuracyM, setAltitudeAccuracyM] = useState("100");
@@ -88,11 +92,22 @@ function CapturePage() {
       const incoming = Array.from(selected).slice(0, MAX_PHOTOS);
       if (incoming.length === 0) return;
 
-      const cleaned = await Promise.all(incoming.map((f) => stripExifAndDownscale(f)));
+      const processed = await Promise.all(incoming.map((f) => stripExifAndDownscale(f)));
+      const cleaned = processed.map((p) => p.blob);
       const urls = cleaned.map((blob) => URL.createObjectURL(blob));
 
       setFiles(cleaned);
       setPreviews(urls);
+
+      // Use the GPS read from the first photo that carries it as a location
+      // suggestion. We never upload it — the observer can keep, adjust or clear
+      // it, and the privacy radius below obscures the published area.
+      const gps = processed.map((p) => p.gps).find((g): g is GpsCoords => g != null) ?? null;
+      setPhotoGps(gps);
+      if (gps && !lat.trim() && !lng.trim()) {
+        setLat(String(gps.lat));
+        setLng(String(gps.lng));
+      }
 
       if (selected.length > MAX_PHOTOS) {
         setError(
@@ -110,6 +125,38 @@ function CapturePage() {
     } finally {
       setStripping(false);
     }
+  }
+
+  function parsedCoords(): { lat: number; lng: number } | null {
+    const rawLat = lat.trim();
+    const rawLng = lng.trim();
+    if (!rawLat && !rawLng) return null;
+    if (!rawLat || !rawLng) {
+      throw new Error(
+        t(
+          "Faltan coordenadas. Ingresa latitud y longitud, o deja ambas en blanco.",
+          "Coordinates are incomplete. Enter both latitude and longitude, or leave both blank.",
+        ),
+      );
+    }
+    const parsedLat = Number(rawLat);
+    const parsedLng = Number(rawLng);
+    if (
+      !Number.isFinite(parsedLat) ||
+      !Number.isFinite(parsedLng) ||
+      parsedLat < -90 ||
+      parsedLat > 90 ||
+      parsedLng < -180 ||
+      parsedLng > 180
+    ) {
+      throw new Error(
+        t(
+          "Coordenadas inválidas. La latitud va de -90 a 90 y la longitud de -180 a 180.",
+          "Invalid coordinates. Latitude is -90 to 90 and longitude is -180 to 180.",
+        ),
+      );
+    }
+    return { lat: parsedLat, lng: parsedLng };
   }
 
   function parsedAltitude() {
@@ -133,6 +180,7 @@ function CapturePage() {
     setError(null);
     try {
       const altitude = parsedAltitude();
+      const coords = parsedCoords();
       const uploadedPhotos: { photo_url: string; storage_path: string; position: number }[] = [];
 
       for (const [position, photo] of files.entries()) {
@@ -163,6 +211,10 @@ function CapturePage() {
           taxon_id: taxonId || null,
           photo_url: uploadedPhotos[0]?.photo_url ?? null,
           observed_at: new Date(observedAt).toISOString(),
+          // Exact coordinates stay private — a DB trigger builds the point and the
+          // public view only ever exposes a fuzzed area at `public_radius_km`.
+          lat: coords?.lat ?? null,
+          lng: coords?.lng ?? null,
           // Store the observer's place text. The public view hides it when precision is hidden.
           location_label: locationLabel || REGION,
           location_precision: privacy.precision,
@@ -386,7 +438,63 @@ function CapturePage() {
           </div>
         </Field>
 
-        <Field label={t("Lugar privado para tu registro", "Private place for your record")}>
+        <Field label={t("Coordenadas del avistamiento", "Sighting coordinates")}>
+          {photoGps && (
+            <button
+              type="button"
+              onClick={() => {
+                setLat(String(photoGps.lat));
+                setLng(String(photoGps.lng));
+              }}
+              className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-leaf/10 text-leaf px-3 py-1.5 text-[11px] font-semibold hover:bg-leaf/20 transition"
+            >
+              <Crosshair size={12} />
+              {t(
+                `Usar ubicación de la foto (${photoGps.lat.toFixed(4)}, ${photoGps.lng.toFixed(4)})`,
+                `Use photo location (${photoGps.lat.toFixed(4)}, ${photoGps.lng.toFixed(4)})`,
+              )}
+            </button>
+          )}
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block">
+              <span className="text-[11px] font-medium text-foreground/80">
+                {t("Latitud", "Latitude")}
+              </span>
+              <input
+                inputMode="decimal"
+                value={lat}
+                onChange={(e) => setLat(e.target.value.replace(/[^0-9.-]/g, "").slice(0, 12))}
+                placeholder="17.2611"
+                className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="block">
+              <span className="text-[11px] font-medium text-foreground/80">
+                {t("Longitud", "Longitude")}
+              </span>
+              <input
+                inputMode="decimal"
+                value={lng}
+                onChange={(e) => setLng(e.target.value.replace(/[^0-9.-]/g, "").slice(0, 12))}
+                placeholder="-96.7236"
+                className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+              />
+            </label>
+          </div>
+          <p className="mt-1.5 text-[11px] text-muted-foreground">
+            {photoGps
+              ? t(
+                  "Sugerencia tomada del GPS de tu foto (no se sube). Ajústala o bórrala para ocultar el sitio real — la opción de privacidad abajo publica solo un área aproximada.",
+                  "Suggested from your photo's GPS (never uploaded). Adjust or clear it to hide the true site — the privacy option below only ever publishes an approximate area.",
+                )
+              : t(
+                  "Opcional. Las coordenadas exactas se guardan en privado; al público solo se le muestra el área aproximada de la opción de abajo.",
+                  "Optional. Exact coordinates stay private; the public only sees the approximate area from the option below.",
+                )}
+          </p>
+        </Field>
+
+        <Field label={t("Nombre del lugar (opcional)", "Place name (optional)")}>
           <div className="relative">
             <MapPin
               size={14}
@@ -466,8 +574,8 @@ function CapturePage() {
           </div>
           <p className="mt-1 text-[11px] text-muted-foreground leading-snug">
             {t(
-              "No tomamos coordenadas GPS. Puedes registrar una altitud estimada y el hábitat alrededor de la planta.",
-              "We do not take GPS coordinates. You can record estimated altitude and the habitat around the plant.",
+              "Las coordenadas exactas nunca se publican. Puedes registrar una altitud estimada y el hábitat alrededor de la planta.",
+              "Exact coordinates are never published. You can record estimated altitude and the habitat around the plant.",
             )}
           </p>
 
