@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Flower2,
   BadgeCheck,
@@ -10,9 +10,16 @@ import {
   Award,
   Search,
   Mountain,
+  Edit3,
+  Save,
+  X,
+  Camera,
+  Loader2,
+  Star,
 } from "lucide-react";
 import { Shell, REGION } from "@/components/Shell";
 import { Orchid } from "@/components/Orchid";
+import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { StatusPill } from "@/components/StatusPill";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,10 +42,30 @@ export const Route = createFileRoute("/lista")({
   component: ListPage,
 });
 
+type ProfileMeta = {
+  display_name: string | null;
+  handle: string | null;
+  points: number;
+  region: string | null;
+  avatar_url: string | null;
+  avatar_storage_path: string | null;
+  bio: string | null;
+  favorite_taxon_id: string | null;
+};
+
+type TaxonOption = {
+  id: string;
+  sci_name: string;
+  common_name: string | null;
+  conservation_status: string | null;
+  is_sensitive: boolean;
+};
+
 function ListPage() {
   const { t, lang } = useLang();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ["my-list", user?.id],
@@ -54,22 +81,64 @@ function ListPage() {
           .order("observed_at", { ascending: false, nullsFirst: false }),
         supabase
           .from("profiles")
-          .select("display_name, handle, points, region")
+          .select(
+            "display_name, handle, points, region, avatar_url, avatar_storage_path, bio, favorite_taxon_id",
+          )
           .eq("id", user!.id)
           .maybeSingle(),
         supabase
           .from("taxa")
-          .select("id, sci_name, common_name, conservation_status, is_sensitive"),
+          .select("id, sci_name, common_name, conservation_status, is_sensitive")
+          .order("sci_name", { ascending: true }),
       ]);
-      const taxaById = new Map((tRes.data ?? []).map((t) => [t.id, t]));
-      return { sightings: sRes.data ?? [], profile: pRes.data, taxaById };
+
+      if (sRes.error) throw sRes.error;
+      if (pRes.error) throw pRes.error;
+      if (tRes.error) throw tRes.error;
+
+      const taxa = ((tRes.data ?? []) as TaxonOption[]).filter((tx) => Boolean(tx.id));
+      const taxaById = new Map(taxa.map((tx) => [tx.id, tx]));
+      return {
+        sightings: sRes.data ?? [],
+        profile: pRes.data as ProfileMeta | null,
+        taxa,
+        taxaById,
+      };
     },
   });
 
   const [filter, setFilter] = useState<"all" | "verified" | "needs_id" | "pending">("all");
   const [search, setSearch] = useState("");
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [draft, setDraft] = useState({
+    display_name: "",
+    region: "",
+    bio: "",
+    favorite_taxon_id: "",
+  });
 
   const sightings = useMemo(() => data?.sightings ?? [], [data]);
+  const taxa = useMemo(() => data?.taxa ?? [], [data]);
+  const profile = data?.profile ?? null;
+
+  useEffect(() => {
+    if (!profile || editingProfile) return;
+    setDraft({
+      display_name: profile.display_name ?? "",
+      region: profile.region ?? "",
+      bio: profile.bio ?? "",
+      favorite_taxon_id: profile.favorite_taxon_id ?? "",
+    });
+  }, [
+    profile?.display_name,
+    profile?.region,
+    profile?.bio,
+    profile?.favorite_taxon_id,
+    editingProfile,
+  ]);
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -86,6 +155,112 @@ function ListPage() {
     });
   }, [sightings, filter, search, data, lang]);
 
+  const species = new Set(sightings.filter((s) => s.taxon_id).map((s) => s.taxon_id!));
+  const verified = sightings.filter((s) => s.status === "verified").length;
+  const favoriteTaxon = profile?.favorite_taxon_id
+    ? data?.taxaById.get(profile.favorite_taxon_id)
+    : null;
+  const profileLabel = profile?.display_name ?? profile?.handle ?? t("spotter", "spotter");
+
+  function resetProfileDraft() {
+    setDraft({
+      display_name: profile?.display_name ?? "",
+      region: profile?.region ?? "",
+      bio: profile?.bio ?? "",
+      favorite_taxon_id: profile?.favorite_taxon_id ?? "",
+    });
+    setProfileError(null);
+  }
+
+  async function saveProfile() {
+    if (!user || savingProfile) return;
+    setSavingProfile(true);
+    setProfileError(null);
+    try {
+      const profilesTable = supabase.from("profiles") as any;
+      const { error } = await profilesTable
+        .update({
+          display_name: draft.display_name.trim().slice(0, 80) || null,
+          region: draft.region.trim().slice(0, 80) || null,
+          bio: draft.bio.trim().slice(0, 280) || null,
+          favorite_taxon_id: draft.favorite_taxon_id || null,
+        })
+        .eq("id", user.id);
+      if (error) throw error;
+      await qc.invalidateQueries({ queryKey: ["my-list", user.id] });
+      setEditingProfile(false);
+    } catch (err) {
+      setProfileError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSavingProfile(false);
+    }
+  }
+
+  async function uploadAvatar(event: ChangeEvent<HTMLInputElement>) {
+    if (!user || uploadingAvatar) return;
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+
+    const validTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      setProfileError(t("Usa JPG, PNG o WebP.", "Use JPG, PNG, or WebP."));
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setProfileError(t("La foto debe pesar menos de 2 MB.", "The photo must be under 2 MB."));
+      return;
+    }
+
+    setUploadingAvatar(true);
+    setProfileError(null);
+    try {
+      const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+      const path = `${user.id}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("profile-photos")
+        .upload(path, file, {
+          cacheControl: "3600",
+          contentType: file.type,
+          upsert: false,
+        });
+      if (uploadError) throw uploadError;
+
+      const { data: publicData } = supabase.storage.from("profile-photos").getPublicUrl(path);
+      const profilesTable = supabase.from("profiles") as any;
+      const { error } = await profilesTable
+        .update({ avatar_url: publicData.publicUrl, avatar_storage_path: path })
+        .eq("id", user.id);
+      if (error) throw error;
+      await qc.invalidateQueries({ queryKey: ["my-list", user.id] });
+    } catch (err) {
+      setProfileError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }
+
+  async function clearAvatar() {
+    if (!user || uploadingAvatar) return;
+    setUploadingAvatar(true);
+    setProfileError(null);
+    try {
+      const oldPath = profile?.avatar_storage_path;
+      const profilesTable = supabase.from("profiles") as any;
+      const { error } = await profilesTable
+        .update({ avatar_url: null, avatar_storage_path: null })
+        .eq("id", user.id);
+      if (error) throw error;
+      if (oldPath) await supabase.storage.from("profile-photos").remove([oldPath]);
+      await qc.invalidateQueries({ queryKey: ["my-list", user.id] });
+    } catch (err) {
+      setProfileError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }
+
   if (loading || !user)
     return (
       <Shell active="list">
@@ -93,27 +268,31 @@ function ListPage() {
       </Shell>
     );
 
-  const species = new Set(sightings.filter((s) => s.taxon_id).map((s) => s.taxon_id!));
-  const verified = sightings.filter((s) => s.status === "verified").length;
-  const profile = data?.profile;
-
   return (
     <Shell active="list">
       <div className="px-4 pt-5 pb-10">
         <h1 className="sr-only">{t("Mi life list de orquídeas", "My orchid life list")}</h1>
 
         <div className="rounded-3xl bg-gradient-to-br from-leaf to-leaf/70 text-leaf-foreground p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xs opacity-80">@{profile?.handle ?? "—"}</div>
-              <div className="font-display text-xl font-semibold">
-                {profile?.display_name ?? t("Mi lista", "My list")}
-              </div>
-              <div className="text-[11px] opacity-80 mt-1 inline-flex items-center gap-1">
-                <MapPin size={11} /> {profile?.region ?? REGION}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex items-center gap-3">
+              <ProfileAvatar
+                url={profile?.avatar_url}
+                label={profileLabel}
+                size="lg"
+                className="bg-background/20 text-leaf-foreground"
+              />
+              <div className="min-w-0">
+                <div className="text-xs opacity-80 truncate">@{profile?.handle ?? "—"}</div>
+                <div className="font-display text-xl font-semibold truncate">
+                  {profile?.display_name ?? t("Mi lista", "My list")}
+                </div>
+                <div className="text-[11px] opacity-80 mt-1 inline-flex items-center gap-1">
+                  <MapPin size={11} /> {profile?.region ?? REGION}
+                </div>
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-right shrink-0">
               <div className="inline-flex items-center gap-1 text-xs opacity-90">
                 <Award size={12} /> {t("puntos", "points")}
               </div>
@@ -122,11 +301,161 @@ function ListPage() {
               </div>
             </div>
           </div>
+
+          {(profile?.bio || favoriteTaxon) && (
+            <div className="mt-4 space-y-2 text-xs leading-snug">
+              {profile?.bio && <p className="opacity-95">{profile.bio}</p>}
+              {favoriteTaxon && (
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-background/15 px-2.5 py-1">
+                  <Star size={12} />
+                  <span>{t("Favorita", "Favourite")}: </span>
+                  <span className="italic">{favoriteTaxon.sci_name}</span>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="mt-4 grid grid-cols-3 gap-2 text-center">
             <Stat n={sightings.length} label={t("avistamientos", "sightings")} />
             <Stat n={species.size} label={t("especies", "species")} />
             <Stat n={verified} label={t("verificados", "verified")} />
           </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              resetProfileDraft();
+              setEditingProfile((open) => !open);
+            }}
+            className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-background/15 px-3 py-1.5 text-xs font-semibold hover:bg-background/25 transition"
+          >
+            {editingProfile ? <X size={13} /> : <Edit3 size={13} />}
+            {editingProfile ? t("Cerrar edición", "Close editor") : t("Editar perfil", "Edit profile")}
+          </button>
+
+          {editingProfile && (
+            <form
+              className="mt-4 rounded-2xl bg-background/15 p-3 space-y-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void saveProfile();
+              }}
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-background/20 px-3 py-1.5 text-xs font-semibold hover:bg-background/30 transition">
+                  {uploadingAvatar ? <Loader2 size={13} className="animate-spin" /> : <Camera size={13} />}
+                  {t("Cambiar foto", "Change photo")}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                    disabled={uploadingAvatar}
+                    onChange={uploadAvatar}
+                  />
+                </label>
+                {profile?.avatar_url && (
+                  <button
+                    type="button"
+                    onClick={() => void clearAvatar()}
+                    disabled={uploadingAvatar}
+                    className="rounded-full bg-background/10 px-3 py-1.5 text-xs font-semibold hover:bg-background/20 disabled:opacity-50"
+                  >
+                    {t("Quitar foto", "Remove photo")}
+                  </button>
+                )}
+              </div>
+
+              <label className="block space-y-1">
+                <span className="text-[11px] font-semibold uppercase tracking-wide opacity-80">
+                  {t("Nombre público", "Public name")}
+                </span>
+                <input
+                  value={draft.display_name}
+                  onChange={(e) => setDraft((d) => ({ ...d, display_name: e.target.value }))}
+                  maxLength={80}
+                  placeholder={t("Tu nombre o apodo", "Your name or nickname")}
+                  className="w-full rounded-xl border border-background/25 bg-background/90 px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-background/40"
+                />
+              </label>
+
+              <label className="block space-y-1">
+                <span className="text-[11px] font-semibold uppercase tracking-wide opacity-80">
+                  {t("Región", "Region")}
+                </span>
+                <input
+                  value={draft.region}
+                  onChange={(e) => setDraft((d) => ({ ...d, region: e.target.value }))}
+                  maxLength={80}
+                  placeholder={REGION}
+                  className="w-full rounded-xl border border-background/25 bg-background/90 px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-background/40"
+                />
+              </label>
+
+              <label className="block space-y-1">
+                <span className="text-[11px] font-semibold uppercase tracking-wide opacity-80">
+                  {t("Descripción breve", "Brief description")}
+                </span>
+                <textarea
+                  value={draft.bio}
+                  onChange={(e) => setDraft((d) => ({ ...d, bio: e.target.value }))}
+                  maxLength={280}
+                  rows={3}
+                  placeholder={t(
+                    "Ej. Busco Laelia, tomo fotos en bosque mesófilo…",
+                    "E.g. I look for Laelia and photograph cloud forest orchids…",
+                  )}
+                  className="w-full resize-none rounded-xl border border-background/25 bg-background/90 px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-background/40"
+                />
+                <span className="block text-right text-[10px] opacity-75">{draft.bio.length}/280</span>
+              </label>
+
+              <label className="block space-y-1">
+                <span className="text-[11px] font-semibold uppercase tracking-wide opacity-80">
+                  {t("Especie favorita", "Favourite species")}
+                </span>
+                <select
+                  value={draft.favorite_taxon_id}
+                  onChange={(e) => setDraft((d) => ({ ...d, favorite_taxon_id: e.target.value }))}
+                  className="w-full rounded-xl border border-background/25 bg-background/90 px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-background/40"
+                >
+                  <option value="">{t("Sin especie favorita", "No favourite species")}</option>
+                  {taxa.map((tx) => (
+                    <option key={tx.id} value={tx.id}>
+                      {tx.sci_name}
+                      {tx.common_name ? ` · ${tx.common_name}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {profileError && (
+                <div className="rounded-xl bg-destructive/15 px-3 py-2 text-xs text-destructive">
+                  {profileError}
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={savingProfile}
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-background text-leaf px-3 py-2 text-sm font-semibold disabled:opacity-60"
+                >
+                  {savingProfile ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                  {t("Guardar perfil", "Save profile")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetProfileDraft();
+                    setEditingProfile(false);
+                  }}
+                  className="rounded-xl bg-background/10 px-3 py-2 text-sm font-semibold hover:bg-background/20"
+                >
+                  {t("Cancelar", "Cancel")}
+                </button>
+              </div>
+            </form>
+          )}
         </div>
 
         <h2 className="mt-6 font-display text-lg font-semibold">
