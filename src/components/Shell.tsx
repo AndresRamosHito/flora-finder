@@ -20,6 +20,18 @@ export const REGION = "México";
 
 export type ShellTab = "feed" | "map" | "species" | "community" | "list" | "hunts" | "board";
 
+const topSafeAreaStyle = {
+  paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)",
+} as const;
+
+const bottomSafeAreaStyle = {
+  paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.5rem)",
+} as const;
+
+const mainSafeAreaStyle = {
+  paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 6rem)",
+} as const;
+
 export function Shell({ children, active = "feed" }: { children: ReactNode; active?: ShellTab }) {
   const { user, loading } = useAuth();
   const { t } = useLang();
@@ -28,7 +40,10 @@ export function Shell({ children, active = "feed" }: { children: ReactNode; acti
   return (
     <div className="min-h-screen w-full bg-background flex justify-center">
       <div className="relative w-full max-w-[460px] min-h-screen flex flex-col bg-background border-x border-border/60 shadow-[0_0_40px_-20px_rgba(0,0,0,0.15)]">
-        <header className="flex items-center justify-between px-4 py-3 border-b border-border/60 sticky top-0 z-20 bg-background/95 backdrop-blur">
+        <header
+          className="flex items-center justify-between px-4 pb-3 border-b border-border/60 sticky top-0 z-20 bg-background/95 backdrop-blur"
+          style={topSafeAreaStyle}
+        >
           <Link to="/" className="flex items-center gap-2.5">
             <span className="grid h-9 w-9 place-items-center rounded-full bg-leaf text-leaf-foreground">
               <Flower2 size={17} />
@@ -75,9 +90,14 @@ export function Shell({ children, active = "feed" }: { children: ReactNode; acti
           </div>
         </header>
 
-        <main className="flex-1 pb-24">{children}</main>
+        <main className="flex-1" style={mainSafeAreaStyle}>
+          {children}
+        </main>
 
-        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[460px] bg-background/95 backdrop-blur border-t border-border/60 px-2 py-2 z-20 flex items-center justify-around">
+        <nav
+          className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[460px] bg-background/95 backdrop-blur border-t border-border/60 px-2 pt-2 z-20 flex items-center justify-around"
+          style={bottomSafeAreaStyle}
+        >
           <NavLink
             to="/"
             icon={<Home size={20} />}
