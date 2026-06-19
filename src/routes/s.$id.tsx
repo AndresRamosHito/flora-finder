@@ -16,12 +16,14 @@ import {
 } from "lucide-react";
 import { Shell, REGION } from "@/components/Shell";
 import { Orchid } from "@/components/Orchid";
+import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { TaxonCombobox } from "@/components/TaxonCombobox";
 import { LikeButton } from "@/components/LikeButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { fetchLikeCount, fetchHasLiked } from "@/lib/likes";
 import { useLang, formatRelativeTime } from "@/lib/i18n";
+import { profileHandleLabel, profileHref, profileLabel } from "@/lib/profile-links";
 
 export const Route = createFileRoute("/s/$id")({
   loader: async ({ params }) => {
@@ -127,6 +129,13 @@ type CommentRow = {
   created_at: string;
 };
 
+type CommentProfile = {
+  id: string;
+  handle: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+};
+
 function SightingDetail() {
   const { t, lang } = useLang();
   const { id } = Route.useParams();
@@ -181,11 +190,11 @@ function SightingDetail() {
           .order("created_at", { ascending: true }),
         supabase.from("comment_agreements").select("comment_id, user_id"),
         supabase.from("taxa").select("id, sci_name, common_name"),
-        supabase.from("profiles").select("id, handle, display_name"),
+        supabase.from("profiles").select("id, handle, display_name, avatar_url"),
       ]);
       if (comm.error) throw comm.error;
       const taxaById = new Map((taxa.data ?? []).map((tx) => [tx.id, tx]));
-      const profById = new Map((profs.data ?? []).map((p) => [p.id, p]));
+      const profById = new Map((profs.data ?? []).map((p) => [p.id, p as CommentProfile]));
       const agreeBy = new Map<string, string[]>();
       for (const a of agree.data ?? []) {
         const arr = agreeBy.get(a.comment_id) ?? [];
@@ -433,8 +442,7 @@ function SightingDetail() {
                   {t("Discusión", "Discussion")}
                 </h2>
                 <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
-                  <CheckCircle2 size={12} />{" "}
-                  {t("3 acuerdos → verificado", "3 agreements → verified")}
+                  <CheckCircle2 size={12} /> {t("3 acuerdos → verificado", "3 agreements → verified")}
                 </span>
               </div>
               <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -463,17 +471,27 @@ function SightingDetail() {
                   const support = 1 + agrees.length;
                   const iAgree = user ? agrees.includes(user.id) : false;
                   const isMine = user?.id === c.user_id;
+                  const authorUrl = profileHref(prof ?? { id: c.user_id });
                   return (
                     <div key={c.id} className="rounded-2xl border border-border bg-card p-3">
-                      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                        <span className="font-medium text-foreground/80">
-                          @{prof?.handle ?? "spotter"}
-                        </span>
-                        <span>{formatRelativeTime(c.created_at, lang)}</span>
+                      <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                        <a
+                          href={authorUrl ?? undefined}
+                          className="min-w-0 inline-flex items-center gap-2 font-medium text-foreground/80 hover:text-leaf"
+                        >
+                          <ProfileAvatar
+                            url={prof?.avatar_url}
+                            label={profileLabel(prof)}
+                            size="sm"
+                            className="bg-accent text-muted-foreground"
+                          />
+                          <span className="truncate">{profileHandleLabel(prof)}</span>
+                        </a>
+                        <span className="shrink-0">{formatRelativeTime(c.created_at, lang)}</span>
                       </div>
                       {taxon && (
                         <div className="mt-2 rounded-lg bg-leaf/10 text-leaf px-2.5 py-1.5 text-xs">
-                          {t("Sugiere:", "Suggests:")}{" "}
+                          {t("Sugiere:", "Suggests:")} {" "}
                           <span className="italic font-semibold">{taxon.sci_name}</span>
                           {taxon.common_name && (
                             <span className="opacity-70"> · {taxon.common_name}</span>
@@ -506,7 +524,7 @@ function SightingDetail() {
                                     : "bg-leaf/10 text-leaf hover:bg-leaf/20")
                               }
                             >
-                              <ThumbsUp size={11} />{" "}
+                              <ThumbsUp size={11} /> {" "}
                               {isMine
                                 ? t("Tu sugerencia", "Your suggestion")
                                 : iAgree
