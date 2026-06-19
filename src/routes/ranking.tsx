@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, BadgeCheck, Flower2 } from "lucide-react";
+import { Trophy, BadgeCheck, Flower2, Target } from "lucide-react";
 import { Shell } from "@/components/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useLang } from "@/lib/i18n";
@@ -41,6 +41,12 @@ function RankingPage() {
         <h1 className="text-2xl font-display font-semibold">{t("Ranking", "Ranking")}</h1>
         <p className="text-xs text-muted-foreground mt-1">
           {t("Spotters más activos del país.", "The country's most active spotters.")}
+        </p>
+        <p className="text-[11px] text-muted-foreground mt-1">
+          {t(
+            "Puntos por avistamientos, especies, verificaciones y retos completados.",
+            "Points for sightings, species, verifications and completed quests.",
+          )}
         </p>
 
         {isLoading && (
@@ -94,13 +100,26 @@ function RankingPage() {
                   <div className="text-[11px] text-muted-foreground truncate">
                     @{row.handle ?? "—"}
                   </div>
-                </div>
-                <div className="text-right text-[11px] text-muted-foreground">
-                  <div className="inline-flex items-center gap-1">
-                    <Flower2 size={11} /> {row.species} {t("esp.", "spp.")}
+                  <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10px] text-muted-foreground">
+                    <span className="inline-flex items-center gap-1">
+                      <Flower2 size={10} /> {row.species} {t("esp.", "spp.")}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <BadgeCheck size={10} /> {row.verified} {t("verif.", "verif.")}
+                    </span>
+                    {row.challenges > 0 && (
+                      <span className="inline-flex items-center gap-1 text-orchid">
+                        <Target size={10} /> {row.challenges} {t("retos", "quests")}
+                      </span>
+                    )}
                   </div>
-                  <div className="inline-flex items-center gap-1">
-                    <BadgeCheck size={11} /> {row.verified} {t("verif.", "verif.")}
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="font-display text-lg font-semibold leading-none">
+                    {row.points}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {t("pts", "pts")}
                   </div>
                 </div>
               </li>
