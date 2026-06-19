@@ -289,8 +289,8 @@ function FeedCard({
       style={{ animationDelay: index * 40 + "ms" }}
     >
       <div className="flex min-h-40">
-        <Link to="/s/$id" params={{ id: s.id }} className="block w-40 shrink-0 self-stretch">
-          <div className="relative h-full min-h-40 w-40 grid place-items-center overflow-hidden bg-gradient-to-br from-accent/40 to-secondary/30">
+        <Link to="/s/$id" params={{ id: s.id }} className="block h-40 w-40 shrink-0">
+          <div className="relative h-40 w-40 grid place-items-center overflow-hidden bg-gradient-to-br from-accent/40 to-secondary/30">
             {s.photo_url ? (
               <img
                 src={s.photo_url}
