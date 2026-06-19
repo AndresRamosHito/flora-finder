@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Users, ArrowRight, Check, Loader2, Plus, AlertCircle } from "lucide-react";
+import { ProfileSearch } from "@/components/ProfileSearch";
 import { Shell } from "@/components/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -180,12 +181,17 @@ function SocietiesPage() {
           )}
         </p>
 
+        <ProfileSearch className="mt-4" />
+
         {!user && (
           <div className="mt-4 rounded-2xl bg-accent/40 border border-border p-3 text-xs">
             <Link to="/login" className="font-semibold text-leaf underline">
               {t("Entra", "Sign in")}
             </Link>{" "}
-            {t("para unirte, registrar una sociedad y participar en los grupos.", "to join, register a society, and take part in the groups.")}
+            {t(
+              "para unirte, registrar una sociedad y participar en los grupos.",
+              "to join, register a society, and take part in the groups.",
+            )}
           </div>
         )}
 
@@ -204,7 +210,10 @@ function SocietiesPage() {
         </button>
 
         {showForm && (
-          <form onSubmit={registerSociety} className="mt-3 rounded-2xl border border-border bg-card p-4 space-y-3">
+          <form
+            onSubmit={registerSociety}
+            className="mt-3 rounded-2xl border border-border bg-card p-4 space-y-3"
+          >
             <label className="block">
               <span className="text-xs font-medium text-foreground/80">
                 {t("Nombre corto", "Short name")}
