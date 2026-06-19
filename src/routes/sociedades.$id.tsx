@@ -2,10 +2,12 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Send, Loader2, Users, Check, AlertCircle, LogOut } from "lucide-react";
+import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { Shell } from "@/components/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useLang } from "@/lib/i18n";
+import { profileHandleLabel, profileHref, profileLabel } from "@/lib/profile-links";
 
 export const Route = createFileRoute("/sociedades/$id")({
   ssr: false,
@@ -28,7 +30,12 @@ type Msg = {
   body: string | null;
   created_at: string;
   user_id: string | null;
-  author?: { handle: string | null; display_name: string | null } | null;
+  author?: {
+    id: string;
+    handle: string | null;
+    display_name: string | null;
+    avatar_url: string | null;
+  } | null;
 };
 
 function SocietyDetail() {
@@ -93,7 +100,7 @@ function SocietyDetail() {
 
       const profiles = await supabase
         .from("profiles")
-        .select("id, handle, display_name")
+        .select("id, handle, display_name, avatar_url")
         .in("id", userIds);
       if (profiles.error) throw profiles.error;
 
@@ -299,8 +306,19 @@ function SocietyDetail() {
               )}
               {messages.map((m) => {
                 const mine = m.user_id === user.id;
+                const authorUrl = profileHref(m.author);
                 return (
                   <div key={m.id} className={"flex " + (mine ? "justify-end" : "justify-start")}>
+                    {!mine && (
+                      <a href={authorUrl ?? undefined} className="mr-2 mt-1 shrink-0">
+                        <ProfileAvatar
+                          url={m.author?.avatar_url}
+                          label={profileLabel(m.author)}
+                          size="sm"
+                          className="bg-accent text-muted-foreground"
+                        />
+                      </a>
+                    )}
                     <div
                       className={
                         "max-w-[80%] rounded-2xl px-3 py-2 text-sm " +
@@ -310,9 +328,12 @@ function SocietyDetail() {
                       }
                     >
                       {!mine && (
-                        <div className="text-[10px] font-semibold opacity-70 mb-0.5">
-                          @{m.author?.handle ?? m.author?.display_name ?? "anon"}
-                        </div>
+                        <a
+                          href={authorUrl ?? undefined}
+                          className="mb-0.5 block text-[10px] font-semibold opacity-70 hover:opacity-100"
+                        >
+                          {profileHandleLabel(m.author)}
+                        </a>
                       )}
                       <div className="whitespace-pre-wrap break-words">{m.body}</div>
                     </div>
