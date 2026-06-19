@@ -11,6 +11,7 @@ import {
   Search,
   Users,
   BookOpen,
+  MessageCircle,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -72,13 +73,22 @@ export function Shell({ children, active = "feed" }: { children: ReactNode; acti
             </span>
             {!loading &&
               (user ? (
-                <Link
-                  to="/lista"
-                  className="grid h-9 w-9 place-items-center rounded-full bg-accent text-accent-foreground"
-                  aria-label={t("Mi cuenta", "My account")}
-                >
-                  <UserCircle size={18} />
-                </Link>
+                <>
+                  <Link
+                    to="/mensajes"
+                    className="grid h-9 w-9 place-items-center rounded-full bg-orchid/10 text-orchid hover:bg-orchid/20 transition"
+                    aria-label={t("Mensajes", "Messages")}
+                  >
+                    <MessageCircle size={17} />
+                  </Link>
+                  <Link
+                    to="/lista"
+                    className="grid h-9 w-9 place-items-center rounded-full bg-accent text-accent-foreground"
+                    aria-label={t("Mi cuenta", "My account")}
+                  >
+                    <UserCircle size={18} />
+                  </Link>
+                </>
               ) : (
                 <Link
                   to="/login"
