@@ -289,8 +289,8 @@ function FeedCard({
       style={{ animationDelay: index * 40 + "ms" }}
     >
       <div className="flex min-h-40">
-        <Link to="/s/$id" params={{ id: s.id }} className="block h-40 w-40 shrink-0">
-          <div className="relative h-40 w-40 grid place-items-center overflow-hidden bg-gradient-to-br from-accent/40 to-secondary/30">
+        <Link to="/s/$id" params={{ id: s.id }} className="block w-40 shrink-0 self-stretch">
+          <div className="relative h-full min-h-40 w-40 grid place-items-center overflow-hidden bg-gradient-to-br from-accent/40 to-secondary/30">
             {s.photo_url ? (
               <img
                 src={s.photo_url}
@@ -359,7 +359,7 @@ function FeedCard({
         <Link
           to="/s/$id"
           params={{ id: s.id }}
-          className="flex-1 inline-flex items-center justify-center gap-1.5 bg-leaf/10 py-3 text-xs font-semibold text-leaf hover:bg-leaf/15 transition"
+          className="w-40 shrink-0 inline-flex items-center justify-center gap-1.5 bg-leaf/10 py-3 text-xs font-semibold text-leaf hover:bg-leaf/15 transition"
         >
           <MessageCircle size={15} /> {t("Discusión", "Discussion")}
         </Link>
