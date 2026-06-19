@@ -24,6 +24,38 @@ export type SpeciesObservation = {
   like_count: number;
 };
 
+type LikeRow = {
+  sighting_id: string;
+  user_id?: string;
+};
+
+type SightingLikesTable = {
+  select: (
+    columns?: string,
+    options?: { count?: "exact"; head?: boolean },
+  ) => {
+    eq: (column: string, value: string) => {
+      in: (column: string, values: string[]) => Promise<{
+        data: LikeRow[] | null;
+        error: { message: string } | null;
+      }>;
+      maybeSingle: () => Promise<{ data: LikeRow | null; error: { message: string } | null }>;
+    };
+  };
+  delete: () => {
+    eq: (column: string, value: string) => {
+      eq: (column: string, value: string) => Promise<{ error: { message: string } | null }>;
+    };
+  };
+  insert: (values: { sighting_id: string; user_id: string }) => Promise<{
+    error: { message: string } | null;
+  }>;
+};
+
+function sightingLikesTable() {
+  return supabase.from("sighting_likes" as never) as unknown as SightingLikesTable;
+}
+
 /** Observations of one species, ranked by community likes (masking applied server-side). */
 export async function fetchSpeciesObservations(taxonId: string): Promise<SpeciesObservation[]> {
   const { data, error } = await supabase.rpc("species_observations", { p_taxon_id: taxonId });
@@ -45,8 +77,7 @@ export async function fetchTopPhotos(): Promise<Map<string, string>> {
 /** Which of these sightings the current user has already liked. */
 export async function fetchMyLikes(sightingIds: string[], userId: string): Promise<Set<string>> {
   if (sightingIds.length === 0) return new Set();
-  const { data, error } = await supabase
-    .from("sighting_likes")
+  const { data, error } = await sightingLikesTable()
     .select("sighting_id")
     .eq("user_id", userId)
     .in("sighting_id", sightingIds);
@@ -57,7 +88,7 @@ export async function fetchMyLikes(sightingIds: string[], userId: string): Promi
 /** Number of likes on one sighting. */
 export async function fetchLikeCount(sightingId: string): Promise<number> {
   const { count, error } = await supabase
-    .from("sighting_likes")
+    .from("sighting_likes" as never)
     .select("*", { count: "exact", head: true })
     .eq("sighting_id", sightingId);
   if (error) return 0;
@@ -66,8 +97,7 @@ export async function fetchLikeCount(sightingId: string): Promise<number> {
 
 /** Whether the current user has liked one sighting. */
 export async function fetchHasLiked(sightingId: string, userId: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .from("sighting_likes")
+  const { data, error } = await sightingLikesTable()
     .select("sighting_id")
     .eq("sighting_id", sightingId)
     .eq("user_id", userId)
@@ -83,16 +113,13 @@ export async function toggleLike(
   liked: boolean,
 ): Promise<void> {
   if (liked) {
-    const { error } = await supabase
-      .from("sighting_likes")
+    const { error } = await sightingLikesTable()
       .delete()
       .eq("sighting_id", sightingId)
       .eq("user_id", userId);
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   } else {
-    const { error } = await supabase
-      .from("sighting_likes")
-      .insert({ sighting_id: sightingId, user_id: userId });
-    if (error) throw error;
+    const { error } = await sightingLikesTable().insert({ sighting_id: sightingId, user_id: userId });
+    if (error) throw new Error(error.message);
   }
 }
