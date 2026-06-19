@@ -19,6 +19,7 @@ import { LikeButton } from "@/components/LikeButton";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useLang, formatRelativeTime } from "@/lib/i18n";
+import { profileHandleLabel, profileHref, profileLabel as formatProfileLabel } from "@/lib/profile-links";
 
 /**
  * Public community feed. Reads the masking view `sightings_public` directly via
@@ -275,7 +276,8 @@ function FeedCard({
   const { t, lang } = useLang();
   const sci = s.sci_name;
   const common = s.common_name;
-  const profileLabel = profile?.display_name ?? profile?.handle ?? t("Spotter", "Spotter");
+  const profileName = formatProfileLabel(profile);
+  const profileUrl = profileHref(profile);
   const photoAlt = sci
     ? t(
         `Foto de orquídea ${sci}${common ? ` (${common})` : ""}`,
@@ -312,45 +314,43 @@ function FeedCard({
           </div>
         </Link>
 
-        <Link to="/s/$id" params={{ id: s.id }} className="block min-w-0 flex-1 p-4">
-          <div className="flex items-center gap-3">
-            <ProfileAvatar
-              url={profile?.avatar_url}
-              label={profileLabel}
-              size="md"
-              className="h-11 w-11 bg-accent text-muted-foreground"
-            />
-            <div className="min-w-0 leading-tight">
-              <div className="truncate text-[15px] font-semibold text-foreground">
-                {profileLabel}
-              </div>
-              <div className="truncate text-[11px] text-muted-foreground">
-                @{profile?.handle ?? "spotter"}
-              </div>
+        <div className="block min-w-0 flex-1 p-4">
+          {profileUrl ? (
+            <a
+              href={profileUrl}
+              className="flex items-center gap-3 rounded-2xl -m-1 p-1 hover:bg-leaf/5 transition"
+            >
+              <ProfileIdentity profile={profile} label={profileName} />
+            </a>
+          ) : (
+            <div className="flex items-center gap-3">
+              <ProfileIdentity profile={profile} label={profileName} />
             </div>
-          </div>
+          )}
 
-          <div className="mt-3 flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                {sci ? t("ID sugerida", "Suggested ID") : t("Sin ID sugerida", "No suggested ID")}
+          <Link to="/s/$id" params={{ id: s.id }} className="mt-3 block min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  {sci ? t("ID sugerida", "Suggested ID") : t("Sin ID sugerida", "No suggested ID")}
+                </div>
+                <div className="font-display italic text-[16px] leading-tight truncate">
+                  {sci ?? t("Orquídea sin identificar", "Unidentified orchid")}
+                </div>
+                <div className="text-xs text-muted-foreground truncate">
+                  {common ??
+                    t("Ayuda a la comunidad a identificarla", "Help the community identify it")}
+                </div>
               </div>
-              <div className="font-display italic text-[16px] leading-tight truncate">
-                {sci ?? t("Orquídea sin identificar", "Unidentified orchid")}
-              </div>
-              <div className="text-xs text-muted-foreground truncate">
-                {common ??
-                  t("Ayuda a la comunidad a identificarla", "Help the community identify it")}
-              </div>
+              {status && <StatusPill status={status} />}
             </div>
-            {status && <StatusPill status={status} />}
-          </div>
 
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-            <span>{formatRelativeTime(s.observed_at ?? s.created_at, lang)}</span>
-            <ObservationStatusBadge status={s.status} hasTaxon={Boolean(s.taxon_id)} />
-          </div>
-        </Link>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+              <span>{formatRelativeTime(s.observed_at ?? s.created_at, lang)}</span>
+              <ObservationStatusBadge status={s.status} hasTaxon={Boolean(s.taxon_id)} />
+            </div>
+          </Link>
+        </div>
       </div>
 
       {/* Full-width action bar. The long buttons fill the card's base; the like
@@ -382,6 +382,25 @@ function FeedCard({
         </div>
       </div>
     </article>
+  );
+}
+
+function ProfileIdentity({ profile, label }: { profile: ProfileSummary | null; label: string }) {
+  return (
+    <>
+      <ProfileAvatar
+        url={profile?.avatar_url}
+        label={label}
+        size="md"
+        className="h-11 w-11 bg-accent text-muted-foreground"
+      />
+      <div className="min-w-0 leading-tight">
+        <div className="truncate text-[15px] font-semibold text-foreground">{label}</div>
+        <div className="truncate text-[11px] text-muted-foreground">
+          {profileHandleLabel(profile)}
+        </div>
+      </div>
+    </>
   );
 }
 
