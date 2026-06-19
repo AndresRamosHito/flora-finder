@@ -289,8 +289,8 @@ function FeedCard({
       style={{ animationDelay: index * 40 + "ms" }}
     >
       <div className="flex min-h-40">
-        <Link to="/s/$id" params={{ id: s.id }} className="block h-40 w-40 shrink-0">
-          <div className="relative h-40 w-40 grid place-items-center overflow-hidden bg-gradient-to-br from-accent/40 to-secondary/30">
+        <Link to="/s/$id" params={{ id: s.id }} className="block w-40 shrink-0 self-stretch">
+          <div className="relative h-full min-h-40 w-40 grid place-items-center overflow-hidden bg-gradient-to-br from-accent/40 to-secondary/30">
             {s.photo_url ? (
               <img
                 src={s.photo_url}
@@ -321,7 +321,9 @@ function FeedCard({
               className="h-11 w-11 bg-accent text-muted-foreground"
             />
             <div className="min-w-0 leading-tight">
-              <div className="truncate text-[15px] font-semibold text-foreground">{profileLabel}</div>
+              <div className="truncate text-[15px] font-semibold text-foreground">
+                {profileLabel}
+              </div>
               <div className="truncate text-[11px] text-muted-foreground">
                 @{profile?.handle ?? "spotter"}
               </div>
@@ -337,7 +339,8 @@ function FeedCard({
                 {sci ?? t("Orquídea sin identificar", "Unidentified orchid")}
               </div>
               <div className="text-xs text-muted-foreground truncate">
-                {common ?? t("Ayuda a la comunidad a identificarla", "Help the community identify it")}
+                {common ??
+                  t("Ayuda a la comunidad a identificarla", "Help the community identify it")}
               </div>
             </div>
             {status && <StatusPill status={status} />}
@@ -352,11 +355,11 @@ function FeedCard({
 
       {/* Full-width action bar. The long buttons fill the card's base; the like
           button stops propagation so it never navigates. */}
-      <div className="flex items-stretch border-t border-border/60 divide-x divide-border/60">
+      <div className="flex items-stretch border-t border-border/60 divide-x divide-border/60 overflow-hidden">
         <Link
           to="/s/$id"
           params={{ id: s.id }}
-          className="flex-1 inline-flex items-center justify-center gap-1.5 py-3 text-xs font-semibold text-muted-foreground hover:bg-accent/40 hover:text-foreground transition"
+          className="flex-1 inline-flex items-center justify-center gap-1.5 bg-leaf/10 py-3 text-xs font-semibold text-leaf hover:bg-leaf/15 transition"
         >
           <MessageCircle size={15} /> {t("Discusión", "Discussion")}
         </Link>
@@ -364,12 +367,12 @@ function FeedCard({
           <Link
             to="/especies/$id"
             params={{ id: s.taxon_id }}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 py-3 text-xs font-semibold text-muted-foreground hover:bg-accent/40 hover:text-foreground transition"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-warn/10 py-3 text-xs font-semibold text-warn hover:bg-warn/15 transition"
           >
             <BookOpen size={15} /> {t("Ver ficha", "View profile")}
           </Link>
         )}
-        <div className="flex items-center justify-center px-3 py-1.5">
+        <div className="flex items-center justify-center bg-orchid/10 px-3 py-1.5 hover:bg-orchid/15 transition">
           <LikeButton
             sightingId={s.id}
             count={likeCount}
