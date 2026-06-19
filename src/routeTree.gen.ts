@@ -22,9 +22,11 @@ import { Route as ListaRouteImport } from './routes/lista'
 import { Route as CaptureRouteImport } from './routes/capture'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SociedadesIndexRouteImport } from './routes/sociedades.index'
+import { Route as MensajesIndexRouteImport } from './routes/mensajes.index'
 import { Route as EspeciesIndexRouteImport } from './routes/especies.index'
 import { Route as UHandleRouteImport } from './routes/u.$handle'
 import { Route as SociedadesIdRouteImport } from './routes/sociedades.$id'
+import { Route as MensajesIdRouteImport } from './routes/mensajes.$id'
 import { Route as SIdRouteImport } from './routes/s.$id'
 import { Route as EspeciesIdRouteImport } from './routes/especies.$id'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
@@ -95,6 +97,11 @@ const SociedadesIndexRoute = SociedadesIndexRouteImport.update({
   path: '/sociedades/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MensajesIndexRoute = MensajesIndexRouteImport.update({
+  id: '/mensajes/',
+  path: '/mensajes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EspeciesIndexRoute = EspeciesIndexRouteImport.update({
   id: '/especies/',
   path: '/especies/',
@@ -108,6 +115,11 @@ const UHandleRoute = UHandleRouteImport.update({
 const SociedadesIdRoute = SociedadesIdRouteImport.update({
   id: '/sociedades/$id',
   path: '/sociedades/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MensajesIdRoute = MensajesIdRouteImport.update({
+  id: '/mensajes/$id',
+  path: '/mensajes/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SIdRoute = SIdRouteImport.update({
@@ -147,10 +159,12 @@ export interface FileRoutesByFullPath {
   '/admin/reportes': typeof AdminReportesRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/especies/$id': typeof EspeciesIdRoute
+  '/mensajes/$id': typeof MensajesIdRoute
   '/s/$id': typeof SIdRoute
   '/sociedades/$id': typeof SociedadesIdRoute
   '/u/$handle': typeof UHandleRoute
   '/especies/': typeof EspeciesIndexRoute
+  '/mensajes/': typeof MensajesIndexRoute
   '/sociedades/': typeof SociedadesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -169,10 +183,12 @@ export interface FileRoutesByTo {
   '/admin/reportes': typeof AdminReportesRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/especies/$id': typeof EspeciesIdRoute
+  '/mensajes/$id': typeof MensajesIdRoute
   '/s/$id': typeof SIdRoute
   '/sociedades/$id': typeof SociedadesIdRoute
   '/u/$handle': typeof UHandleRoute
   '/especies': typeof EspeciesIndexRoute
+  '/mensajes': typeof MensajesIndexRoute
   '/sociedades': typeof SociedadesIndexRoute
 }
 export interface FileRoutesById {
@@ -192,10 +208,12 @@ export interface FileRoutesById {
   '/admin/reportes': typeof AdminReportesRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/especies/$id': typeof EspeciesIdRoute
+  '/mensajes/$id': typeof MensajesIdRoute
   '/s/$id': typeof SIdRoute
   '/sociedades/$id': typeof SociedadesIdRoute
   '/u/$handle': typeof UHandleRoute
   '/especies/': typeof EspeciesIndexRoute
+  '/mensajes/': typeof MensajesIndexRoute
   '/sociedades/': typeof SociedadesIndexRoute
 }
 export interface FileRouteTypes {
@@ -216,10 +234,12 @@ export interface FileRouteTypes {
     | '/admin/reportes'
     | '/auth/callback'
     | '/especies/$id'
+    | '/mensajes/$id'
     | '/s/$id'
     | '/sociedades/$id'
     | '/u/$handle'
     | '/especies/'
+    | '/mensajes/'
     | '/sociedades/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -238,10 +258,12 @@ export interface FileRouteTypes {
     | '/admin/reportes'
     | '/auth/callback'
     | '/especies/$id'
+    | '/mensajes/$id'
     | '/s/$id'
     | '/sociedades/$id'
     | '/u/$handle'
     | '/especies'
+    | '/mensajes'
     | '/sociedades'
   id:
     | '__root__'
@@ -260,10 +282,12 @@ export interface FileRouteTypes {
     | '/admin/reportes'
     | '/auth/callback'
     | '/especies/$id'
+    | '/mensajes/$id'
     | '/s/$id'
     | '/sociedades/$id'
     | '/u/$handle'
     | '/especies/'
+    | '/mensajes/'
     | '/sociedades/'
   fileRoutesById: FileRoutesById
 }
@@ -283,10 +307,12 @@ export interface RootRouteChildren {
   AdminReportesRoute: typeof AdminReportesRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   EspeciesIdRoute: typeof EspeciesIdRoute
+  MensajesIdRoute: typeof MensajesIdRoute
   SIdRoute: typeof SIdRoute
   SociedadesIdRoute: typeof SociedadesIdRoute
   UHandleRoute: typeof UHandleRoute
   EspeciesIndexRoute: typeof EspeciesIndexRoute
+  MensajesIndexRoute: typeof MensajesIndexRoute
   SociedadesIndexRoute: typeof SociedadesIndexRoute
 }
 
@@ -383,6 +409,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SociedadesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mensajes/': {
+      id: '/mensajes/'
+      path: '/mensajes'
+      fullPath: '/mensajes/'
+      preLoaderRoute: typeof MensajesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/especies/': {
       id: '/especies/'
       path: '/especies'
@@ -402,6 +435,13 @@ declare module '@tanstack/react-router' {
       path: '/sociedades/$id'
       fullPath: '/sociedades/$id'
       preLoaderRoute: typeof SociedadesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mensajes/$id': {
+      id: '/mensajes/$id'
+      path: '/mensajes/$id'
+      fullPath: '/mensajes/$id'
+      preLoaderRoute: typeof MensajesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/s/$id': {
@@ -451,10 +491,12 @@ const rootRouteChildren: RootRouteChildren = {
   AdminReportesRoute: AdminReportesRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   EspeciesIdRoute: EspeciesIdRoute,
+  MensajesIdRoute: MensajesIdRoute,
   SIdRoute: SIdRoute,
   SociedadesIdRoute: SociedadesIdRoute,
   UHandleRoute: UHandleRoute,
   EspeciesIndexRoute: EspeciesIndexRoute,
+  MensajesIndexRoute: MensajesIndexRoute,
   SociedadesIndexRoute: SociedadesIndexRoute,
 }
 export const routeTree = rootRouteImport
