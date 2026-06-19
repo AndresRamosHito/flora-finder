@@ -1129,8 +1129,11 @@ export type Database = {
           handle: string;
           position: number;
           species: number;
-          user_id: string;
           verified: number;
+          sightings: number;
+          challenges: number;
+          points: number;
+          user_id: string;
         }[];
       };
       longtransactionsenabled: { Args: never; Returns: boolean };

@@ -1,4 +1,4 @@
-﻿import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -29,11 +29,11 @@ import { habitatLabel } from "@/lib/habitats";
 export const Route = createFileRoute("/lista")({
   head: () => ({
     meta: [
-      { title: "Mi life list de orquﾃｭdeas ﾂｷ OrquIDea" },
+      { title: "Mi life list de orquídeas · OrquIDea" },
       {
         name: "description",
         content:
-          "Tu life list personal de orquﾃｭdeas observadas: avistamientos, especies ﾃｺnicas y verificados por la comunidad.",
+          "Tu life list personal de orquídeas observadas: avistamientos, especies únicas y verificados por la comunidad.",
       },
       { name: "robots", content: "noindex, nofollow" },
     ],
@@ -275,14 +275,14 @@ function ListPage() {
   if (loading || !user)
     return (
       <Shell active="list">
-        <div className="p-6 text-sm text-muted-foreground">{t("Cargando窶ｦ", "Loading窶ｦ")}</div>
+        <div className="p-6 text-sm text-muted-foreground">{t("Cargando…", "Loading…")}</div>
       </Shell>
     );
 
   return (
     <Shell active="list">
       <div className="px-4 pt-5 pb-10">
-        <h1 className="sr-only">{t("Mi life list de orquﾃｭdeas", "My orchid life list")}</h1>
+        <h1 className="sr-only">{t("Mi life list de orquídeas", "My orchid life list")}</h1>
 
         <div className="rounded-3xl bg-gradient-to-br from-leaf to-leaf/70 text-leaf-foreground p-5">
           <div className="flex items-start justify-between gap-3">
@@ -342,7 +342,7 @@ function ListPage() {
           >
             {editingProfile ? <X size={13} /> : <Edit3 size={13} />}
             {editingProfile
-              ? t("Cerrar ediciﾃｳn", "Close editor")
+              ? t("Cerrar edición", "Close editor")
               : t("Editar perfil", "Edit profile")}
           </button>
 
@@ -384,7 +384,7 @@ function ListPage() {
 
               <label className="block space-y-1">
                 <span className="text-[11px] font-semibold uppercase tracking-wide opacity-80">
-                  {t("Nombre pﾃｺblico", "Public name")}
+                  {t("Nombre público", "Public name")}
                 </span>
                 <input
                   value={draft.display_name}
@@ -397,7 +397,7 @@ function ListPage() {
 
               <label className="block space-y-1">
                 <span className="text-[11px] font-semibold uppercase tracking-wide opacity-80">
-                  {t("Regiﾃｳn", "Region")}
+                  {t("Región", "Region")}
                 </span>
                 <input
                   value={draft.region}
@@ -410,7 +410,7 @@ function ListPage() {
 
               <label className="block space-y-1">
                 <span className="text-[11px] font-semibold uppercase tracking-wide opacity-80">
-                  {t("Descripciﾃｳn breve", "Brief description")}
+                  {t("Descripción breve", "Brief description")}
                 </span>
                 <textarea
                   value={draft.bio}
@@ -418,8 +418,8 @@ function ListPage() {
                   maxLength={280}
                   rows={3}
                   placeholder={t(
-                    "Ej. Busco Laelia, tomo fotos en bosque mesﾃｳfilo窶ｦ",
-                    "E.g. I look for Laelia and photograph cloud forest orchids窶ｦ",
+                    "Ej. Busco Laelia, tomo fotos en bosque mesófilo…",
+                    "E.g. I look for Laelia and photograph cloud forest orchids…",
                   )}
                   className="w-full resize-none rounded-xl border border-background/25 bg-background/90 px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-background/40"
                 />
@@ -441,7 +441,7 @@ function ListPage() {
                   {taxa.map((tx) => (
                     <option key={tx.id} value={tx.id}>
                       {tx.sci_name}
-                      {tx.common_name ? ` ﾂｷ ${tx.common_name}` : ""}
+                      {tx.common_name ? ` · ${tx.common_name}` : ""}
                     </option>
                   ))}
                 </select>
@@ -493,7 +493,7 @@ function ListPage() {
                   ["all", t("Todas", "All")],
                   ["verified", t("Verificadas", "Verified")],
                   ["needs_id", t("Necesitan ID", "Need ID")],
-                  ["pending", t("En revisiﾃｳn", "Under review")],
+                  ["pending", t("En revisión", "Under review")],
                 ] as const
               ).map(([v, label]) => (
                 <button
@@ -520,8 +520,8 @@ function ListPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={t(
-                  "Busca por especie, lugar o hﾃ｡bitat窶ｦ",
-                  "Search by species, place, or habitat窶ｦ",
+                  "Busca por especie, lugar o hábitat…",
+                  "Search by species, place, or habitat…",
                 )}
                 className="w-full rounded-xl border border-input bg-card pl-9 pr-3 py-2 text-sm outline-none focus:border-leaf focus:ring-2 focus:ring-leaf/20"
               />
@@ -530,13 +530,13 @@ function ListPage() {
         )}
 
         {isLoading && (
-          <p className="mt-3 text-sm text-muted-foreground">{t("Cargando窶ｦ", "Loading窶ｦ")}</p>
+          <p className="mt-3 text-sm text-muted-foreground">{t("Cargando…", "Loading…")}</p>
         )}
         {!isLoading && sightings.length === 0 && (
           <div className="mt-4 rounded-2xl border border-dashed border-border p-6 text-center">
             <Flower2 className="mx-auto text-leaf" size={28} />
             <p className="mt-2 text-sm font-medium">
-              {t("Aﾃｺn no has registrado orquﾃｭdeas.", "You haven't logged any orchids yet.")}
+              {t("Aún no has registrado orquídeas.", "You haven't logged any orchids yet.")}
             </p>
             <Link
               to="/capture"
@@ -549,7 +549,7 @@ function ListPage() {
 
         {!isLoading && sightings.length > 0 && visible.length === 0 && (
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            {t("Ninguna observaciﾃｳn coincide con el filtro.", "No observations match the filter.")}
+            {t("Ninguna observación coincide con el filtro.", "No observations match the filter.")}
           </p>
         )}
 
@@ -588,7 +588,7 @@ function ListPage() {
                         lang === "en" ? "en-US" : "es-MX",
                       )}
                     </span>
-                    <span>ﾂｷ</span>
+                    <span>·</span>
                     <span className="truncate">{s.location_label ?? REGION}</span>
                   </div>
                   {(s.altitude_m != null || habitat) && (
@@ -597,10 +597,10 @@ function ListPage() {
                       {s.altitude_m != null && (
                         <span>
                           {s.altitude_m} m
-                          {s.altitude_accuracy_m ? ` ﾂｱ${s.altitude_accuracy_m} m` : ""}
+                          {s.altitude_accuracy_m ? ` ±${s.altitude_accuracy_m} m` : ""}
                         </span>
                       )}
-                      {s.altitude_m != null && habitat && <span>ﾂｷ</span>}
+                      {s.altitude_m != null && habitat && <span>·</span>}
                       {habitat && <span className="truncate">{habitat}</span>}
                     </div>
                   )}
@@ -615,7 +615,7 @@ function ListPage() {
                       </span>
                     ) : (
                       <span className="text-muted-foreground">
-                        {t("en revisiﾃｳn", "under review")}
+                        {t("en revisión", "under review")}
                       </span>
                     )}
                   </div>
@@ -625,7 +625,7 @@ function ListPage() {
                   params={{ id: s.id }}
                   className="absolute inset-0"
                   aria-label={t(
-                    `Ver avistamiento de ${tx?.sci_name ?? "orquﾃｭdea sin identificar"}`,
+                    `Ver avistamiento de ${tx?.sci_name ?? "orquídea sin identificar"}`,
                     `View sighting of ${tx?.sci_name ?? "unidentified orchid"}`,
                   )}
                 />
