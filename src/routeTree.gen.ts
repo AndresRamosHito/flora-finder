@@ -23,6 +23,7 @@ import { Route as CaptureRouteImport } from './routes/capture'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SociedadesIndexRouteImport } from './routes/sociedades.index'
 import { Route as EspeciesIndexRouteImport } from './routes/especies.index'
+import { Route as UHandleRouteImport } from './routes/u.$handle'
 import { Route as SociedadesIdRouteImport } from './routes/sociedades.$id'
 import { Route as SIdRouteImport } from './routes/s.$id'
 import { Route as EspeciesIdRouteImport } from './routes/especies.$id'
@@ -99,6 +100,11 @@ const EspeciesIndexRoute = EspeciesIndexRouteImport.update({
   path: '/especies/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UHandleRoute = UHandleRouteImport.update({
+  id: '/u/$handle',
+  path: '/u/$handle',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SociedadesIdRoute = SociedadesIdRouteImport.update({
   id: '/sociedades/$id',
   path: '/sociedades/$id',
@@ -143,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/especies/$id': typeof EspeciesIdRoute
   '/s/$id': typeof SIdRoute
   '/sociedades/$id': typeof SociedadesIdRoute
+  '/u/$handle': typeof UHandleRoute
   '/especies/': typeof EspeciesIndexRoute
   '/sociedades/': typeof SociedadesIndexRoute
 }
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/especies/$id': typeof EspeciesIdRoute
   '/s/$id': typeof SIdRoute
   '/sociedades/$id': typeof SociedadesIdRoute
+  '/u/$handle': typeof UHandleRoute
   '/especies': typeof EspeciesIndexRoute
   '/sociedades': typeof SociedadesIndexRoute
 }
@@ -186,6 +194,7 @@ export interface FileRoutesById {
   '/especies/$id': typeof EspeciesIdRoute
   '/s/$id': typeof SIdRoute
   '/sociedades/$id': typeof SociedadesIdRoute
+  '/u/$handle': typeof UHandleRoute
   '/especies/': typeof EspeciesIndexRoute
   '/sociedades/': typeof SociedadesIndexRoute
 }
@@ -209,6 +218,7 @@ export interface FileRouteTypes {
     | '/especies/$id'
     | '/s/$id'
     | '/sociedades/$id'
+    | '/u/$handle'
     | '/especies/'
     | '/sociedades/'
   fileRoutesByTo: FileRoutesByTo
@@ -230,6 +240,7 @@ export interface FileRouteTypes {
     | '/especies/$id'
     | '/s/$id'
     | '/sociedades/$id'
+    | '/u/$handle'
     | '/especies'
     | '/sociedades'
   id:
@@ -251,6 +262,7 @@ export interface FileRouteTypes {
     | '/especies/$id'
     | '/s/$id'
     | '/sociedades/$id'
+    | '/u/$handle'
     | '/especies/'
     | '/sociedades/'
   fileRoutesById: FileRoutesById
@@ -273,6 +285,7 @@ export interface RootRouteChildren {
   EspeciesIdRoute: typeof EspeciesIdRoute
   SIdRoute: typeof SIdRoute
   SociedadesIdRoute: typeof SociedadesIdRoute
+  UHandleRoute: typeof UHandleRoute
   EspeciesIndexRoute: typeof EspeciesIndexRoute
   SociedadesIndexRoute: typeof SociedadesIndexRoute
 }
@@ -377,6 +390,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EspeciesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/u/$handle': {
+      id: '/u/$handle'
+      path: '/u/$handle'
+      fullPath: '/u/$handle'
+      preLoaderRoute: typeof UHandleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sociedades/$id': {
       id: '/sociedades/$id'
       path: '/sociedades/$id'
@@ -433,6 +453,7 @@ const rootRouteChildren: RootRouteChildren = {
   EspeciesIdRoute: EspeciesIdRoute,
   SIdRoute: SIdRoute,
   SociedadesIdRoute: SociedadesIdRoute,
+  UHandleRoute: UHandleRoute,
   EspeciesIndexRoute: EspeciesIndexRoute,
   SociedadesIndexRoute: SociedadesIndexRoute,
 }
