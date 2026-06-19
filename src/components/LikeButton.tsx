@@ -7,9 +7,8 @@ import { useLang } from "@/lib/i18n";
 import { toggleLike } from "@/lib/likes";
 
 /**
- * Like (upvote) a community observation. More likes push a photo up the
- * "see observations" ranking and make it the species' herbarium image.
- * Optimistic; reconciles to server state via the invalidated query keys.
+ * Like (upvote) a community observation. Clicking a filled heart removes the
+ * current user's like; clicking an empty heart adds it.
  */
 export function LikeButton({
   sightingId,
@@ -42,7 +41,7 @@ export function LikeButton({
     },
     onMutate: () => {
       setOptimisticLiked((v) => !v);
-      setOptimisticCount((c) => c + (optimisticLiked ? -1 : 1));
+      setOptimisticCount((c) => Math.max(0, c + (optimisticLiked ? -1 : 1)));
     },
     onError: () => {
       // revert
@@ -56,12 +55,14 @@ export function LikeButton({
 
   const pad = size === "sm" ? "px-2 py-1 text-[11px]" : "px-2.5 py-1.5 text-xs";
   const iconSize = size === "sm" ? 12 : 14;
+  const label = optimisticLiked ? t("Quitar me gusta", "Remove like") : t("Me gusta", "Like");
 
   if (!user) {
     return (
       <Link
         to="/login"
         aria-label={t("Entra para dar me gusta", "Sign in to like")}
+        title={t("Entra para dar me gusta", "Sign in to like")}
         className={
           "inline-flex items-center gap-1 rounded-full border border-border bg-card font-semibold text-muted-foreground hover:text-foreground transition " +
           pad
@@ -81,7 +82,8 @@ export function LikeButton({
         if (!mutation.isPending) mutation.mutate();
       }}
       aria-pressed={optimisticLiked}
-      aria-label={optimisticLiked ? t("Quitar me gusta", "Remove like") : t("Me gusta", "Like")}
+      aria-label={label}
+      title={label}
       className={
         "inline-flex items-center gap-1 rounded-full border font-semibold transition " +
         pad +
