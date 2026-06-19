@@ -1,10 +1,22 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { BadgeCheck, BookOpen, Flower2, MapPin, Star, Trophy } from "lucide-react";
+import { useState } from "react";
+import {
+  BadgeCheck,
+  BookOpen,
+  Flower2,
+  Loader2,
+  MapPin,
+  MessageCircle,
+  Star,
+  Trophy,
+} from "lucide-react";
 import { Shell, REGION } from "@/components/Shell";
 import { Orchid } from "@/components/Orchid";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { StatusPill } from "@/components/StatusPill";
+import { useAuth } from "@/hooks/use-auth";
+import { getOrCreateDmThread } from "@/lib/dms";
 import { supabase } from "@/integrations/supabase/client";
 import { useLang, formatRelativeTime } from "@/lib/i18n";
 
@@ -104,7 +116,11 @@ async function fetchPublicProfile(handleOrId: string) {
 
 function PublicProfilePage() {
   const { t, lang } = useLang();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const { handle } = Route.useParams();
+  const [startingDm, setStartingDm] = useState(false);
+  const [dmError, setDmError] = useState<string | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["public-profile", handle],
@@ -117,6 +133,26 @@ function PublicProfilePage() {
   const species = new Set(sightings.filter((s) => s.taxon_id).map((s) => s.taxon_id));
   const verified = sightings.filter((s) => s.status === "verified").length;
   const label = profile?.display_name ?? profile?.handle ?? t("Spotter", "Spotter");
+  const canMessage = !!profile && !!user && profile.id !== user.id;
+
+  async function startDm() {
+    if (!profile) return;
+    if (!user) {
+      navigate({ to: "/login" });
+      return;
+    }
+    if (profile.id === user.id || startingDm) return;
+    setStartingDm(true);
+    setDmError(null);
+    try {
+      const threadId = await getOrCreateDmThread(profile.id);
+      navigate({ to: "/mensajes/$id", params: { id: threadId } });
+    } catch (err) {
+      setDmError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setStartingDm(false);
+    }
+  }
 
   return (
     <Shell active="community">
@@ -185,6 +221,20 @@ function PublicProfilePage() {
                 <ProfileStat n={species.size} label={t("especies", "species")} />
                 <ProfileStat n={verified} label={t("verificados", "verified")} />
               </div>
+
+              {profile.id !== user?.id && (
+                <button
+                  type="button"
+                  onClick={startDm}
+                  disabled={startingDm}
+                  className="mt-4 w-full rounded-2xl bg-background/15 px-4 py-2.5 text-sm font-semibold inline-flex items-center justify-center gap-2 hover:bg-background/25 transition disabled:opacity-60"
+                >
+                  {startingDm ? <Loader2 size={14} className="animate-spin" /> : <MessageCircle size={14} />}
+                  {canMessage ? t("Mensaje", "Message") : t("Entra para enviar mensaje", "Sign in to message")}
+                </button>
+              )}
+
+              {dmError && <div className="mt-2 text-xs text-background/90">{dmError}</div>}
             </section>
 
             <section className="mt-6">
