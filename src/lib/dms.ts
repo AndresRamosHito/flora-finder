@@ -15,6 +15,11 @@ export type DmMessage = {
   created_at: string;
 };
 
+type DmParticipant = {
+  thread_id: string;
+  user_id: string;
+};
+
 export type DmThreadSummary = {
   thread_id: string;
   other: DmProfile | null;
@@ -43,7 +48,7 @@ export async function getOrCreateDmThread(otherUserId: string) {
 export async function sendDmMessage(threadId: string, senderId: string, body: string) {
   const trimmed = body.trim().slice(0, 2000);
   if (!trimmed) return;
-  const dmMessages = supabase.from("dm_messages") as unknown as InsertDmMessageTable;
+  const dmMessages = supabase.from("dm_messages" as never) as unknown as InsertDmMessageTable;
   const { error } = await dmMessages.insert({
     thread_id: threadId,
     sender_id: senderId,
@@ -54,7 +59,7 @@ export async function sendDmMessage(threadId: string, senderId: string, body: st
 
 export async function fetchDmMessages(threadId: string) {
   const { data, error } = await supabase
-    .from("dm_messages")
+    .from("dm_messages" as never)
     .select("id, thread_id, sender_id, body, created_at")
     .eq("thread_id", threadId)
     .order("created_at", { ascending: true })
@@ -65,12 +70,14 @@ export async function fetchDmMessages(threadId: string) {
 
 export async function fetchDmThreadProfiles(threadId: string) {
   const participants = await supabase
-    .from("dm_participants")
+    .from("dm_participants" as never)
     .select("thread_id, user_id")
     .eq("thread_id", threadId);
   if (participants.error) throw participants.error;
 
-  const userIds = (participants.data ?? []).map((p) => p.user_id).filter(Boolean);
+  const userIds = ((participants.data ?? []) as DmParticipant[])
+    .map((p) => p.user_id)
+    .filter(Boolean);
   if (userIds.length === 0) return new Map<string, DmProfile>();
 
   const profiles = await supabase
@@ -83,10 +90,12 @@ export async function fetchDmThreadProfiles(threadId: string) {
 }
 
 export async function fetchDmThreads(currentUserId: string) {
-  const participants = await supabase.from("dm_participants").select("thread_id, user_id");
+  const participants = await supabase
+    .from("dm_participants" as never)
+    .select("thread_id, user_id");
   if (participants.error) throw participants.error;
 
-  const rows = participants.data ?? [];
+  const rows = (participants.data ?? []) as DmParticipant[];
   const threadIds = Array.from(
     new Set(rows.filter((row) => row.user_id === currentUserId).map((row) => row.thread_id)),
   );
@@ -108,7 +117,7 @@ export async function fetchDmThreads(currentUserId: string) {
   const profileById = new Map((profiles.data ?? []).map((profile) => [profile.id, profile as DmProfile]));
 
   const messages = await supabase
-    .from("dm_messages")
+    .from("dm_messages" as never)
     .select("id, thread_id, sender_id, body, created_at")
     .in("thread_id", threadIds)
     .order("created_at", { ascending: false })
