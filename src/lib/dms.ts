@@ -38,8 +38,10 @@ type InsertDmMessageTable = {
 };
 
 export async function getOrCreateDmThread(otherUserId: string) {
-  const rpc = supabase.rpc as unknown as RpcOneUuid;
-  const { data, error } = await rpc("get_or_create_dm_thread", { p_other_user_id: otherUserId });
+  const client = supabase as unknown as { rpc: RpcOneUuid };
+  const { data, error } = await client.rpc("get_or_create_dm_thread", {
+    p_other_user_id: otherUserId,
+  });
   if (error) throw new Error(error.message);
   if (!data) throw new Error("No DM thread returned");
   return data;
