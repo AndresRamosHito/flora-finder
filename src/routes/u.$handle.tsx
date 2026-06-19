@@ -11,6 +11,7 @@ import {
   Star,
   Trophy,
 } from "lucide-react";
+import { AdminBadge } from "@/components/AdminBadge";
 import { Shell, REGION } from "@/components/Shell";
 import { Orchid } from "@/components/Orchid";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
@@ -45,6 +46,8 @@ type PublicProfile = {
   avatar_url: string | null;
   bio: string | null;
   favorite_taxon_id: string | null;
+  is_platform_admin: boolean;
+  admin_badge_label: string | null;
 };
 
 type PublicSighting = {
@@ -65,12 +68,15 @@ type FavoriteTaxon = {
   conservation_status: string | null;
 };
 
+const profileSelect =
+  "id, handle, display_name, region, points, avatar_url, bio, favorite_taxon_id, is_platform_admin, admin_badge_label";
+
 async function fetchPublicProfile(handleOrId: string) {
   const key = decodeURIComponent(handleOrId).replace(/^@+/, "");
 
   const byHandle = await supabase
     .from("profiles")
-    .select("id, handle, display_name, region, points, avatar_url, bio, favorite_taxon_id")
+    .select(profileSelect)
     .eq("handle", key)
     .maybeSingle();
 
@@ -78,11 +84,7 @@ async function fetchPublicProfile(handleOrId: string) {
 
   const profileRes = byHandle.data
     ? byHandle
-    : await supabase
-        .from("profiles")
-        .select("id, handle, display_name, region, points, avatar_url, bio, favorite_taxon_id")
-        .eq("id", key)
-        .maybeSingle();
+    : await supabase.from("profiles").select(profileSelect).eq("id", key).maybeSingle();
 
   if (profileRes.error) throw profileRes.error;
   const profile = profileRes.data as PublicProfile | null;
@@ -195,6 +197,11 @@ function PublicProfilePage() {
                   <div className="mt-1 inline-flex items-center gap-1 text-[11px] opacity-85">
                     <MapPin size={11} /> {profile.region ?? REGION}
                   </div>
+                  {profile.is_platform_admin && (
+                    <div className="mt-2">
+                      <AdminBadge label={profile.admin_badge_label} />
+                    </div>
+                  )}
                 </div>
                 <div className="text-right shrink-0">
                   <div className="inline-flex items-center gap-1 text-xs opacity-90">
