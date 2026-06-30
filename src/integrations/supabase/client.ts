@@ -2,6 +2,15 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
+function assertSafeSupabaseKey(key: string) {
+  // The publishable/anon key is safe to bundle in the browser only when RLS is correct.
+  // Service-role keys bypass RLS and must never be shipped to web/mobile clients.
+  const lower = key.toLowerCase();
+  if (lower.includes("service_role") || lower.includes("service-role")) {
+    throw new Error("Unsafe Supabase key: service-role keys must never be used in the client app.");
+  }
+}
+
 function createSupabaseClient() {
   // Use import.meta.env for client-side (Vite build-time replacement)
   // Fall back to process.env for SSR (server-side rendering)
@@ -18,6 +27,8 @@ function createSupabaseClient() {
     console.error(`[Supabase] ${message}`);
     throw new Error(message);
   }
+
+  assertSafeSupabaseKey(SUPABASE_PUBLISHABLE_KEY);
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: {
