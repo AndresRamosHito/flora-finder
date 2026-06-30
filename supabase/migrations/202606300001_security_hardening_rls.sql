@@ -1,47 +1,12 @@
 -- Flora Finder database security hardening
--- Apply with Supabase CLI or paste into Supabase SQL editor.
--- This migration is intentionally defensive and idempotent where PostgreSQL allows it.
+-- Conservative RLS migration: no guessed admin/moderator enum values.
+-- Public content stays readable where needed; user-owned and sensitive content is owner-gated.
 
 begin;
 
 -- -----------------------------------------------------------------------------
 -- Helper functions
 -- -----------------------------------------------------------------------------
-
-create or replace function public.is_member_role(required_roles public.member_role[])
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1
-    from public.profiles p
-    where p.id = auth.uid()
-      and p.role = any(required_roles)
-  );
-$$;
-
-create or replace function public.is_moderator_or_admin()
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select public.is_member_role(array['moderator'::public.member_role, 'admin'::public.member_role]);
-$$;
-
-create or replace function public.is_admin()
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select public.is_member_role(array['admin'::public.member_role]);
-$$;
 
 create or replace function public.is_sighting_owner(sighting_uuid uuid)
 returns boolean
@@ -73,38 +38,44 @@ as $$
   );
 $$;
 
-create or replace function public.prevent_profile_privilege_escalation()
+-- Prevent normal authenticated users from editing protected profile fields.
+-- Service-role/database maintenance can still operate with the service role.
+create or replace function public.prevent_profile_protected_field_updates()
 returns trigger
 language plpgsql
 security definer
 set search_path = public
 as $$
 begin
-  if public.is_admin() then
+  if auth.role() = 'service_role' then
     return new;
-  end if;
-
-  if new.role is distinct from old.role then
-    raise exception 'Only admins can change profile roles';
-  end if;
-
-  if new.points is distinct from old.points then
-    raise exception 'Only admins can change profile points';
   end if;
 
   if new.id is distinct from old.id then
     raise exception 'Profile id cannot be changed';
   end if;
 
+  if new.role is distinct from old.role then
+    raise exception 'Profile role cannot be changed by the client';
+  end if;
+
+  if new.points is distinct from old.points then
+    raise exception 'Profile points cannot be changed by the client';
+  end if;
+
+  if new.created_at is distinct from old.created_at then
+    raise exception 'Profile created_at cannot be changed by the client';
+  end if;
+
   return new;
 end;
 $$;
 
-drop trigger if exists prevent_profile_privilege_escalation on public.profiles;
-create trigger prevent_profile_privilege_escalation
+drop trigger if exists prevent_profile_protected_field_updates on public.profiles;
+create trigger prevent_profile_protected_field_updates
 before update on public.profiles
 for each row
-execute function public.prevent_profile_privilege_escalation();
+execute function public.prevent_profile_protected_field_updates();
 
 -- -----------------------------------------------------------------------------
 -- Enable RLS on app tables. PostGIS metadata tables are intentionally excluded.
@@ -130,62 +101,50 @@ alter table public.user_badges enable row level security;
 alter table public.verifications enable row level security;
 
 -- -----------------------------------------------------------------------------
--- Reset policies created by this migration.
+-- Remove policies managed by this migration, then recreate them.
 -- -----------------------------------------------------------------------------
 
 drop policy if exists "Public can read badges" on public.badges;
-drop policy if exists "Admins can manage badges" on public.badges;
-drop policy if exists "Users can read own comment agreements" on public.comment_agreements;
-drop policy if exists "Users can insert own comment agreements" on public.comment_agreements;
-drop policy if exists "Users can delete own comment agreements" on public.comment_agreements;
-drop policy if exists "Users can read own handle changes" on public.handle_changes;
-drop policy if exists "Users can insert own handle changes" on public.handle_changes;
-drop policy if exists "Public can read hunt targets" on public.hunt_targets;
-drop policy if exists "Moderators can manage hunt targets" on public.hunt_targets;
 drop policy if exists "Public can read hunts" on public.hunts;
-drop policy if exists "Moderators can manage hunts" on public.hunts;
-drop policy if exists "Public can read profiles" on public.profiles;
+drop policy if exists "Public can read hunt targets" on public.hunt_targets;
+drop policy if exists "Public can read societies" on public.societies;
+drop policy if exists "Public can read taxa" on public.taxa;
+drop policy if exists "Authenticated can read own profile" on public.profiles;
 drop policy if exists "Users can insert own profile" on public.profiles;
 drop policy if exists "Users can update own profile" on public.profiles;
-drop policy if exists "Admins can manage reserved handles" on public.reserved_handles;
-drop policy if exists "Users can read comments" on public.sighting_comments;
+drop policy if exists "Users can read own handle changes" on public.handle_changes;
+drop policy if exists "Users can insert own handle changes" on public.handle_changes;
+drop policy if exists "Users can read own sightings" on public.sightings;
+drop policy if exists "Users can insert own sightings" on public.sightings;
+drop policy if exists "Users can update own sightings" on public.sightings;
+drop policy if exists "Users can delete own sightings" on public.sightings;
+drop policy if exists "Public can read sighting photos for public sightings" on public.sighting_photos;
+drop policy if exists "Owners can manage sighting photos" on public.sighting_photos;
+drop policy if exists "Public can read comments for public sightings" on public.sighting_comments;
 drop policy if exists "Users can insert own comments" on public.sighting_comments;
 drop policy if exists "Users can update own comments" on public.sighting_comments;
 drop policy if exists "Users can delete own comments" on public.sighting_comments;
-drop policy if exists "Users can read likes" on public.sighting_likes;
+drop policy if exists "Public can read likes" on public.sighting_likes;
 drop policy if exists "Users can insert own likes" on public.sighting_likes;
 drop policy if exists "Users can delete own likes" on public.sighting_likes;
-drop policy if exists "Users can read sighting photos" on public.sighting_photos;
-drop policy if exists "Owners can manage sighting photos" on public.sighting_photos;
-drop policy if exists "Users can read own sightings" on public.sightings;
-drop policy if exists "Moderators can read all sightings" on public.sightings;
-drop policy if exists "Users can insert own sightings" on public.sightings;
-drop policy if exists "Users can update own sightings" on public.sightings;
-drop policy if exists "Moderators can update all sightings" on public.sightings;
-drop policy if exists "Users can delete own sightings" on public.sightings;
-drop policy if exists "Moderators can delete sightings" on public.sightings;
-drop policy if exists "Public can read societies" on public.societies;
-drop policy if exists "Moderators can manage societies" on public.societies;
+drop policy if exists "Users can read own comment agreements" on public.comment_agreements;
+drop policy if exists "Users can insert own comment agreements" on public.comment_agreements;
+drop policy if exists "Users can delete own comment agreements" on public.comment_agreements;
 drop policy if exists "Users can read own society memberships" on public.society_members;
 drop policy if exists "Users can join societies" on public.society_members;
 drop policy if exists "Users can leave societies" on public.society_members;
 drop policy if exists "Members can read society messages" on public.society_messages;
 drop policy if exists "Members can create society messages" on public.society_messages;
-drop policy if exists "Users can manage own society messages" on public.society_messages;
-drop policy if exists "Public can read non-sensitive taxa" on public.taxa;
-drop policy if exists "Authenticated can read sensitive taxa" on public.taxa;
-drop policy if exists "Moderators can manage taxa" on public.taxa;
+drop policy if exists "Users can update own society messages" on public.society_messages;
+drop policy if exists "Users can delete own society messages" on public.society_messages;
 drop policy if exists "Users can create own trade reports" on public.trade_reports;
 drop policy if exists "Users can read own trade reports" on public.trade_reports;
-drop policy if exists "Moderators can read all trade reports" on public.trade_reports;
-drop policy if exists "Moderators can update trade reports" on public.trade_reports;
 drop policy if exists "Users can read own badges" on public.user_badges;
-drop policy if exists "Moderators can manage user badges" on public.user_badges;
-drop policy if exists "Users can read verifications" on public.verifications;
-drop policy if exists "Moderators can manage verifications" on public.verifications;
+drop policy if exists "Public can read verifications for public sightings" on public.verifications;
+drop policy if exists "Users can create own verifications" on public.verifications;
 
 -- -----------------------------------------------------------------------------
--- Reference / public content
+-- Public/reference tables
 -- -----------------------------------------------------------------------------
 
 create policy "Public can read badges"
@@ -193,75 +152,34 @@ on public.badges for select
 to anon, authenticated
 using (true);
 
-create policy "Admins can manage badges"
-on public.badges for all
-to authenticated
-using (public.is_admin())
-with check (public.is_admin());
-
 create policy "Public can read hunts"
 on public.hunts for select
 to anon, authenticated
 using (true);
-
-create policy "Moderators can manage hunts"
-on public.hunts for all
-to authenticated
-using (public.is_moderator_or_admin())
-with check (public.is_moderator_or_admin());
 
 create policy "Public can read hunt targets"
 on public.hunt_targets for select
 to anon, authenticated
 using (true);
 
-create policy "Moderators can manage hunt targets"
-on public.hunt_targets for all
-to authenticated
-using (public.is_moderator_or_admin())
-with check (public.is_moderator_or_admin());
-
 create policy "Public can read societies"
 on public.societies for select
 to anon, authenticated
 using (true);
 
-create policy "Moderators can manage societies"
-on public.societies for all
-to authenticated
-using (public.is_moderator_or_admin())
-with check (public.is_moderator_or_admin());
-
-create policy "Public can read non-sensitive taxa"
+create policy "Public can read taxa"
 on public.taxa for select
 to anon, authenticated
-using (is_sensitive = false);
-
-create policy "Authenticated can read sensitive taxa"
-on public.taxa for select
-to authenticated
 using (true);
 
-create policy "Moderators can manage taxa"
-on public.taxa for all
-to authenticated
-using (public.is_moderator_or_admin())
-with check (public.is_moderator_or_admin());
-
-create policy "Admins can manage reserved handles"
-on public.reserved_handles for all
-to authenticated
-using (public.is_admin())
-with check (public.is_admin());
-
 -- -----------------------------------------------------------------------------
--- Profiles and user-owned rows
+-- Profiles and user-owned records
 -- -----------------------------------------------------------------------------
 
-create policy "Public can read profiles"
+create policy "Authenticated can read own profile"
 on public.profiles for select
-to anon, authenticated
-using (true);
+to authenticated
+using (id = auth.uid());
 
 create policy "Users can insert own profile"
 on public.profiles for insert
@@ -271,13 +189,13 @@ with check (id = auth.uid());
 create policy "Users can update own profile"
 on public.profiles for update
 to authenticated
-using (id = auth.uid() or public.is_admin())
-with check (id = auth.uid() or public.is_admin());
+using (id = auth.uid())
+with check (id = auth.uid());
 
 create policy "Users can read own handle changes"
 on public.handle_changes for select
 to authenticated
-using (user_id = auth.uid() or public.is_moderator_or_admin());
+using (user_id = auth.uid());
 
 create policy "Users can insert own handle changes"
 on public.handle_changes for insert
@@ -287,28 +205,17 @@ with check (user_id = auth.uid());
 create policy "Users can read own badges"
 on public.user_badges for select
 to authenticated
-using (user_id = auth.uid() or public.is_moderator_or_admin());
-
-create policy "Moderators can manage user badges"
-on public.user_badges for all
-to authenticated
-using (public.is_moderator_or_admin())
-with check (public.is_moderator_or_admin());
+using (user_id = auth.uid());
 
 -- -----------------------------------------------------------------------------
--- Sightings: exact coordinates remain private to owner/moderators.
--- Public feeds should query public.sightings_public, not public.sightings.
+-- Sightings. Exact coordinates in public.sightings are private to the owner.
+-- Public feeds should use public.sightings_public.
 -- -----------------------------------------------------------------------------
 
 create policy "Users can read own sightings"
 on public.sightings for select
 to authenticated
 using (user_id = auth.uid());
-
-create policy "Moderators can read all sightings"
-on public.sightings for select
-to authenticated
-using (public.is_moderator_or_admin());
 
 create policy "Users can insert own sightings"
 on public.sightings for insert
@@ -321,50 +228,39 @@ to authenticated
 using (user_id = auth.uid())
 with check (user_id = auth.uid());
 
-create policy "Moderators can update all sightings"
-on public.sightings for update
-to authenticated
-using (public.is_moderator_or_admin())
-with check (public.is_moderator_or_admin());
-
 create policy "Users can delete own sightings"
 on public.sightings for delete
 to authenticated
 using (user_id = auth.uid());
 
-create policy "Moderators can delete sightings"
-on public.sightings for delete
-to authenticated
-using (public.is_moderator_or_admin());
-
-create policy "Users can read sighting photos"
+create policy "Public can read sighting photos for public sightings"
 on public.sighting_photos for select
 to anon, authenticated
 using (
   exists (
-    select 1 from public.sightings_public sp
+    select 1
+    from public.sightings_public sp
     where sp.id = sighting_id
   )
   or public.is_sighting_owner(sighting_id)
-  or public.is_moderator_or_admin()
 );
 
 create policy "Owners can manage sighting photos"
 on public.sighting_photos for all
 to authenticated
-using (public.is_sighting_owner(sighting_id) or public.is_moderator_or_admin())
-with check (public.is_sighting_owner(sighting_id) or public.is_moderator_or_admin());
+using (public.is_sighting_owner(sighting_id))
+with check (public.is_sighting_owner(sighting_id));
 
-create policy "Users can read comments"
+create policy "Public can read comments for public sightings"
 on public.sighting_comments for select
 to anon, authenticated
 using (
   exists (
-    select 1 from public.sightings_public sp
+    select 1
+    from public.sightings_public sp
     where sp.id = sighting_id
   )
   or user_id = auth.uid()
-  or public.is_moderator_or_admin()
 );
 
 create policy "Users can insert own comments"
@@ -375,15 +271,15 @@ with check (user_id = auth.uid());
 create policy "Users can update own comments"
 on public.sighting_comments for update
 to authenticated
-using (user_id = auth.uid() or public.is_moderator_or_admin())
-with check (user_id = auth.uid() or public.is_moderator_or_admin());
+using (user_id = auth.uid())
+with check (user_id = auth.uid());
 
 create policy "Users can delete own comments"
 on public.sighting_comments for delete
 to authenticated
-using (user_id = auth.uid() or public.is_moderator_or_admin());
+using (user_id = auth.uid());
 
-create policy "Users can read likes"
+create policy "Public can read likes"
 on public.sighting_likes for select
 to anon, authenticated
 using (true);
@@ -401,7 +297,7 @@ using (user_id = auth.uid());
 create policy "Users can read own comment agreements"
 on public.comment_agreements for select
 to authenticated
-using (user_id = auth.uid() or public.is_moderator_or_admin());
+using (user_id = auth.uid());
 
 create policy "Users can insert own comment agreements"
 on public.comment_agreements for insert
@@ -411,25 +307,24 @@ with check (user_id = auth.uid());
 create policy "Users can delete own comment agreements"
 on public.comment_agreements for delete
 to authenticated
-using (user_id = auth.uid() or public.is_moderator_or_admin());
+using (user_id = auth.uid());
 
-create policy "Users can read verifications"
+create policy "Public can read verifications for public sightings"
 on public.verifications for select
 to anon, authenticated
 using (
   exists (
-    select 1 from public.sightings_public sp
+    select 1
+    from public.sightings_public sp
     where sp.id = sighting_id
   )
   or verifier_id = auth.uid()
-  or public.is_moderator_or_admin()
 );
 
-create policy "Moderators can manage verifications"
-on public.verifications for all
+create policy "Users can create own verifications"
+on public.verifications for insert
 to authenticated
-using (public.is_moderator_or_admin())
-with check (public.is_moderator_or_admin());
+with check (verifier_id = auth.uid());
 
 -- -----------------------------------------------------------------------------
 -- Societies
@@ -438,7 +333,7 @@ with check (public.is_moderator_or_admin());
 create policy "Users can read own society memberships"
 on public.society_members for select
 to authenticated
-using (user_id = auth.uid() or public.is_moderator_or_admin());
+using (user_id = auth.uid());
 
 create policy "Users can join societies"
 on public.society_members for insert
@@ -448,14 +343,14 @@ with check (user_id = auth.uid());
 create policy "Users can leave societies"
 on public.society_members for delete
 to authenticated
-using (user_id = auth.uid() or public.is_moderator_or_admin());
+using (user_id = auth.uid());
 
 create policy "Members can read society messages"
 on public.society_messages for select
 to authenticated
 using (
   society_id is not null
-  and (public.is_society_member(society_id) or public.is_moderator_or_admin())
+  and public.is_society_member(society_id)
 );
 
 create policy "Members can create society messages"
@@ -467,14 +362,19 @@ with check (
   and public.is_society_member(society_id)
 );
 
-create policy "Users can manage own society messages"
+create policy "Users can update own society messages"
 on public.society_messages for update
 to authenticated
-using (user_id = auth.uid() or public.is_moderator_or_admin())
-with check (user_id = auth.uid() or public.is_moderator_or_admin());
+using (user_id = auth.uid())
+with check (user_id = auth.uid());
+
+create policy "Users can delete own society messages"
+on public.society_messages for delete
+to authenticated
+using (user_id = auth.uid());
 
 -- -----------------------------------------------------------------------------
--- Trade reports: potentially sensitive illegal-trade/location data.
+-- Trade reports: potentially sensitive report/location data.
 -- -----------------------------------------------------------------------------
 
 create policy "Users can create own trade reports"
@@ -489,16 +389,5 @@ create policy "Users can read own trade reports"
 on public.trade_reports for select
 to authenticated
 using (reporter_id = auth.uid());
-
-create policy "Moderators can read all trade reports"
-on public.trade_reports for select
-to authenticated
-using (public.is_moderator_or_admin());
-
-create policy "Moderators can update trade reports"
-on public.trade_reports for update
-to authenticated
-using (public.is_moderator_or_admin())
-with check (public.is_moderator_or_admin());
 
 commit;
