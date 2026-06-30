@@ -7,18 +7,48 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+
+# Build outputs
 dist
 dist-ssr
 .output
 .vinxi
 .tanstack/**
 .nitro
+.vercel
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
 *.local
+.dev.vars
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.csr
+*.jks
+*.keystore
+service-role*.json
+supabase-service-role*.json
+
+# Local databases / dumps / backups
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.sql
+*.bak
+*.backup
+*.tar
+*.gz
 
 # Wrangler / Cloudflare
 .wrangler/
-.dev.vars
 
 # Editor directories and files
 .vscode/*
@@ -30,5 +60,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-.vercel
