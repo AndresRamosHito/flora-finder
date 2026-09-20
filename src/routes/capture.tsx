@@ -336,7 +336,6 @@ function CapturePage() {
             ref={fileRef}
             type="file"
             accept="image/*"
-            capture="environment"
             multiple
             className="hidden"
             onChange={(e) => e.target.files && handleFiles(e.target.files)}
