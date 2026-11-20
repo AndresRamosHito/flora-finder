@@ -83,6 +83,10 @@ const ES: Block[] = [
           cuenta.
         </li>
         <li>
+          <b>Edad declarada:</b> si eres mayor o menor de 18 años. Es privada y solo se usa para
+          limitar los mensajes directos.
+        </li>
+        <li>
           <b>Datos técnicos:</b> registros de seguridad y de errores del servicio, y tu preferencia
           de idioma.
         </li>
@@ -213,7 +217,8 @@ const ES: Block[] = [
     body: (
       <p>
         OrquIDea es para personas de {MIN_AGE} años o más. Las personas de {MIN_AGE} a 17 años
-        necesitan el permiso de su madre, padre o tutor para crear una cuenta. Si eres madre, padre
+        necesitan el permiso de su madre, padre o tutor para crear una cuenta. Los mensajes directos
+        solo están disponibles entre personas que declaran tener 18 años o más. Si eres madre, padre
         o tutor y quieres revisar o eliminar la cuenta de un menor, escribe a <Mail />. Si sabemos
         que una cuenta pertenece a una persona menor de {MIN_AGE} años, la eliminaremos.
       </p>
@@ -278,6 +283,10 @@ const EN: Block[] = [
         <li>
           <b>Illegal-trade reports:</b> what you describe and, unless you choose anonymous mode,
           your account.
+        </li>
+        <li>
+          <b>Declared age band:</b> whether you are 18+ or 12-17. It is private and only used to
+          limit direct messages.
         </li>
         <li>
           <b>Technical data:</b> security and error logs, and your language preference.
@@ -404,9 +413,10 @@ const EN: Block[] = [
     body: (
       <p>
         OrquIDea is for people aged {MIN_AGE} and over. Users aged {MIN_AGE} to 17 need permission
-        from a parent or guardian to create an account. Parents or guardians who want to review or
-        delete a child's account can email <Mail />. If we learn that an account belongs to someone
-        under {MIN_AGE}, we will delete it.
+        from a parent or guardian to create an account. Direct messages are only available between
+        people who declare they are 18 or older. Parents or guardians who want to review or delete a
+        child's account can email <Mail />. If we learn that an account belongs to someone under{" "}
+        {MIN_AGE}, we will delete it.
       </p>
     ),
   },
