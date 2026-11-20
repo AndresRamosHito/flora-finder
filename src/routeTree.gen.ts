@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CaptureRouteImport } from './routes/capture'
+import { Route as EliminarCuentaRouteImport } from './routes/eliminar-cuenta'
 import { Route as ListaRouteImport } from './routes/lista'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MapaRouteImport } from './routes/mapa'
@@ -40,6 +41,11 @@ const IndexRoute = IndexRouteImport.update({
 const CaptureRoute = CaptureRouteImport.update({
   id: '/capture',
   path: '/capture',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EliminarCuentaRoute = EliminarCuentaRouteImport.update({
+  id: '/eliminar-cuenta',
+  path: '/eliminar-cuenta',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ListaRoute = ListaRouteImport.update({
@@ -146,6 +152,7 @@ const UHandleRoute = UHandleRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/capture': typeof CaptureRoute
+  '/eliminar-cuenta': typeof EliminarCuentaRoute
   '/lista': typeof ListaRoute
   '/login': typeof LoginRoute
   '/mapa': typeof MapaRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/capture': typeof CaptureRoute
+  '/eliminar-cuenta': typeof EliminarCuentaRoute
   '/lista': typeof ListaRoute
   '/login': typeof LoginRoute
   '/mapa': typeof MapaRoute
@@ -195,6 +203,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/capture': typeof CaptureRoute
+  '/eliminar-cuenta': typeof EliminarCuentaRoute
   '/lista': typeof ListaRoute
   '/login': typeof LoginRoute
   '/mapa': typeof MapaRoute
@@ -221,6 +230,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/capture'
+    | '/eliminar-cuenta'
     | '/lista'
     | '/login'
     | '/mapa'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/capture'
+    | '/eliminar-cuenta'
     | '/lista'
     | '/login'
     | '/mapa'
@@ -269,6 +280,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/capture'
+    | '/eliminar-cuenta'
     | '/lista'
     | '/login'
     | '/mapa'
@@ -294,6 +306,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CaptureRoute: typeof CaptureRoute
+  EliminarCuentaRoute: typeof EliminarCuentaRoute
   ListaRoute: typeof ListaRoute
   LoginRoute: typeof LoginRoute
   MapaRoute: typeof MapaRoute
@@ -330,6 +343,13 @@ declare module '@tanstack/react-router' {
       path: '/capture'
       fullPath: '/capture'
       preLoaderRoute: typeof CaptureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/eliminar-cuenta': {
+      id: '/eliminar-cuenta'
+      path: '/eliminar-cuenta'
+      fullPath: '/eliminar-cuenta'
+      preLoaderRoute: typeof EliminarCuentaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lista': {
@@ -478,6 +498,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CaptureRoute: CaptureRoute,
+  EliminarCuentaRoute: EliminarCuentaRoute,
   ListaRoute: ListaRoute,
   LoginRoute: LoginRoute,
   MapaRoute: MapaRoute,

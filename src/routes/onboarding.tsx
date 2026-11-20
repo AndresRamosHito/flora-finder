@@ -4,6 +4,7 @@ import { Flower2, Loader2, AtSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useLang, LanguageToggle, type Lang } from "@/lib/i18n";
+import { recordConsentIfPending } from "@/lib/consent";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -39,6 +40,7 @@ function OnboardingPage() {
 
     let cancelled = false;
     void (async () => {
+      await recordConsentIfPending(user.id);
       const { data } = await supabase
         .from("profiles")
         .select("handle")

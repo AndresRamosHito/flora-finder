@@ -4,6 +4,7 @@ import { Flower2, Mail, Loader2, ArrowLeft, LockKeyhole } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useLang, LanguageToggle } from "@/lib/i18n";
+import { markConsent, recordConsentIfPending, MIN_AGE } from "@/lib/consent";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -29,6 +30,7 @@ function authRedirectUrl() {
 }
 
 async function nextRouteForUser(userId: string): Promise<"/" | "/onboarding"> {
+  await recordConsentIfPending(userId);
   const { data } = await supabase.from("profiles").select("handle").eq("id", userId).maybeSingle();
   const isDefault = !data?.handle || data.handle.startsWith("spotter_");
   return isDefault ? "/onboarding" : "/";
@@ -48,6 +50,7 @@ function LoginPage() {
   const [status, setStatus] = useState<Status>("idle");
   const [sentKind, setSentKind] = useState<SentKind>("confirm");
   const [errMsg, setErrMsg] = useState<string | null>(null);
+  const [ageOk, setAgeOk] = useState(false);
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -149,6 +152,17 @@ function LoginPage() {
     }
 
     if (mode === "signup") {
+      if (!ageOk) {
+        setStatus("error");
+        setErrMsg(
+          t(
+            "Confirma tu edad y acepta los Términos y el Aviso de privacidad para crear la cuenta.",
+            "Confirm your age and accept the Terms and Privacy Notice to create an account.",
+          ),
+        );
+        return;
+      }
+      markConsent();
       if (password.length < 8) {
         setStatus("error");
         setErrMsg(t("Usa al menos 8 caracteres.", "Use at least 8 characters."));
@@ -316,10 +330,52 @@ function LoginPage() {
         )}
 
         {!isReset && (
+          <label className="mt-5 flex items-start gap-2.5 rounded-xl border border-border bg-card p-3 text-xs leading-relaxed">
+            <input
+              type="checkbox"
+              checked={ageOk}
+              onChange={(e) => setAgeOk(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--leaf)]"
+            />
+            <span>
+              {t(
+                `Tengo ${MIN_AGE} años o más. Si soy menor de 18, tengo permiso de mi madre, padre o tutor. Acepto los `,
+                `I am ${MIN_AGE} or older. If I am under 18, I have permission from a parent or guardian. I accept the `,
+              )}
+              <Link to="/terms" className="font-semibold text-leaf underline">
+                {t("Términos", "Terms")}
+              </Link>
+              {t(" y el ", " and the ")}
+              <Link to="/privacy" className="font-semibold text-leaf underline">
+                {t("Aviso de privacidad", "Privacy Notice")}
+              </Link>
+              .
+              <span className="block mt-1 text-muted-foreground">
+                {t(
+                  "Obligatorio para crear una cuenta o entrar con Google.",
+                  "Required to create an account or continue with Google.",
+                )}
+              </span>
+            </span>
+          </label>
+        )}
+
+        {!isReset && (
           <button
             type="button"
+            aria-disabled={!ageOk}
             onClick={async () => {
               setErrMsg(null);
+              if (!ageOk) {
+                setErrMsg(
+                  t(
+                    "Marca la casilla de edad y Términos para continuar con Google.",
+                    "Tick the age and Terms box to continue with Google.",
+                  ),
+                );
+                return;
+              }
+              markConsent();
               const { error } = await supabase.auth.signInWithOAuth({
                 provider: "google",
                 options: {
