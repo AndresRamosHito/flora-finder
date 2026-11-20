@@ -192,6 +192,7 @@ type TaxonDetail = {
   is_sensitive: boolean;
   is_native: boolean;
   ref_image_url: string | null;
+  ref_image_credit: string | null;
   synonyms: string[] | null;
   region: string | null;
 };
@@ -206,7 +207,7 @@ function SpeciesDetailPage() {
     queryFn: () =>
       selectTaxonById<Omit<TaxonDetail, "is_native">>(
         id,
-        "id, sci_name, common_name, genus, family, tribe, description, conservation_status, is_sensitive, ref_image_url, synonyms, region",
+        "id, sci_name, common_name, genus, family, tribe, description, conservation_status, is_sensitive, ref_image_url, ref_image_credit, synonyms, region",
       ),
   });
 
@@ -275,6 +276,11 @@ function SpeciesDetailPage() {
                 <span className="absolute top-3 left-3 specimen-label rounded bg-background/90 px-2 py-1 border border-border/60">
                   Orchidaceae
                 </span>
+                {!topCommunityPhoto && t.ref_image_url && t.ref_image_credit && (
+                  <span className="absolute bottom-3 left-3 rounded-full bg-background/90 px-2 py-1 text-[11px] font-semibold text-foreground border border-border/60">
+                    {tr("Foto", "Photo")}: {t.ref_image_credit}
+                  </span>
+                )}
                 {topCommunityPhoto && (
                   <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-background/90 px-2 py-1 text-[10px] font-semibold text-leaf border border-border/60">
                     <BadgeCheck size={11} /> {tr("Foto de la comunidad", "Community photo")}
@@ -410,6 +416,12 @@ function SpeciesDetailPage() {
                     {wikiQ.data.lang === "es" ? tr("español", "Spanish") : tr("inglés", "English")})
                     <ExternalLink size={11} />
                   </div>
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    {tr(
+                      "Texto e imagen: Wikipedia y Wikimedia Commons, bajo licencias CC BY-SA y las indicadas en la página de origen.",
+                      "Text and image: Wikipedia and Wikimedia Commons, under CC BY-SA and the licences shown on the source page.",
+                    )}
+                  </p>
                 </a>
               )}
               {wikiQ.isSuccess && !wikiQ.data && (

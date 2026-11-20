@@ -547,6 +547,7 @@ export type Database = {
           id: string;
           is_native: boolean;
           is_sensitive: boolean;
+          ref_image_credit: string | null;
           ref_image_url: string | null;
           region: string | null;
           sci_name: string;
@@ -565,6 +566,7 @@ export type Database = {
           id?: string;
           is_native?: boolean;
           is_sensitive?: boolean;
+          ref_image_credit?: string | null;
           ref_image_url?: string | null;
           region?: string | null;
           sci_name: string;
@@ -583,6 +585,7 @@ export type Database = {
           id?: string;
           is_native?: boolean;
           is_sensitive?: boolean;
+          ref_image_credit?: string | null;
           ref_image_url?: string | null;
           region?: string | null;
           sci_name?: string;
