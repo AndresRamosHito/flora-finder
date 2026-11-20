@@ -1,11 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MessageCircle } from "lucide-react";
+import { AgeBandCard } from "@/components/AgeBandCard";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { Shell } from "@/components/Shell";
 import { useAuth } from "@/hooks/use-auth";
 import { fetchDmThreads } from "@/lib/dms";
+import { fetchMyAgeBand, type AgeBand } from "@/lib/age";
 import { useLang, formatRelativeTime } from "@/lib/i18n";
 import { profileHandleLabel, profileLabel } from "@/lib/profile-links";
 
@@ -36,6 +38,14 @@ function MessagesInbox() {
     queryFn: () => fetchDmThreads(user!.id),
   });
 
+  const ageQ = useQuery({
+    queryKey: ["age-band", user?.id],
+    enabled: !!user,
+    queryFn: () => fetchMyAgeBand(user!.id),
+  });
+  const [bandOverride, setBandOverride] = useState<AgeBand | undefined>(undefined);
+  const band = bandOverride !== undefined ? bandOverride : (ageQ.data ?? null);
+
   if (loading || !user) return null;
 
   return (
@@ -53,7 +63,15 @@ function MessagesInbox() {
           </div>
         </div>
 
-        {isLoading && <div className="mt-5 text-xs text-muted-foreground">{t("Cargando…", "Loading…")}</div>}
+        {ageQ.isSuccess && (
+          <div className="mt-5">
+            <AgeBandCard band={band} onChange={setBandOverride} />
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="mt-5 text-xs text-muted-foreground">{t("Cargando…", "Loading…")}</div>
+        )}
 
         {error && (
           <div className="mt-5 rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">

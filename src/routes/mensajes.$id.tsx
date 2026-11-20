@@ -6,16 +6,14 @@ import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { Shell } from "@/components/Shell";
 import { useAuth } from "@/hooks/use-auth";
 import { fetchDmMessages, fetchDmThreadProfiles, sendDmMessage } from "@/lib/dms";
+import { dmErrorText } from "@/lib/age";
 import { useLang, formatRelativeTime } from "@/lib/i18n";
 import { profileHandleLabel, profileLabel } from "@/lib/profile-links";
 
 export const Route = createFileRoute("/mensajes/$id")({
   ssr: false,
   head: () => ({
-    meta: [
-      { title: "Conversación · OrquIDea" },
-      { name: "robots", content: "noindex, nofollow" },
-    ],
+    meta: [{ title: "Conversación · OrquIDea" }, { name: "robots", content: "noindex, nofollow" }],
   }),
   component: MessageThread,
 });
@@ -70,7 +68,7 @@ function MessageThread() {
         qc.invalidateQueries({ queryKey: ["dm-threads", user.id] }),
       ]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(dmErrorText(err instanceof Error ? err.message : String(err), t));
     } finally {
       setSending(false);
     }
@@ -80,7 +78,10 @@ function MessageThread() {
     <Shell active="community">
       <div className="flex flex-col h-[calc(100vh-60px-96px)]">
         <div className="px-4 pt-4 pb-3 border-b border-border/60 bg-background/95 backdrop-blur sticky top-[60px] z-10">
-          <Link to="/mensajes" className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+          <Link
+            to="/mensajes"
+            className="inline-flex items-center gap-1 text-[11px] text-muted-foreground"
+          >
             <ArrowLeft size={11} /> {t("Mensajes", "Messages")}
           </Link>
           <div className="mt-2 flex items-center gap-3">

@@ -18,6 +18,7 @@ import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { StatusPill } from "@/components/StatusPill";
 import { useAuth } from "@/hooks/use-auth";
 import { getOrCreateDmThread } from "@/lib/dms";
+import { dmErrorText } from "@/lib/age";
 import { supabase } from "@/integrations/supabase/client";
 import { useLang, formatRelativeTime } from "@/lib/i18n";
 
@@ -150,7 +151,7 @@ function PublicProfilePage() {
       const threadId = await getOrCreateDmThread(profile.id);
       navigate({ to: "/mensajes/$id", params: { id: threadId } });
     } catch (err) {
-      setDmError(err instanceof Error ? err.message : String(err));
+      setDmError(dmErrorText(err instanceof Error ? err.message : String(err), t));
     } finally {
       setStartingDm(false);
     }
@@ -236,8 +237,14 @@ function PublicProfilePage() {
                   disabled={startingDm}
                   className="mt-4 w-full rounded-2xl bg-background/15 px-4 py-2.5 text-sm font-semibold inline-flex items-center justify-center gap-2 hover:bg-background/25 transition disabled:opacity-60"
                 >
-                  {startingDm ? <Loader2 size={14} className="animate-spin" /> : <MessageCircle size={14} />}
-                  {canMessage ? t("Mensaje", "Message") : t("Entra para enviar mensaje", "Sign in to message")}
+                  {startingDm ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <MessageCircle size={14} />
+                  )}
+                  {canMessage
+                    ? t("Mensaje", "Message")
+                    : t("Entra para enviar mensaje", "Sign in to message")}
                 </button>
               )}
 
