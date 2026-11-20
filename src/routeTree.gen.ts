@@ -9,77 +9,32 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TermsRouteImport } from './routes/terms'
-import { Route as SupportRouteImport } from './routes/support'
-import { Route as RetosRouteImport } from './routes/retos'
-import { Route as ReportarRouteImport } from './routes/reportar'
-import { Route as RankingRouteImport } from './routes/ranking'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
-import { Route as MapaRouteImport } from './routes/mapa'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ListaRouteImport } from './routes/lista'
-import { Route as CaptureRouteImport } from './routes/capture'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SociedadesIndexRouteImport } from './routes/sociedades.index'
-import { Route as MensajesIndexRouteImport } from './routes/mensajes.index'
+import { Route as CaptureRouteImport } from './routes/capture'
+import { Route as ListaRouteImport } from './routes/lista'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as MapaRouteImport } from './routes/mapa'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as RankingRouteImport } from './routes/ranking'
+import { Route as ReportarRouteImport } from './routes/reportar'
+import { Route as RetosRouteImport } from './routes/retos'
+import { Route as SupportRouteImport } from './routes/support'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as AdminReportesRouteImport } from './routes/admin.reportes'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as EspeciesIndexRouteImport } from './routes/especies.index'
-import { Route as UHandleRouteImport } from './routes/u.$handle'
-import { Route as SociedadesIdRouteImport } from './routes/sociedades.$id'
+import { Route as EspeciesIdRouteImport } from './routes/especies.$id'
+import { Route as MensajesIndexRouteImport } from './routes/mensajes.index'
 import { Route as MensajesIdRouteImport } from './routes/mensajes.$id'
 import { Route as SIdRouteImport } from './routes/s.$id'
-import { Route as EspeciesIdRouteImport } from './routes/especies.$id'
-import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
-import { Route as AdminReportesRouteImport } from './routes/admin.reportes'
+import { Route as SociedadesIndexRouteImport } from './routes/sociedades.index'
+import { Route as SociedadesIdRouteImport } from './routes/sociedades.$id'
+import { Route as UHandleRouteImport } from './routes/u.$handle'
 
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SupportRoute = SupportRouteImport.update({
-  id: '/support',
-  path: '/support',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RetosRoute = RetosRouteImport.update({
-  id: '/retos',
-  path: '/retos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReportarRoute = ReportarRouteImport.update({
-  id: '/reportar',
-  path: '/reportar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RankingRoute = RankingRouteImport.update({
-  id: '/ranking',
-  path: '/ranking',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MapaRoute = MapaRouteImport.update({
-  id: '/mapa',
-  path: '/mapa',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ListaRoute = ListaRouteImport.update({
-  id: '/lista',
-  path: '/lista',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CaptureRoute = CaptureRouteImport.update({
@@ -87,19 +42,64 @@ const CaptureRoute = CaptureRouteImport.update({
   path: '/capture',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ListaRoute = ListaRouteImport.update({
+  id: '/lista',
+  path: '/lista',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SociedadesIndexRoute = SociedadesIndexRouteImport.update({
-  id: '/sociedades/',
-  path: '/sociedades/',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MensajesIndexRoute = MensajesIndexRouteImport.update({
-  id: '/mensajes/',
-  path: '/mensajes/',
+const MapaRoute = MapaRouteImport.update({
+  id: '/mapa',
+  path: '/mapa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RankingRoute = RankingRouteImport.update({
+  id: '/ranking',
+  path: '/ranking',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportarRoute = ReportarRouteImport.update({
+  id: '/reportar',
+  path: '/reportar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RetosRoute = RetosRouteImport.update({
+  id: '/retos',
+  path: '/retos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminReportesRoute = AdminReportesRouteImport.update({
+  id: '/admin/reportes',
+  path: '/admin/reportes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EspeciesIndexRoute = EspeciesIndexRouteImport.update({
@@ -107,14 +107,14 @@ const EspeciesIndexRoute = EspeciesIndexRouteImport.update({
   path: '/especies/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UHandleRoute = UHandleRouteImport.update({
-  id: '/u/$handle',
-  path: '/u/$handle',
+const EspeciesIdRoute = EspeciesIdRouteImport.update({
+  id: '/especies/$id',
+  path: '/especies/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SociedadesIdRoute = SociedadesIdRouteImport.update({
-  id: '/sociedades/$id',
-  path: '/sociedades/$id',
+const MensajesIndexRoute = MensajesIndexRouteImport.update({
+  id: '/mensajes/',
+  path: '/mensajes/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MensajesIdRoute = MensajesIdRouteImport.update({
@@ -127,19 +127,19 @@ const SIdRoute = SIdRouteImport.update({
   path: '/s/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EspeciesIdRoute = EspeciesIdRouteImport.update({
-  id: '/especies/$id',
-  path: '/especies/$id',
+const SociedadesIndexRoute = SociedadesIndexRouteImport.update({
+  id: '/sociedades/',
+  path: '/sociedades/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthCallbackRoute = AuthCallbackRouteImport.update({
-  id: '/auth/callback',
-  path: '/auth/callback',
+const SociedadesIdRoute = SociedadesIdRouteImport.update({
+  id: '/sociedades/$id',
+  path: '/sociedades/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminReportesRoute = AdminReportesRouteImport.update({
-  id: '/admin/reportes',
-  path: '/admin/reportes',
+const UHandleRoute = UHandleRouteImport.update({
+  id: '/u/$handle',
+  path: '/u/$handle',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -318,74 +318,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/support': {
-      id: '/support'
-      path: '/support'
-      fullPath: '/support'
-      preLoaderRoute: typeof SupportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/retos': {
-      id: '/retos'
-      path: '/retos'
-      fullPath: '/retos'
-      preLoaderRoute: typeof RetosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reportar': {
-      id: '/reportar'
-      path: '/reportar'
-      fullPath: '/reportar'
-      preLoaderRoute: typeof ReportarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ranking': {
-      id: '/ranking'
-      path: '/ranking'
-      fullPath: '/ranking'
-      preLoaderRoute: typeof RankingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mapa': {
-      id: '/mapa'
-      path: '/mapa'
-      fullPath: '/mapa'
-      preLoaderRoute: typeof MapaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lista': {
-      id: '/lista'
-      path: '/lista'
-      fullPath: '/lista'
-      preLoaderRoute: typeof ListaRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/capture': {
@@ -395,25 +332,88 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CaptureRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/lista': {
+      id: '/lista'
+      path: '/lista'
+      fullPath: '/lista'
+      preLoaderRoute: typeof ListaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sociedades/': {
-      id: '/sociedades/'
-      path: '/sociedades'
-      fullPath: '/sociedades/'
-      preLoaderRoute: typeof SociedadesIndexRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/mensajes/': {
-      id: '/mensajes/'
-      path: '/mensajes'
-      fullPath: '/mensajes/'
-      preLoaderRoute: typeof MensajesIndexRouteImport
+    '/mapa': {
+      id: '/mapa'
+      path: '/mapa'
+      fullPath: '/mapa'
+      preLoaderRoute: typeof MapaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ranking': {
+      id: '/ranking'
+      path: '/ranking'
+      fullPath: '/ranking'
+      preLoaderRoute: typeof RankingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reportar': {
+      id: '/reportar'
+      path: '/reportar'
+      fullPath: '/reportar'
+      preLoaderRoute: typeof ReportarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/retos': {
+      id: '/retos'
+      path: '/retos'
+      fullPath: '/retos'
+      preLoaderRoute: typeof RetosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/reportes': {
+      id: '/admin/reportes'
+      path: '/admin/reportes'
+      fullPath: '/admin/reportes'
+      preLoaderRoute: typeof AdminReportesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/especies/': {
@@ -423,18 +423,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EspeciesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/u/$handle': {
-      id: '/u/$handle'
-      path: '/u/$handle'
-      fullPath: '/u/$handle'
-      preLoaderRoute: typeof UHandleRouteImport
+    '/especies/$id': {
+      id: '/especies/$id'
+      path: '/especies/$id'
+      fullPath: '/especies/$id'
+      preLoaderRoute: typeof EspeciesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sociedades/$id': {
-      id: '/sociedades/$id'
-      path: '/sociedades/$id'
-      fullPath: '/sociedades/$id'
-      preLoaderRoute: typeof SociedadesIdRouteImport
+    '/mensajes/': {
+      id: '/mensajes/'
+      path: '/mensajes'
+      fullPath: '/mensajes/'
+      preLoaderRoute: typeof MensajesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mensajes/$id': {
@@ -451,25 +451,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/especies/$id': {
-      id: '/especies/$id'
-      path: '/especies/$id'
-      fullPath: '/especies/$id'
-      preLoaderRoute: typeof EspeciesIdRouteImport
+    '/sociedades/': {
+      id: '/sociedades/'
+      path: '/sociedades'
+      fullPath: '/sociedades/'
+      preLoaderRoute: typeof SociedadesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/callback': {
-      id: '/auth/callback'
-      path: '/auth/callback'
-      fullPath: '/auth/callback'
-      preLoaderRoute: typeof AuthCallbackRouteImport
+    '/sociedades/$id': {
+      id: '/sociedades/$id'
+      path: '/sociedades/$id'
+      fullPath: '/sociedades/$id'
+      preLoaderRoute: typeof SociedadesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/reportes': {
-      id: '/admin/reportes'
-      path: '/admin/reportes'
-      fullPath: '/admin/reportes'
-      preLoaderRoute: typeof AdminReportesRouteImport
+    '/u/$handle': {
+      id: '/u/$handle'
+      path: '/u/$handle'
+      fullPath: '/u/$handle'
+      preLoaderRoute: typeof UHandleRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
