@@ -74,7 +74,7 @@
   --leaf-foreground: oklch(0.975 0.015 85);
   --orchid: oklch(0.55 0.18 350);
   --orchid-foreground: oklch(0.98 0.01 85);
-  --warn: oklch(0.65 0.14 55);
+  --warn: oklch(0.5 0.13 50); /* darkened for WCAG AA text contrast (was oklch(0.65 0.14 55), 3.1:1) */
   --danger: oklch(0.52 0.18 25);
 }
 
