@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
+import { MIN_AGE } from "@/lib/consent";
 
 export const Route = createFileRoute("/terms")({
   head: () => ({
@@ -23,7 +24,7 @@ function TermsPage() {
         <header className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-leaf">OrquIDea</p>
           <h1 className="font-display text-3xl font-semibold tracking-tight">Terms of Use</h1>
-          <p className="text-muted-foreground">Last updated: 17 June 2026</p>
+          <p className="text-muted-foreground">Last updated: 20 November 2026</p>
         </header>
 
         <section className="space-y-3">
@@ -81,13 +82,34 @@ function TermsPage() {
           </p>
         </section>
 
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Age and accounts</h2>
+          <p>
+            You must be {MIN_AGE} or older to create an account. If you are under 18, you need
+            permission from a parent or guardian. Keep your sign-in details private. Treat other
+            users with respect in comments, societies and direct messages; we may suspend or delete
+            accounts that harass others, share sensitive locations, or promote collection or trade
+            of wild orchids. You can delete your account at any time at{" "}
+            <Link to="/eliminar-cuenta" className="font-medium text-leaf underline">
+              orquidea.orchidarc.org/eliminar-cuenta
+            </Link>
+            . How we handle personal data is explained in the{" "}
+            <Link to="/privacy" className="font-medium text-leaf underline">
+              Privacy Notice
+            </Link>
+            .
+          </p>
+        </section>
+
         <section className="space-y-3 rounded-xl border border-border bg-card p-4">
           <h2 className="text-lg font-semibold">Español</h2>
           <p>
             OrquIDea es una plataforma de observación, educación y conservación. Usarla no autoriza
             colectar, comprar, vender ni perturbar orquídeas silvestres. Las observaciones deben
             hacerse legalmente, con respeto al hábitat, a las comunidades locales y a las
-            regulaciones aplicables.
+            regulaciones aplicables. Debes tener {MIN_AGE} años o más para crear una cuenta; si eres
+            menor de 18, necesitas permiso de tu madre, padre o tutor. Puedes eliminar tu cuenta en
+            cualquier momento.
           </p>
         </section>
 

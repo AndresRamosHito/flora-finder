@@ -633,6 +633,47 @@ function ListPage() {
             );
           })}
         </ul>
+
+        <section
+          aria-labelledby="account-heading"
+          className="mt-8 rounded-2xl border border-border bg-card p-4 text-sm"
+        >
+          <h2 id="account-heading" className="font-semibold">
+            {t("Cuenta", "Account")}
+          </h2>
+          <ul className="mt-2 divide-y divide-border">
+            <li>
+              <Link to="/privacy" className="block py-2.5 text-foreground hover:text-leaf">
+                {t("Aviso de privacidad", "Privacy Notice")}
+              </Link>
+            </li>
+            <li>
+              <Link to="/terms" className="block py-2.5 text-foreground hover:text-leaf">
+                {t("Términos de uso", "Terms of Use")}
+              </Link>
+            </li>
+            <li>
+              <button
+                type="button"
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  navigate({ to: "/", replace: true });
+                }}
+                className="block w-full py-2.5 text-left text-foreground hover:text-leaf"
+              >
+                {t("Cerrar sesión", "Sign out")}
+              </button>
+            </li>
+            <li>
+              <Link
+                to="/eliminar-cuenta"
+                className="block py-2.5 font-semibold text-destructive hover:underline"
+              >
+                {t("Eliminar mi cuenta", "Delete my account")}
+              </Link>
+            </li>
+          </ul>
+        </section>
       </div>
     </Shell>
   );

@@ -156,6 +156,7 @@ export type Database = {
       };
       profiles: {
         Row: {
+          age_terms_confirmed_at: string | null;
           created_at: string;
           display_name: string | null;
           handle: string | null;
@@ -165,6 +166,7 @@ export type Database = {
           role: Database["public"]["Enums"]["member_role"];
         };
         Insert: {
+          age_terms_confirmed_at?: string | null;
           created_at?: string;
           display_name?: string | null;
           handle?: string | null;
@@ -174,6 +176,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["member_role"];
         };
         Update: {
+          age_terms_confirmed_at?: string | null;
           created_at?: string;
           display_name?: string | null;
           handle?: string | null;
